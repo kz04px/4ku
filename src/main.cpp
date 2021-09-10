@@ -1,8 +1,9 @@
 #include <algorithm>
 #include <cstdint>
 #include <cstdio>
-#include <cstring>
 #include <ctime>
+#include <iostream>
+#include <string>
 
 #define MATE_SCORE (1 << 15)
 #define INF (1 << 16)
@@ -683,20 +684,7 @@ void go(chess::Position &pos, const int time) {
     puts(bestmove_str);
 }
 
-void next(char *ptr) {
-    char c;
-    while ((c = getchar())) {
-        if (c == '\n' || c == '\0' || c == ' ') {
-            break;
-        }
-        *ptr = c;
-        ptr++;
-    }
-    *ptr = '\0';
-}
-
 void listen() {
-    char word[4096];
     auto pos = chess::Position();
     chess::Move moves[256];
 
@@ -707,33 +695,36 @@ void listen() {
     puts("id name 4ku2\nid author kz04px\nuciok");
 
     while (true) {
+        std::string word;
+
         // Get next word
-        next(word);
+        std::cin >> word;
 
         // quit
-        if (word[0] == 'q') {
+        if (word == "quit") {
             break;
         }
         // isready
-        else if (word[0] == 'i' && word[1] == 's') {
+        else if (word == "isready") {
             puts("readyok");
         }
         // go
-        else if (word[0] == 'g' && word[1] == 'o') {
+        else if (word == "go") {
+            int wtime;
+            int btime;
+
             // wtime
-            next(word);
-            next(word);
-            const int wtime = atoi(word);
+            std::cin >> word;
+            std::cin >> wtime;
 
             // btime
-            next(word);
-            next(word);
-            const int btime = atoi(word);
+            std::cin >> word;
+            std::cin >> btime;
 
             go(pos, pos.flipped ? btime : wtime);
         }
         // position
-        else if (word[0] == 'p' && word[1] == 'o') {
+        else if (word == "position") {
             pos = chess::Position();
         }
         // Try parse a move
@@ -742,7 +733,7 @@ void listen() {
             for (int i = 0; i < num_moves; ++i) {
                 char movestr[6];
                 chess::move_str(moves[i], movestr, pos.flipped);
-                if (strncmp(movestr, word, strlen(movestr)) == 0) {
+                if (movestr == word) {
                     chess::makemove(pos, moves[i]);
                     break;
                 }
