@@ -704,7 +704,7 @@ void listen() {
     getchar();
 
     // Tell the GUI about us
-    puts("id name 4ku\nid author kz04px\nuciok");
+    puts("id name 4ku2\nid author kz04px\nuciok");
 
     while (true) {
         // Get next word
