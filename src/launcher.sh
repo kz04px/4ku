@@ -1,5 +1,5 @@
 #!/bin/sh
 T=`mktemp`
-tail -c +104 "$0"|g++ -xc++ - -o /dev/fd/1>$T
+tail -c +108 "$0"|g++ -xc++ -O3 - -o /dev/fd/1>$T
 chmod +x $T
 (sleep 3;rm $T)&exec $T
