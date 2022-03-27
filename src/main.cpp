@@ -213,7 +213,7 @@ bool makemove(Position &pos, Move &move) {
     return !attacked(pos, ksq, false);
 }
 
-void add_move(Move *movelist, int &num_moves, int from, int to, int promo) {
+void add_move(Move *movelist, int &num_moves, int from, int to, int promo = None) {
     movelist[num_moves] = Move{from, to, promo};
     num_moves++;
 }
@@ -228,7 +228,7 @@ void generate_pawn_moves(Move *movelist, int &num_moves, BB to_mask, int offset)
             add_move(movelist, num_moves, to + offset, to, Bishop);
             add_move(movelist, num_moves, to + offset, to, Knight);
         } else {
-            add_move(movelist, num_moves, to + offset, to, None);
+            add_move(movelist, num_moves, to + offset, to);
         }
     }
 }
@@ -243,7 +243,7 @@ void generate_piece_moves(Move *movelist, int &num_moves, Position &pos, int pie
         while (moves) {
             int to = lsb(moves);
             moves &= moves - 1;
-            add_move(movelist, num_moves, fr, to, None);
+            add_move(movelist, num_moves, fr, to);
         }
     }
 }
@@ -264,10 +264,10 @@ int movegen(Position &pos, Move *movelist) {
     generate_piece_moves(movelist, num_moves, pos, Queen, rook);
     generate_piece_moves(movelist, num_moves, pos, King, king);
     if (pos.castling[0] && !(all & (0x60ULL)) && !attacked(pos, 4) && !attacked(pos, 5)) {
-        add_move(movelist, num_moves, 4, 6, None);
+        add_move(movelist, num_moves, 4, 6);
     }
     if (pos.castling[1] && !(all & (0xEULL)) && !attacked(pos, 4) && !attacked(pos, 3)) {
-        add_move(movelist, num_moves, 4, 2, None);
+        add_move(movelist, num_moves, 4, 2);
     }
     return num_moves;
 }
