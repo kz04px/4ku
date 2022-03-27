@@ -8,9 +8,7 @@
 #define MATE_SCORE (1 << 15)
 #define INF (1 << 16)
 
-#ifdef USE_SEARCHINFO
-extern unsigned long long int nodes_searched;
-#endif
+using namespace std;
 
 long long int now() {
     timespec t;
@@ -18,11 +16,9 @@ long long int now() {
     return t.tv_sec * 1000 + t.tv_nsec / 1000000;
 }
 
-namespace chess {
-
-enum class Piece : std::uint8_t
+enum
 {
-    Pawn = 0,
+    Pawn,
     Knight,
     Bishop,
     Rook,
@@ -31,129 +27,105 @@ enum class Piece : std::uint8_t
     None,
 };
 
-// clang-format off
-enum Square
-{
-    a1=0, b1, c1, d1, e1, f1, g1, h1,
-    a2, b2, c2, d2, e2, f2, g2, h2,
-    a3, b3, c3, d3, e3, f3, g3, h3,
-    a4, b4, c4, d4, e4, f4, g4, h4,
-    a5, b5, c5, d5, e5, f5, g5, h5,
-    a6, b6, c6, d6, e6, f6, g6, h6,
-    a7, b7, c7, d7, e7, f7, g7, h7,
-    a8, b8, c8, d8, e8, f8, g8, h8,
-};
-// clang-format on
-
 struct Move {
     int from;
     int to;
-    Piece promo;
+    int promo;
 };
 
-using Bitboard = std::uint64_t;
+using BB = uint64_t;
 
 struct Position {
-    Bitboard colour[2] = {0xFFFFULL, 0xFFFF000000000000ULL};
-    Bitboard pieces[6] = {0xFF00000000FF00ULL,
-                          0x4200000000000042ULL,
-                          0x2400000000000024ULL,
-                          0x8100000000000081ULL,
-                          0x800000000000008ULL,
-                          0x1000000000000010ULL};
-    Bitboard ep = 0x0ULL;
+    BB colour[2] = {0xFFFFULL, 0xFFFF000000000000ULL};
+    BB pieces[6] = {0xFF00000000FF00ULL,
+                    0x4200000000000042ULL,
+                    0x2400000000000024ULL,
+                    0x8100000000000081ULL,
+                    0x800000000000008ULL,
+                    0x1000000000000010ULL};
+    BB ep = 0x0ULL;
     int halfmoves = 0;
     bool castling[4] = {true, true, true, true};
     bool flipped = false;
 };
 
-[[nodiscard]] constexpr Bitboard flip(Bitboard bb) noexcept {
+BB flip(BB bb) {
     return __builtin_bswap64(bb);
 }
 
-[[nodiscard]] constexpr int lsbll(Bitboard bb) noexcept {
+int lsb(BB bb) {
     return __builtin_ctzll(bb);
 }
 
-[[nodiscard]] constexpr auto count(Bitboard bb) noexcept {
+int count(BB bb) {
     return __builtin_popcountll(bb);
 }
 
-[[nodiscard]] constexpr Bitboard north(Bitboard bb) noexcept {
+BB north(BB bb) {
     return bb << 8;
 }
 
-[[nodiscard]] constexpr Bitboard south(Bitboard bb) noexcept {
+BB south(BB bb) {
     return bb >> 8;
 }
 
-[[nodiscard]] constexpr Bitboard east(Bitboard bb) noexcept {
+BB east(BB bb) {
     return (bb << 1) & ~0x0101010101010101ULL;
 }
 
-[[nodiscard]] constexpr Bitboard west(Bitboard bb) noexcept {
+BB west(BB bb) {
     return (bb >> 1) & ~0x8080808080808080ULL;
 }
 
-[[nodiscard]] constexpr Bitboard nw(Bitboard bb) noexcept {
+BB nw(BB bb) {
     return (bb << 7) & ~0x8080808080808080ULL;
 }
 
-[[nodiscard]] constexpr Bitboard ne(Bitboard bb) noexcept {
+BB ne(BB bb) {
     return (bb << 9) & ~0x0101010101010101ULL;
 }
 
-[[nodiscard]] constexpr Bitboard sw(Bitboard bb) noexcept {
+BB sw(BB bb) {
     return (bb >> 9) & ~0x8080808080808080ULL;
 }
 
-[[nodiscard]] constexpr Bitboard se(Bitboard bb) noexcept {
+BB se(BB bb) {
     return (bb >> 7) & ~0x0101010101010101ULL;
 }
 
-[[nodiscard]] constexpr Bitboard adjacent(Bitboard bb) noexcept {
-    return (bb << 8) | (bb >> 8) | (((bb >> 1) | (bb >> 9) | (bb << 7)) & 0x7F7F7F7F7F7F7F7FULL) |
-           (((bb << 1) | (bb << 9) | (bb >> 7)) & 0xFEFEFEFEFEFEFEFEULL);
-}
-
-[[nodiscard]] constexpr Bitboard knight(Bitboard bb) noexcept {
-    return (((bb << 15) | (bb >> 17)) & 0x7F7F7F7F7F7F7F7FULL) | (((bb << 17) | (bb >> 15)) & 0xFEFEFEFEFEFEFEFEULL) |
-           (((bb << 10) | (bb >> 6)) & 0xFCFCFCFCFCFCFCFCULL) | (((bb << 6) | (bb >> 10)) & 0x3F3F3F3F3F3F3F3FULL);
-}
-
-[[maybe_unused]] static bool operator==(const Move &lhs, const Move &rhs) {
+bool operator==(Move &lhs, Move &rhs) {
     return lhs.from == rhs.from && lhs.to == rhs.to && lhs.promo == rhs.promo;
 }
 
-[[maybe_unused]] static void move_str(const Move &move, char *str, const bool flip) {
-    static constexpr char promos[] = {'\0', 'n', 'b', 'r', 'q', '\0', '\0'};
+void move_str(Move &move, char *str, bool flip) {
+    auto promos = "\0nbrq\0\0";
 
-    str[0] = static_cast<char>((move.from % 8) + 'a');
-    str[2] = static_cast<char>((move.to % 8) + 'a');
+    str[0] = (move.from % 8) + 'a';
+    str[2] = (move.to % 8) + 'a';
     if (flip) {
-        str[1] = static_cast<char>(7 - (move.from / 8) + '1');
-        str[3] = static_cast<char>(7 - (move.to / 8) + '1');
+        str[1] = (7 - (move.from / 8)) + '1';
+        str[3] = (7 - (move.to / 8)) + '1';
     } else {
-        str[1] = static_cast<char>((move.from / 8) + '1');
-        str[3] = static_cast<char>((move.to / 8) + '1');
+        str[1] = (move.from / 8) + '1';
+        str[3] = (move.to / 8) + '1';
     }
 
-    str[4] = promos[static_cast<int>(move.promo)];
+    str[4] = promos[move.promo];
     str[5] = '\0';
 }
 
-static Piece piece_on(const Position &pos, const int sq) noexcept {
-    const auto bb = Bitboard(1ULL << sq);
+int piece_on(Position &pos, int sq) {
+    BB bb = 1ULL << sq;
     for (int i = 0; i < 6; ++i) {
         if (pos.pieces[i] & bb) {
-            return static_cast<Piece>(i);
+            return i;
         }
     }
-    return Piece::None;
+    return None;
 }
 
-static int colour_on(const Position &pos, const int sq) {
-    const auto bb = Bitboard(1ULL << sq);
+int colour_on(Position &pos, int sq) {
+    BB bb = 1ULL << sq;
     if (pos.colour[0] & bb) {
         return 0;
     } else if (pos.pieces[1] & bb) {
@@ -163,329 +135,216 @@ static int colour_on(const Position &pos, const int sq) {
     }
 }
 
-[[maybe_unused]] static void flip(Position &pos) noexcept {
+void flip(Position &pos) {
     pos.colour[0] = flip(pos.colour[0]);
     pos.colour[1] = flip(pos.colour[1]);
-
     for (int i = 0; i < 6; ++i) {
         pos.pieces[i] = flip(pos.pieces[i]);
     }
-
     pos.ep = flip(pos.ep);
-
-    {
-        const auto c = pos.colour[0];
-        pos.colour[0] = pos.colour[1];
-        pos.colour[1] = c;
-    }
-    {
-        const auto c = pos.castling[0];
-        pos.castling[0] = pos.castling[2];
-        pos.castling[2] = c;
-    }
-    {
-        const auto c = pos.castling[1];
-        pos.castling[1] = pos.castling[3];
-        pos.castling[3] = c;
-    }
+    swap(pos.colour[0], pos.colour[1]);
+    swap(pos.castling[0], pos.castling[2]);
+    swap(pos.castling[1], pos.castling[3]);
     pos.flipped = !pos.flipped;
 }
 
-namespace raycast {
-
-constexpr Bitboard N(const int sq, const Bitboard blockers) {
-    auto mask = north(Bitboard(1ULL << sq));
+template <typename F>
+BB ray(int sq, BB blockers, F f) {
+    BB mask = f(1ULL << sq);
     for (int i = 1; i < 8; ++i) {
-        mask |= north(mask & ~blockers);
+        mask |= f(mask & ~blockers);
     }
     return mask;
 }
 
-constexpr Bitboard S(const int sq, const Bitboard blockers) {
-    auto mask = south(Bitboard(1ULL << sq));
-    for (int i = 1; i < 8; ++i) {
-        mask |= south(mask & ~blockers);
-    }
-    return mask;
+BB knight(int sq, BB) {
+    BB bb = 1ULL << sq;
+    return (((bb << 15) | (bb >> 17)) & 0x7F7F7F7F7F7F7F7FULL) | (((bb << 17) | (bb >> 15)) & 0xFEFEFEFEFEFEFEFEULL) |
+           (((bb << 10) | (bb >> 6)) & 0xFCFCFCFCFCFCFCFCULL) | (((bb << 6) | (bb >> 10)) & 0x3F3F3F3F3F3F3F3FULL);
 }
 
-constexpr Bitboard E(const int sq, const Bitboard blockers) {
-    auto mask = east(Bitboard(1ULL << sq));
-    for (int i = 1; i < 8; ++i) {
-        mask |= east(mask & ~blockers);
-    }
-    return mask;
+BB bishop(int sq, BB blockers) {
+    return ray(sq, blockers, nw) | ray(sq, blockers, ne) | ray(sq, blockers, sw) | ray(sq, blockers, se);
 }
 
-constexpr Bitboard W(const int sq, const Bitboard blockers) {
-    auto mask = west(Bitboard(1ULL << sq));
-    for (int i = 1; i < 8; ++i) {
-        mask |= west(mask & ~blockers);
-    }
-    return mask;
+BB rook(int sq, BB blockers) {
+    return ray(sq, blockers, north) | ray(sq, blockers, east) | ray(sq, blockers, south) | ray(sq, blockers, west);
 }
 
-constexpr Bitboard NW(const int sq, const Bitboard blockers) {
-    auto mask = nw(Bitboard(1ULL << sq));
-    for (int i = 1; i < 8; ++i) {
-        mask |= nw(mask & ~blockers);
-    }
-    return mask;
+BB king(int sq, BB) {
+    BB bb = 1ULL << sq;
+    return (bb << 8) | (bb >> 8) | (((bb >> 1) | (bb >> 9) | (bb << 7)) & 0x7F7F7F7F7F7F7F7FULL) |
+           (((bb << 1) | (bb << 9) | (bb >> 7)) & 0xFEFEFEFEFEFEFEFEULL);
 }
 
-constexpr Bitboard NE(const int sq, const Bitboard blockers) {
-    auto mask = ne(Bitboard(1ULL << sq));
-    for (int i = 1; i < 8; ++i) {
-        mask |= ne(mask & ~blockers);
-    }
-    return mask;
+bool attacked(Position &pos, int sq, bool them) {
+    BB bb = 1ULL << sq;
+    BB kt = pos.colour[them] & pos.pieces[Knight];
+    BB BQ = pos.pieces[Bishop] | pos.pieces[Queen];
+    BB RQ = pos.pieces[Rook] | pos.pieces[Queen];
+    BB pawns = pos.colour[them] & pos.pieces[Pawn];
+    BB pawn_attacks = them ? sw(pawns) | se(pawns) : nw(pawns) | ne(pawns);
+
+    return (pawn_attacks & bb) | (kt & knight(sq, 0)) |
+           (bishop(sq, pos.colour[0] | pos.colour[1]) & pos.colour[them] & BQ) |
+           (rook(sq, pos.colour[0] | pos.colour[1]) & pos.colour[them] & RQ) |
+           (king(sq, 0) & pos.colour[them] & pos.pieces[King]);
 }
 
-constexpr Bitboard SW(const int sq, const Bitboard blockers) {
-    auto mask = sw(Bitboard(1ULL << sq));
-    for (int i = 1; i < 8; ++i) {
-        mask |= sw(mask & ~blockers);
-    }
-    return mask;
-}
+bool makemove(Position &pos, Move &move) {
+    int piece = piece_on(pos, move.from);
+    int captured = piece_on(pos, move.to);
 
-constexpr Bitboard SE(const int sq, const Bitboard blockers) {
-    auto mask = se(Bitboard(1ULL << sq));
-    for (int i = 1; i < 8; ++i) {
-        mask |= se(mask & ~blockers);
-    }
-    return mask;
-}
+    pos.colour[0] ^= (1ULL << move.from) | (1ULL << move.to);
+    pos.pieces[piece] ^= (1ULL << move.from) | (1ULL << move.to);
 
-constexpr Bitboard knight(const int sq, const Bitboard) {
-    return chess::knight(Bitboard(1ULL << sq));
-}
-
-constexpr Bitboard bishop(const int sq, const Bitboard blockers) {
-    return NW(sq, blockers) | NE(sq, blockers) | SW(sq, blockers) | SE(sq, blockers);
-}
-
-constexpr Bitboard rook(const int sq, const Bitboard blockers) {
-    return N(sq, blockers) | E(sq, blockers) | S(sq, blockers) | W(sq, blockers);
-}
-
-constexpr Bitboard king(const int sq, const Bitboard) {
-    return adjacent(Bitboard(1ULL << sq));
-}
-
-}  // namespace raycast
-
-[[nodiscard]] bool attacked(const Position &pos, const int sq, const bool them) {
-    const auto bb = Bitboard(1ULL << sq);
-    const auto kt = pos.colour[them] & pos.pieces[static_cast<int>(Piece::Knight)];
-    const auto BQ = pos.pieces[static_cast<int>(Piece::Bishop)] | pos.pieces[static_cast<int>(Piece::Queen)];
-    const auto RQ = pos.pieces[static_cast<int>(Piece::Rook)] | pos.pieces[static_cast<int>(Piece::Queen)];
-    const auto pawns = pos.colour[them] & pos.pieces[static_cast<int>(Piece::Pawn)];
-    const auto pawn_attacks = them ? sw(pawns) | se(pawns) : nw(pawns) | ne(pawns);
-
-    return
-        // Pawns
-        (pawn_attacks & bb) |
-        // Knights
-        (bb & knight(kt)) |
-        // Bishops - Queens
-        (raycast::bishop(sq, pos.colour[0] | pos.colour[1]) & pos.colour[them] & BQ) |
-        // Rooks - Queens
-        (raycast::rook(sq, pos.colour[0] | pos.colour[1]) & pos.colour[them] & RQ) |
-        // King
-        (adjacent(bb) & pos.colour[them] & pos.pieces[static_cast<int>(Piece::King)]);
-}
-
-bool makemove(Position &pos, const Move &move) {
-    const auto piece = piece_on(pos, move.from);
-    const auto captured = piece_on(pos, move.to);
-
-    // Move our piece
-    pos.colour[0] ^= Bitboard(1ULL << move.from) | Bitboard(1ULL << move.to);
-    pos.pieces[static_cast<int>(piece)] ^= Bitboard(1ULL << move.from) | Bitboard(1ULL << move.to);
-
-    // En passant
-    if (piece == Piece::Pawn && Bitboard(1ULL << move.to) == pos.ep) {
-        // Remove their pawn
-        pos.colour[1] ^= Bitboard(1ULL << (move.to - 8));
-        pos.pieces[static_cast<int>(Piece::Pawn)] ^= Bitboard(1ULL << (move.to - 8));
+    if (piece == Pawn && (1ULL << move.to) == pos.ep) {
+        pos.colour[1] ^= (1ULL << (move.to - 8));
+        pos.pieces[Pawn] ^= (1ULL << (move.to - 8));
     }
 
     pos.ep = 0x0ULL;
 
-    // Double
-    if (piece == Piece::Pawn && move.to - move.from == 16) {
-        pos.ep = Bitboard(1ULL << (move.from + 8));
+    if (piece == Pawn && move.to - move.from == 16) {
+        pos.ep = (1ULL << (move.from + 8));
     }
 
-    // Remove their piece
-    if (captured != Piece::None) {
-        pos.colour[1] ^= Bitboard(1ULL << move.to);
-        pos.pieces[static_cast<int>(captured)] ^= Bitboard(1ULL << move.to);
+    if (captured != None) {
+        pos.colour[1] ^= (1ULL << move.to);
+        pos.pieces[captured] ^= (1ULL << move.to);
     }
 
-    // Castling
-    if (piece == Piece::King) {
-        const auto bb = move.to - move.from == 2 ? 0xa0ULL : move.to - move.from == -2 ? 0x9ULL : 0x0ULL;
+    if (piece == King) {
+        BB bb = move.to - move.from == 2 ? 0xa0ULL : move.to - move.from == -2 ? 0x9ULL : 0x0ULL;
         pos.colour[0] ^= bb;
-        pos.pieces[static_cast<int>(Piece::Rook)] ^= bb;
+        pos.pieces[Rook] ^= bb;
     }
 
-    // Promo
-    if (piece == Piece::Pawn && move.to >= Square::a8) {
-        // Replace pawn with new piece
-        pos.pieces[static_cast<int>(Piece::Pawn)] ^= Bitboard(1ULL << move.to);
-        pos.pieces[static_cast<int>(move.promo)] ^= Bitboard(1ULL << move.to);
+    if (piece == Pawn && move.to >= 56) {
+        pos.pieces[Pawn] ^= (1ULL << move.to);
+        pos.pieces[move.promo] ^= (1ULL << move.to);
     }
 
-    // Remove castling permissions
-    const auto changed = (1ULL << move.to) | (1ULL << move.from);
+    BB changed = (1ULL << move.to) | (1ULL << move.from);
     pos.castling[0] &= !(changed & 0x90ULL);
     pos.castling[1] &= !(changed & 0x11ULL);
     pos.castling[2] &= !(changed & 0x9000000000000000ULL);
     pos.castling[3] &= !(changed & 0x1100000000000000ULL);
 
-    // Flip the board
     flip(pos);
 
-    // Did this move hang our king?
-    const int ksq = lsbll(pos.colour[1] & pos.pieces[static_cast<int>(chess::Piece::King)]);
+    int ksq = lsb(pos.colour[1] & pos.pieces[King]);
     return !attacked(pos, ksq, false);
 }
 
-void add_move(chess::Move *movelist, int &num_moves, const int from, const int to, const chess::Piece promo) {
+void add_move(Move *movelist, int &num_moves, int from, int to, int promo) {
     movelist[num_moves] = Move{from, to, promo};
     num_moves++;
 }
 
-void generate_pawn_moves(Move *movelist, int &num_moves, Bitboard to_mask, const int offset) {
+void generate_pawn_moves(Move *movelist, int &num_moves, BB to_mask, int offset) {
     while (to_mask) {
-        auto to = lsbll(to_mask);
+        int to = lsb(to_mask);
         to_mask &= to_mask - 1;
 
-        // Promotion
-        if (to >= Square::a8) {
-            add_move(movelist, num_moves, to + offset, to, Piece::Queen);
-            add_move(movelist, num_moves, to + offset, to, Piece::Rook);
-            add_move(movelist, num_moves, to + offset, to, Piece::Bishop);
-            add_move(movelist, num_moves, to + offset, to, Piece::Knight);
+        if (to >= 56) {
+            add_move(movelist, num_moves, to + offset, to, Queen);
+            add_move(movelist, num_moves, to + offset, to, Rook);
+            add_move(movelist, num_moves, to + offset, to, Bishop);
+            add_move(movelist, num_moves, to + offset, to, Knight);
         } else {
-            add_move(movelist, num_moves, to + offset, to, Piece::None);
+            add_move(movelist, num_moves, to + offset, to, None);
         }
     }
 }
 
-void generate_piece_moves(Move *movelist,
-                          int &num_moves,
-                          const Position &pos,
-                          const Piece piece,
-                          Bitboard (*func)(int, Bitboard)) {
-    auto copy = pos.colour[0] & pos.pieces[static_cast<int>(piece)];
+void generate_piece_moves(Move *movelist, int &num_moves, Position &pos, int piece, BB (*func)(int, BB)) {
+    BB copy = pos.colour[0] & pos.pieces[piece];
     while (copy) {
-        auto fr = lsbll(copy);
+        int fr = lsb(copy);
         copy &= copy - 1;
 
-        auto moves = func(fr, pos.colour[0] | pos.colour[1]);
+        BB moves = func(fr, pos.colour[0] | pos.colour[1]);
         moves &= ~pos.colour[0];
 
         while (moves) {
-            auto to = lsbll(moves);
+            int to = lsb(moves);
             moves &= moves - 1;
 
-            add_move(movelist, num_moves, fr, to, Piece::None);
+            add_move(movelist, num_moves, fr, to, None);
         }
     }
 }
 
-int movegen(const Position &pos, Move *movelist) {
+int movegen(Position &pos, Move *movelist) {
     int num_moves = 0;
 
-    const auto all = pos.colour[0] | pos.colour[1];
-    const auto empty = ~all;
-    const auto pawns = pos.colour[0] & pos.pieces[static_cast<int>(Piece::Pawn)];
+    BB all = pos.colour[0] | pos.colour[1];
+    BB empty = ~all;
+    BB pawns = pos.colour[0] & pos.pieces[Pawn];
 
-    // Pawns
     generate_pawn_moves(movelist, num_moves, north(pawns) & empty, -8);
-    generate_pawn_moves(movelist, num_moves, north(north(pawns & Bitboard(0xFF00ULL)) & empty) & empty, -16);
+    generate_pawn_moves(movelist, num_moves, north(north(pawns & 0xFF00ULL) & empty) & empty, -16);
     generate_pawn_moves(movelist, num_moves, nw(pawns) & (pos.colour[1] | pos.ep), -7);
     generate_pawn_moves(movelist, num_moves, ne(pawns) & (pos.colour[1] | pos.ep), -9);
-    // Others
-    generate_piece_moves(movelist, num_moves, pos, Piece::Knight, raycast::knight);
-    generate_piece_moves(movelist, num_moves, pos, Piece::Bishop, raycast::bishop);
-    generate_piece_moves(movelist, num_moves, pos, Piece::Queen, raycast::bishop);
-    generate_piece_moves(movelist, num_moves, pos, Piece::Rook, raycast::rook);
-    generate_piece_moves(movelist, num_moves, pos, Piece::Queen, raycast::rook);
-    generate_piece_moves(movelist, num_moves, pos, Piece::King, raycast::king);
+    generate_piece_moves(movelist, num_moves, pos, Knight, knight);
+    generate_piece_moves(movelist, num_moves, pos, Bishop, bishop);
+    generate_piece_moves(movelist, num_moves, pos, Queen, bishop);
+    generate_piece_moves(movelist, num_moves, pos, Rook, rook);
+    generate_piece_moves(movelist, num_moves, pos, Queen, rook);
+    generate_piece_moves(movelist, num_moves, pos, King, king);
 
-    // Castling - King side
-    if (pos.castling[0] && !(all & Bitboard(0x60ULL)) && !attacked(pos, Square::e1, true) &&
-        !attacked(pos, Square::f1, true)) {
-        add_move(movelist, num_moves, Square::e1, Square::g1, Piece::None);
+    if (pos.castling[0] && !(all & (0x60ULL)) && !attacked(pos, 4, true) && !attacked(pos, 5, true)) {
+        add_move(movelist, num_moves, 4, 6, None);
     }
 
-    // Castling - Queen side
-    if (pos.castling[1] && !(all & Bitboard(0xEULL)) && !attacked(pos, Square::e1, true) &&
-        !attacked(pos, Square::d1, true)) {
-        add_move(movelist, num_moves, Square::e1, Square::c1, Piece::None);
+    if (pos.castling[1] && !(all & (0xEULL)) && !attacked(pos, 4, true) && !attacked(pos, 3, true)) {
+        add_move(movelist, num_moves, 4, 2, None);
     }
 
     return num_moves;
 }
 
-}  // namespace chess
+int material[] = {100, 339, 372, 582, 1180};
+int centralities[] = {2, 20, 16, 1, 3, 11};
+int passers[] = {17, 11, 13, 31, 93, 192};
+int rook_semi_open = 25;
+int rook_open = 35;
+int rook_rank78 = 24;
 
-namespace search {
-
-constexpr int material[] = {100, 339, 372, 582, 1180};
-constexpr int centralities[] = {2, 20, 16, 1, 3, 11};
-constexpr int passers[] = {17, 11, 13, 31, 93, 192};
-constexpr int rook_semi_open = 25;
-constexpr int rook_open = 35;
-constexpr int rook_rank78 = 24;
-
-#ifdef USE_SEARCHINFO
-unsigned long long int nodes_searched;
-#endif
-
-[[nodiscard]] int eval(chess::Position &pos) {
-    // Tempo bonus
+int eval(Position &pos) {
     int score = 10;
 
     for (int c = 0; c < 2; ++c) {
-        chess::Bitboard pawns[2];
+        BB pawns[2];
         for (int c2 = 0; c2 < 2; ++c2) {
-            pawns[c2] = pos.colour[c2] & pos.pieces[static_cast<int>(chess::Piece::Pawn)];
+            pawns[c2] = pos.colour[c2] & pos.pieces[Pawn];
         }
 
         for (int p = 0; p < 6; ++p) {
-            auto copy = pos.colour[0] & pos.pieces[p];
+            BB copy = pos.colour[0] & pos.pieces[p];
             while (copy) {
-                const auto sq = chess::lsbll(copy);
+                int sq = lsb(copy);
                 copy &= copy - 1;
 
-                const int rank = sq >> 3;
-                const int file = sq & 7;
+                int rank = sq >> 3;
+                int file = sq & 7;
 
-                // Centrality
-                const int centrality = (7 - std::abs(7 - rank - file) - std::abs(rank - file)) / 2;
+                int centrality = (7 - abs(7 - rank - file) - abs(rank - file)) / 2;
                 score += centrality * centralities[p];
 
-                // Pawn eval
-                if (p == static_cast<int>(chess::Piece::Pawn)) {
-                    const auto bb = 1ULL << sq;
+                if (p == Pawn) {
+                    BB bb = 1ULL << sq;
 
-                    // Passed pawns
-                    auto attack = chess::nw(bb) | chess::ne(bb);
-                    for (auto i = 0; i < 4; ++i) {
-                        attack |= chess::north(attack);
+                    BB attack = nw(bb) | ne(bb);
+                    for (int i = 0; i < 4; ++i) {
+                        attack |= north(attack);
                     }
-                    const auto is_passed = (attack & pawns[1]) == 0;
-                    if (is_passed) {
+                    if ((attack & pawns[1]) == 0) {
                         score += passers[rank - 1];
                     }
-                } else if (p == static_cast<int>(chess::Piece::Rook)) {
-                    // Open and semi-open files
-                    const auto file_bb = 0x101010101010101ULL << file;
+                } else if (p == Rook) {
+                    BB file_bb = 0x101010101010101ULL << file;
                     if ((file_bb & pawns[0]) == 0) {
                         if ((file_bb & pawns[1]) == 0) {
                             score += rook_open;
@@ -494,41 +353,30 @@ unsigned long long int nodes_searched;
                         }
                     }
 
-                    // Bonus on 7th/8th rank
                     if (rank >= 6) {
                         score += rook_rank78;
                     }
                 }
 
-                // Material
                 score += material[p];
             }
         }
 
-        chess::flip(pos);
+        flip(pos);
         score = -score;
     }
 
     return score;
 }
 
-int alphabeta(chess::Position &pos,
-              int alpha,
-              const int beta,
-              int depth,
-              const int ply,
-              const long long int stop_time,
-              chess::Move *pvline) {
-    const int ksq = chess::lsbll(pos.colour[0] & pos.pieces[static_cast<int>(chess::Piece::King)]);
-    const auto in_check = chess::attacked(pos, ksq, true);
+int alphabeta(Position &pos, int alpha, int beta, int depth, int ply, long long int stop_time, Move *pvline) {
+    int ksq = lsb(pos.colour[0] & pos.pieces[King]);
+    auto in_check = attacked(pos, ksq, true);
 
-    // In-check extension
-    if (in_check) {
-        depth++;
-    }
+    depth += in_check;
 
-    const int static_eval = eval(pos);
-    const bool in_qsearch = depth <= 0;
+    int static_eval = eval(pos);
+    bool in_qsearch = depth <= 0;
     if (in_qsearch) {
         if (static_eval >= beta) {
             return beta;
@@ -538,34 +386,29 @@ int alphabeta(chess::Position &pos,
             alpha = static_eval;
         }
     } else if (depth < 3) {
-        // Reverse futility pruning
-        const int margin = 120;
+        int margin = 120;
         if (static_eval - margin * depth >= beta) {
             return beta;
         }
     }
 
-    // Did we run out of time?
     if (now() >= stop_time) {
         return 0;
     }
 
-    chess::Move moves[256];
-    const int num_moves = chess::movegen(pos, moves);
+    Move moves[256];
+    int num_moves = movegen(pos, moves);
 
     int move_scores[256];
     for (int j = 0; j < num_moves; ++j) {
-        auto move_score = 0;
+        int move_score = 0;
 
-        // PV-move first
         if (!in_qsearch && moves[j] == pvline[ply]) {
             move_score = 1 << 16;
         } else {
-            // MVVLVA
-            const auto capture = chess::piece_on(pos, moves[j].to);
-            if (capture != chess::Piece::None) {
-                move_score =
-                    ((static_cast<int>(capture) + 1) * 8) - static_cast<int>(chess::piece_on(pos, moves[j].from));
+            int capture = piece_on(pos, moves[j].to);
+            if (capture != None) {
+                move_score = ((capture + 1) * 8) - piece_on(pos, moves[j].from);
             }
         }
         move_scores[j] = move_score;
@@ -573,7 +416,6 @@ int alphabeta(chess::Position &pos,
 
     int best_score = -INF;
     for (int i = 0; i < num_moves; ++i) {
-        // Pick next move
         int best_move_score = 0;
         int best_move_score_index = i;
         for (int j = i; j < num_moves; ++j) {
@@ -583,34 +425,27 @@ int alphabeta(chess::Position &pos,
             }
         }
 
-        const auto move = moves[best_move_score_index];
+        auto move = moves[best_move_score_index];
         moves[best_move_score_index] = moves[i];
         move_scores[best_move_score_index] = move_scores[i];
 
-        // Since moves are ordered captures first, break in qsearch
-        if (in_qsearch && chess::piece_on(pos, move.to) == chess::Piece::None) {
+        if (in_qsearch && piece_on(pos, move.to) == None) {
             break;
         }
 
         auto npos = pos;
 
-        // Check move legality
-        if (!chess::makemove(npos, move)) {
+        if (!makemove(npos, move)) {
             continue;
         }
 
-#ifdef USE_SEARCHINFO
-        nodes_searched++;
-#endif
-
-        // Poor man's PVS
-        const int new_beta = -alpha;
+        int new_beta = -alpha;
         int new_alpha = -alpha - 1;
         goto do_search;
     full_search:
         new_alpha = -beta;
     do_search:
-        const int score = -alphabeta(npos, new_alpha, new_beta, depth - 1, ply + 1, stop_time, pvline);
+        int score = -alphabeta(npos, new_alpha, new_beta, depth - 1, ply + 1, stop_time, pvline);
         if (score > alpha && new_alpha != -beta) {
             goto full_search;
         }
@@ -629,14 +464,10 @@ int alphabeta(chess::Position &pos,
         }
     }
 
-    // No legal moves
     if (!in_qsearch && best_score == -INF) {
-        // Checkmate
         if (in_check) {
             return -MATE_SCORE;
-        }
-        // Stalemate
-        else {
+        } else {
             return 0;
         }
     }
@@ -644,108 +475,61 @@ int alphabeta(chess::Position &pos,
     return alpha;
 }
 
-}  // namespace search
+int main() {
+    setbuf(stdout, NULL);
+    Position pos;
+    Move moves[256];
 
-namespace uci {
-
-void go(chess::Position &pos, const int time) {
-    const auto stop_time = now() + time / 30;
-    char bestmove_str[] = "bestmove       ";
-    chess::Move pvline[128];
-#ifdef USE_SEARCHINFO
-    search::nodes_searched = 0;
-    const auto start_time = now();
-#endif
-    // Iterative deepening
-    for (int i = 1; i < 128; ++i) {
-#ifdef USE_SEARCHINFO
-        const auto score = search::alphabeta(pos, -INF, INF, i, 0, stop_time, pvline);
-#else
-        search::alphabeta(pos, -INF, INF, i, 0, stop_time, pvline);
-#endif
-
-        // Did we run out of time?
-        if (now() >= stop_time) {
-            break;
-        }
-
-        chess::move_str(pvline[0], &bestmove_str[9], pos.flipped);
-#ifdef USE_SEARCHINFO
-        auto elapsed = now() - start_time;
-        if (elapsed == 0) {
-            elapsed = 1;
-        }
-        const auto nps = search::nodes_searched * 1000 / elapsed;
-        std::printf(
-            "info depth %i score %i nodes %lld nps %lld time %lld\n", i, score, search::nodes_searched, nps, elapsed);
-#endif
-    }
-
-    puts(bestmove_str);
-}
-
-void listen() {
-    auto pos = chess::Position();
-    chess::Move moves[256];
-
-    // Pretend to wait for "uci"
     getchar();
 
-    // Tell the GUI about us
     puts("id name 4ku2\nid author kz04px\nuciok");
 
     while (true) {
-        std::string word;
+        string word;
 
-        // Get next word
-        std::cin >> word;
+        cin >> word;
 
-        // quit
         if (word == "quit") {
             break;
-        }
-        // isready
-        else if (word == "isready") {
+        } else if (word == "isready") {
             puts("readyok");
-        }
-        // go
-        else if (word == "go") {
+        } else if (word == "go") {
             int wtime;
             int btime;
 
-            // wtime
-            std::cin >> word;
-            std::cin >> wtime;
+            cin >> word;
+            cin >> wtime;
 
-            // btime
-            std::cin >> word;
-            std::cin >> btime;
+            cin >> word;
+            cin >> btime;
 
-            go(pos, pos.flipped ? btime : wtime);
-        }
-        // position
-        else if (word == "position") {
-            pos = chess::Position();
-        }
-        // Try parse a move
-        else {
-            const int num_moves = chess::movegen(pos, moves);
+            auto stop_time = now() + (pos.flipped ? btime : wtime) / 30;
+            char bestmove_str[] = "bestmove       ";
+            Move pvline[128];
+
+            for (int i = 1; i < 128; ++i) {
+                alphabeta(pos, -INF, INF, i, 0, stop_time, pvline);
+
+                if (now() >= stop_time) {
+                    break;
+                }
+
+                move_str(pvline[0], &bestmove_str[9], pos.flipped);
+            }
+
+            puts(bestmove_str);
+        } else if (word == "position") {
+            pos = Position();
+        } else {
+            int num_moves = movegen(pos, moves);
             for (int i = 0; i < num_moves; ++i) {
                 char movestr[6];
-                chess::move_str(moves[i], movestr, pos.flipped);
+                move_str(moves[i], movestr, pos.flipped);
                 if (movestr == word) {
-                    chess::makemove(pos, moves[i]);
+                    makemove(pos, moves[i]);
                     break;
                 }
             }
         }
     }
-}
-
-}  // namespace uci
-
-int main() {
-    setbuf(stdout, NULL);
-    uci::listen();
-    return 0;
 }
