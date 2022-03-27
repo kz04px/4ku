@@ -190,19 +190,21 @@ bool attacked(Position &pos, int sq, bool them = true) {
 bool makemove(Position &pos, Move &move) {
     int piece = piece_on(pos, move.from);
     int captured = piece_on(pos, move.to);
-    pos.colour[0] ^= (1ULL << move.from) | (1ULL << move.to);
-    pos.pieces[piece] ^= (1ULL << move.from) | (1ULL << move.to);
-    if (piece == Pawn && (1ULL << move.to) == pos.ep) {
-        pos.colour[1] ^= (1ULL << (move.to - 8));
-        pos.pieces[Pawn] ^= (1ULL << (move.to - 8));
+    BB to = 1ULL << move.to;
+    BB from = 1ULL << move.from;
+    pos.colour[0] ^= from | to;
+    pos.pieces[piece] ^= from | to;
+    if (piece == Pawn && to == pos.ep) {
+        pos.colour[1] ^= to >> 8;
+        pos.pieces[Pawn] ^= to >> 8;
     }
     pos.ep = 0x0ULL;
     if (piece == Pawn && move.to - move.from == 16) {
-        pos.ep = (1ULL << (move.from + 8));
+        pos.ep = to >> 8;
     }
     if (captured != None) {
-        pos.colour[1] ^= (1ULL << move.to);
-        pos.pieces[captured] ^= (1ULL << move.to);
+        pos.colour[1] ^= to;
+        pos.pieces[captured] ^= to;
     }
     if (piece == King) {
         BB bb = move.to - move.from == 2 ? 0xa0ULL : move.to - move.from == -2 ? 0x9ULL : 0x0ULL;
@@ -210,14 +212,13 @@ bool makemove(Position &pos, Move &move) {
         pos.pieces[Rook] ^= bb;
     }
     if (piece == Pawn && move.to >= 56) {
-        pos.pieces[Pawn] ^= (1ULL << move.to);
-        pos.pieces[move.promo] ^= (1ULL << move.to);
+        pos.pieces[Pawn] ^= to;
+        pos.pieces[move.promo] ^= to;
     }
-    BB changed = (1ULL << move.to) | (1ULL << move.from);
-    pos.castling[0] &= !(changed & 0x90ULL);
-    pos.castling[1] &= !(changed & 0x11ULL);
-    pos.castling[2] &= !(changed & 0x9000000000000000ULL);
-    pos.castling[3] &= !(changed & 0x1100000000000000ULL);
+    pos.castling[0] &= !((from | to) & 0x90ULL);
+    pos.castling[1] &= !((from | to) & 0x11ULL);
+    pos.castling[2] &= !((from | to) & 0x9000000000000000ULL);
+    pos.castling[3] &= !((from | to) & 0x1100000000000000ULL);
     flip(pos);
     int ksq = lsb(pos.colour[1] & pos.pieces[King]);
     return !attacked(pos, ksq, false);
