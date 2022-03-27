@@ -174,7 +174,7 @@ BB king(int sq, BB) {
            (((bb << 1) | (bb << 9) | (bb >> 7)) & 0xFEFEFEFEFEFEFEFEULL);
 }
 
-bool attacked(Position &pos, int sq, bool them) {
+bool attacked(Position &pos, int sq, bool them = true) {
     BB bb = 1ULL << sq;
     BB kt = pos.colour[them] & pos.pieces[Knight];
     BB BQ = pos.pieces[Bishop] | pos.pieces[Queen];
@@ -273,10 +273,10 @@ int movegen(Position &pos, Move *movelist) {
     generate_piece_moves(movelist, num_moves, pos, Rook, rook);
     generate_piece_moves(movelist, num_moves, pos, Queen, rook);
     generate_piece_moves(movelist, num_moves, pos, King, king);
-    if (pos.castling[0] && !(all & (0x60ULL)) && !attacked(pos, 4, true) && !attacked(pos, 5, true)) {
+    if (pos.castling[0] && !(all & (0x60ULL)) && !attacked(pos, 4) && !attacked(pos, 5)) {
         add_move(movelist, num_moves, 4, 6, None);
     }
-    if (pos.castling[1] && !(all & (0xEULL)) && !attacked(pos, 4, true) && !attacked(pos, 3, true)) {
+    if (pos.castling[1] && !(all & (0xEULL)) && !attacked(pos, 4) && !attacked(pos, 3)) {
         add_move(movelist, num_moves, 4, 2, None);
     }
     return num_moves;
@@ -338,7 +338,7 @@ int eval(Position &pos) {
 
 int alphabeta(Position &pos, int alpha, int beta, int depth, int ply, long long int stop_time, Move *pvline) {
     int ksq = lsb(pos.colour[0] & pos.pieces[King]);
-    auto in_check = attacked(pos, ksq, true);
+    auto in_check = attacked(pos, ksq);
     depth += in_check;
     int static_eval = eval(pos);
     bool in_qsearch = depth <= 0;
