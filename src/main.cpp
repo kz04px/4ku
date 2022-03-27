@@ -121,17 +121,6 @@ int piece_on(Position &pos, int sq) {
     return None;
 }
 
-int colour_on(Position &pos, int sq) {
-    BB bb = 1ULL << sq;
-    if (pos.colour[0] & bb) {
-        return 0;
-    } else if (pos.pieces[1] & bb) {
-        return 1;
-    } else {
-        return 2;
-    }
-}
-
 void flip(Position &pos) {
     pos.colour[0] = flip(pos.colour[0]);
     pos.colour[1] = flip(pos.colour[1]);
