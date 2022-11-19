@@ -12,22 +12,19 @@ def get_keywords(src):
 "long", "unsigned", "timespec", "struct", "class", "return", "operator", "typename", "const", "string", "goto",
 "uint64_t", "int64_t", "uint32_t", "int32_t", "uint16_t", "int16_t", "uint8_t", "int8_t"})
 
-    prev = None
     get_next = False
 
     for token in re.split("([^a-zA-Z0-9])", src):
-        if token in [" ", "\t", "\n"]:
+        if token in [" ", "\t", "\n", "nodiscard"]:
             continue
 
-        if get_next:
+        if get_next and token.isalnum():
             keywords.add(token)
             get_next = False
 
         # Declared types
         if token in ["struct", "class", "using", "typename"]:
             get_next = True
-
-        prev = token
 
     return keywords
 
