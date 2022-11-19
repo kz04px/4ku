@@ -9,7 +9,7 @@
 
 using namespace std;
 
-long long int now() {
+[[nodiscard]] long long int now() {
     timespec t;
     clock_gettime(CLOCK_MONOTONIC, &t);
     return t.tv_sec * 1000 + t.tv_nsec / 1000000;
@@ -26,7 +26,7 @@ enum
     None,
 };
 
-struct Move {
+struct [[nodiscard]] Move {
     int from;
     int to;
     int promo;
@@ -34,7 +34,7 @@ struct Move {
 
 using BB = uint64_t;
 
-struct Position {
+struct [[nodiscard]] Position {
     BB colour[2] = {0xFFFFULL, 0xFFFF000000000000ULL};
     BB pieces[6] = {0xFF00000000FF00ULL,
                     0x4200000000000042ULL,
@@ -47,51 +47,51 @@ struct Position {
     bool flipped = false;
 };
 
-BB flip(BB bb) {
+[[nodiscard]] BB flip(BB bb) {
     return __builtin_bswap64(bb);
 }
 
-int lsb(BB bb) {
+[[nodiscard]] int lsb(BB bb) {
     return __builtin_ctzll(bb);
 }
 
-int count(BB bb) {
+[[nodiscard]] int count(BB bb) {
     return __builtin_popcountll(bb);
 }
 
-BB north(BB bb) {
+[[nodiscard]] BB north(BB bb) {
     return bb << 8;
 }
 
-BB south(BB bb) {
+[[nodiscard]] BB south(BB bb) {
     return bb >> 8;
 }
 
-BB east(BB bb) {
+[[nodiscard]] BB east(BB bb) {
     return (bb << 1) & ~0x0101010101010101ULL;
 }
 
-BB west(BB bb) {
+[[nodiscard]] BB west(BB bb) {
     return (bb >> 1) & ~0x8080808080808080ULL;
 }
 
-BB nw(BB bb) {
+[[nodiscard]] BB nw(BB bb) {
     return (bb << 7) & ~0x8080808080808080ULL;
 }
 
-BB ne(BB bb) {
+[[nodiscard]] BB ne(BB bb) {
     return (bb << 9) & ~0x0101010101010101ULL;
 }
 
-BB sw(BB bb) {
+[[nodiscard]] BB sw(BB bb) {
     return (bb >> 9) & ~0x8080808080808080ULL;
 }
 
-BB se(BB bb) {
+[[nodiscard]] BB se(BB bb) {
     return (bb >> 7) & ~0x0101010101010101ULL;
 }
 
-bool operator==(Move &lhs, Move &rhs) {
+[[nodiscard]] bool operator==(Move &lhs, Move &rhs) {
     return lhs.from == rhs.from && lhs.to == rhs.to && lhs.promo == rhs.promo;
 }
 
@@ -110,7 +110,7 @@ void move_str(Move &move, char *str, bool flip) {
     str[5] = '\0';
 }
 
-int piece_on(Position &pos, int sq) {
+[[nodiscard]] int piece_on(Position &pos, int sq) {
     BB bb = 1ULL << sq;
     for (int i = 0; i < 6; ++i) {
         if (pos.pieces[i] & bb) {
@@ -134,7 +134,7 @@ void flip(Position &pos) {
 }
 
 template <typename F>
-BB ray(int sq, BB blockers, F f) {
+[[nodiscard]] BB ray(int sq, BB blockers, F f) {
     BB mask = f(1ULL << sq);
     for (int i = 1; i < 8; ++i) {
         mask |= f(mask & ~blockers);
@@ -142,27 +142,27 @@ BB ray(int sq, BB blockers, F f) {
     return mask;
 }
 
-BB knight(int sq, BB) {
+[[nodiscard]] BB knight(int sq, BB) {
     BB bb = 1ULL << sq;
     return (((bb << 15) | (bb >> 17)) & 0x7F7F7F7F7F7F7F7FULL) | (((bb << 17) | (bb >> 15)) & 0xFEFEFEFEFEFEFEFEULL) |
            (((bb << 10) | (bb >> 6)) & 0xFCFCFCFCFCFCFCFCULL) | (((bb << 6) | (bb >> 10)) & 0x3F3F3F3F3F3F3F3FULL);
 }
 
-BB bishop(int sq, BB blockers) {
+[[nodiscard]] BB bishop(int sq, BB blockers) {
     return ray(sq, blockers, nw) | ray(sq, blockers, ne) | ray(sq, blockers, sw) | ray(sq, blockers, se);
 }
 
-BB rook(int sq, BB blockers) {
+[[nodiscard]] BB rook(int sq, BB blockers) {
     return ray(sq, blockers, north) | ray(sq, blockers, east) | ray(sq, blockers, south) | ray(sq, blockers, west);
 }
 
-BB king(int sq, BB) {
+[[nodiscard]] BB king(int sq, BB) {
     BB bb = 1ULL << sq;
     return (bb << 8) | (bb >> 8) | (((bb >> 1) | (bb >> 9) | (bb << 7)) & 0x7F7F7F7F7F7F7F7FULL) |
            (((bb << 1) | (bb << 9) | (bb >> 7)) & 0xFEFEFEFEFEFEFEFEULL);
 }
 
-bool attacked(Position &pos, int sq, bool them = true) {
+[[nodiscard]] bool attacked(Position &pos, int sq, bool them = true) {
     BB bb = 1ULL << sq;
     BB kt = pos.colour[them] & pos.pieces[Knight];
     BB BQ = pos.pieces[Bishop] | pos.pieces[Queen];
@@ -247,7 +247,7 @@ void generate_piece_moves(Move *movelist, int &num_moves, Position &pos, int pie
     }
 }
 
-int movegen(Position &pos, Move *movelist) {
+[[nodiscard]] int movegen(Position &pos, Move *movelist) {
     int num_moves = 0;
     BB all = pos.colour[0] | pos.colour[1];
     BB empty = ~all;
@@ -278,7 +278,7 @@ int rook_semi_open = 25;
 int rook_open = 35;
 int rook_rank78 = 24;
 
-int eval(Position &pos) {
+[[nodiscard]] int eval(Position &pos) {
     int score = 10;
     for (int c = 0; c < 2; ++c) {
         BB pawns[2];
