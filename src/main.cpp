@@ -23,7 +23,7 @@ enum
     Rook,
     Queen,
     King,
-    None,
+    None
 };
 
 struct [[nodiscard]] Move {
@@ -76,19 +76,19 @@ struct [[nodiscard]] Position {
 }
 
 [[nodiscard]] BB nw(const BB bb) {
-    return (bb << 7) & ~0x8080808080808080ULL;
+    return north(west(bb));
 }
 
 [[nodiscard]] BB ne(const BB bb) {
-    return (bb << 9) & ~0x0101010101010101ULL;
+    return north(east(bb));
 }
 
 [[nodiscard]] BB sw(const BB bb) {
-    return (bb >> 9) & ~0x8080808080808080ULL;
+    return south(west(bb));
 }
 
 [[nodiscard]] BB se(const BB bb) {
-    return (bb >> 7) & ~0x0101010101010101ULL;
+    return south(east(bb));
 }
 
 [[nodiscard]] bool operator==(const Move &lhs, const Move &rhs) {
@@ -133,9 +133,13 @@ void flip(Position &pos) {
 template <typename F>
 [[nodiscard]] BB ray(const int sq, const BB blockers, F f) {
     BB mask = f(1ULL << sq);
-    for (int i = 1; i < 8; ++i) {
-        mask |= f(mask & ~blockers);
-    }
+    mask |= f(mask & ~blockers);
+    mask |= f(mask & ~blockers);
+    mask |= f(mask & ~blockers);
+    mask |= f(mask & ~blockers);
+    mask |= f(mask & ~blockers);
+    mask |= f(mask & ~blockers);
+    mask |= f(mask & ~blockers);
     return mask;
 }
 
@@ -238,8 +242,7 @@ void generate_piece_moves(Move *const movelist,
     while (copy) {
         const int fr = lsb(copy);
         copy &= copy - 1;
-        BB moves = func(fr, pos.colour[0] | pos.colour[1]);
-        moves &= ~pos.colour[0];
+        BB moves = func(fr, pos.colour[0] | pos.colour[1]) & ~pos.colour[0];
         while (moves) {
             const int to = lsb(moves);
             moves &= moves - 1;
@@ -251,10 +254,9 @@ void generate_piece_moves(Move *const movelist,
 [[nodiscard]] int movegen(const Position &pos, Move *const movelist) {
     int num_moves = 0;
     const BB all = pos.colour[0] | pos.colour[1];
-    const BB empty = ~all;
     const BB pawns = pos.colour[0] & pos.pieces[Pawn];
-    generate_pawn_moves(movelist, num_moves, north(pawns) & empty, -8);
-    generate_pawn_moves(movelist, num_moves, north(north(pawns & 0xFF00ULL) & empty) & empty, -16);
+    generate_pawn_moves(movelist, num_moves, north(pawns) & ~all, -8);
+    generate_pawn_moves(movelist, num_moves, north(north(pawns & 0xFF00ULL) & ~all) & ~all, -16);
     generate_pawn_moves(movelist, num_moves, nw(pawns) & (pos.colour[1] | pos.ep), -7);
     generate_pawn_moves(movelist, num_moves, ne(pawns) & (pos.colour[1] | pos.ep), -9);
     generate_piece_moves(movelist, num_moves, pos, Knight, knight);
@@ -282,17 +284,14 @@ const int rook_rank78 = 24;
 [[nodiscard]] int eval(Position &pos) {
     int score = 10;
     for (int c = 0; c < 2; ++c) {
-        BB pawns[2];
-        for (int c2 = 0; c2 < 2; ++c2) {
-            pawns[c2] = pos.colour[c2] & pos.pieces[Pawn];
-        }
+        const BB pawns[] = {pos.colour[0] & pos.pieces[Pawn], pos.colour[1] & pos.pieces[Pawn]};
         for (int p = 0; p < 6; ++p) {
             BB copy = pos.colour[0] & pos.pieces[p];
             while (copy) {
                 const int sq = lsb(copy);
                 copy &= copy - 1;
-                const int rank = sq >> 3;
-                const int file = sq & 7;
+                const int rank = sq / 8;
+                const int file = sq % 8;
                 const int centrality = (7 - abs(7 - rank - file) - abs(rank - file)) / 2;
                 score += centrality * centralities[p];
                 if (p == Pawn) {
@@ -411,11 +410,7 @@ int alphabeta(Position &pos,
         }
     }
     if (!in_qsearch && best_score == -INF) {
-        if (in_check) {
-            return -MATE_SCORE;
-        } else {
-            return 0;
-        }
+        return in_check ? -MATE_SCORE : 0;
     }
     return alpha;
 }
