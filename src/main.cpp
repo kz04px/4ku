@@ -43,7 +43,6 @@ struct Position {
                     0x800000000000008ULL,
                     0x1000000000000010ULL};
     BB ep = 0x0ULL;
-    int halfmoves = 0;
     bool castling[4] = {true, true, true, true};
     bool flipped = false;
 };
