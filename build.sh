@@ -2,6 +2,8 @@ mkdir -p build
 
 cd build
 
+rm ./4ku-executable
+rm ./4ku-executable-mini
 rm ./4ku2-normal
 rm ./4ku2-compressed
 rm ./4ku2-normal-mini
@@ -14,6 +16,9 @@ python3 ../minifier/minify.py ../src/main.cpp > ../src/main-mini.cpp
 
 ######################## Minify Code ########################
 
+
+c++ ../src/main.cpp -O3 -o 4ku-executable
+c++ ../src/main-mini.cpp -O3 -o 4ku-executable-mini
 
 
 ######################## Normal Version ########################
