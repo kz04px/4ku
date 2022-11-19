@@ -14,8 +14,26 @@ sh build.sh
 
 ## Size
 ```
-3,427 bytes
+2,541 bytes
 ```
+
+---
+
+## Minification
+The minifier requires Python 3 to run. It's fragile and will not handle arbitrary C++ code. If better solutions are found in the future it can be replaced.
+
+Points of note:
+- Variable name substitutions are hard coded
+- Erroneous substitutions may happen
+- Multiple passes required
+
+Removed:
+- Whitespace
+- Single line comments
+- Block comments
+- const
+- noexcept
+- Attributes: nodiscard, maybe_unused
 
 ---
 
