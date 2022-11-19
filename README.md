@@ -19,6 +19,16 @@ sh build.sh
 
 ---
 
+## Requirements
+- Linux
+- A C++ compiler
+- python3
+- lzma
+
+The build script, launch scripts, and compression tool (lzma) are all specific to Linux and would need replacing for 4ku to run on Windows. The code itself should be portable.
+
+---
+
 ## Minification
 The minifier requires Python 3 to run. It's fragile and will not handle arbitrary C++ code. If better solutions are found in the future it can be replaced.
 
