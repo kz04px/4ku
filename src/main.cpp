@@ -95,19 +95,16 @@ struct [[nodiscard]] Position {
     return lhs.from == rhs.from && lhs.to == rhs.to && lhs.promo == rhs.promo;
 }
 
-void move_str(const Move &move, char *str, const bool flip) {
-    const auto promos = "\0nbrq\0\0";
-    str[0] = (move.from % 8) + 'a';
-    str[2] = (move.to % 8) + 'a';
-    if (flip) {
-        str[1] = (7 - (move.from / 8)) + '1';
-        str[3] = (7 - (move.to / 8)) + '1';
-    } else {
-        str[1] = (move.from / 8) + '1';
-        str[3] = (move.to / 8) + '1';
+[[nodiscard]] string move_str(const Move &move, const bool flip) {
+    string str;
+    str += 'a' + (move.from % 8);
+    str += '1' + (flip ? (7 - move.from / 8) : (move.from / 8));
+    str += 'a' + (move.to % 8);
+    str += '1' + (flip ? (7 - move.to / 8) : (move.to / 8));
+    if (move.promo != None) {
+        str += "\0nbrq\0\0"[move.promo];
     }
-    str[4] = promos[move.promo];
-    str[5] = '\0';
+    return str;
 }
 
 [[nodiscard]] int piece_on(const Position &pos, const int sq) {
@@ -444,24 +441,22 @@ int main() {
             cin >> word;
             cin >> btime;
             const auto stop_time = now() + (pos.flipped ? btime : wtime) / 30;
-            char bestmove_str[] = "bestmove       ";
+            string bestmove_str;
             Move pvline[128];
             for (int i = 1; i < 128; ++i) {
                 alphabeta(pos, -INF, INF, i, 0, stop_time, pvline);
                 if (now() >= stop_time) {
                     break;
                 }
-                move_str(pvline[0], &bestmove_str[9], pos.flipped);
+                bestmove_str = move_str(pvline[0], pos.flipped);
             }
-            puts(bestmove_str);
+            cout << "bestmove " << bestmove_str << "\n";
         } else if (word == "position") {
             pos = Position();
         } else {
             const int num_moves = movegen(pos, moves);
             for (int i = 0; i < num_moves; ++i) {
-                char movestr[6];
-                move_str(moves[i], movestr, pos.flipped);
-                if (movestr == word) {
+                if (word == move_str(moves[i], pos.flipped)) {
                     makemove(pos, moves[i]);
                     break;
                 }
