@@ -410,8 +410,7 @@ int alphabeta(Position &pos,
             const int capture = piece_on(pos, moves[j].to);
             if (capture != None) {
                 move_score = ((capture + 1) * (1 << 10)) - piece_on(pos, moves[j].from);
-            }
-            else if (moves[j] == stack[ply].killer) {
+            } else if (moves[j] == stack[ply].killer) {
                 move_score = 1 << 8;
             }
         }
