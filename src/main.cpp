@@ -296,7 +296,7 @@ const int rook_rank78 = 24;
                 score += centrality * centralities[p];
                 if (p == Pawn) {
                     const BB bb = 1ULL << sq;
-                    BB attack = nw(bb) | ne(bb);
+                    BB attack = nw(bb) | ne(bb) | north(bb);
                     for (int i = 0; i < 4; ++i) {
                         attack |= north(attack);
                     }
