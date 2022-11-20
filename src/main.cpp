@@ -181,34 +181,52 @@ bool makemove(Position &pos, const Move &move) {
     const int captured = piece_on(pos, move.to);
     const BB to = 1ULL << move.to;
     const BB from = 1ULL << move.from;
+
+    // Move the piece
     pos.colour[0] ^= from | to;
     pos.pieces[piece] ^= from | to;
+
+    // En passant
     if (piece == Pawn && to == pos.ep) {
         pos.colour[1] ^= to >> 8;
         pos.pieces[Pawn] ^= to >> 8;
     }
+
     pos.ep = 0x0ULL;
+
+    // Pawn double move
     if (piece == Pawn && move.to - move.from == 16) {
         pos.ep = to >> 8;
     }
+
+    // Captures
     if (captured != None) {
         pos.colour[1] ^= to;
         pos.pieces[captured] ^= to;
     }
+
+    // Castling
     if (piece == King) {
         const BB bb = move.to - move.from == 2 ? 0xa0ULL : move.to - move.from == -2 ? 0x9ULL : 0x0ULL;
         pos.colour[0] ^= bb;
         pos.pieces[Rook] ^= bb;
     }
+
+    // Promotions
     if (piece == Pawn && move.to >= 56) {
         pos.pieces[Pawn] ^= to;
         pos.pieces[move.promo] ^= to;
     }
+
+    // Update castling permissions
     pos.castling[0] &= !((from | to) & 0x90ULL);
     pos.castling[1] &= !((from | to) & 0x11ULL);
     pos.castling[2] &= !((from | to) & 0x9000000000000000ULL);
     pos.castling[3] &= !((from | to) & 0x1100000000000000ULL);
+
     flip(pos);
+
+    // Return move legality
     const int ksq = lsb(pos.colour[1] & pos.pieces[King]);
     return !attacked(pos, ksq, false);
 }
@@ -282,9 +300,14 @@ const int rook_open = 35;
 const int rook_rank78 = 24;
 
 [[nodiscard]] int eval(Position &pos) {
+    // Include side to move bonus
     int score = 10;
+
     for (int c = 0; c < 2; ++c) {
+        // our pawns, their pawns
         const BB pawns[] = {pos.colour[0] & pos.pieces[Pawn], pos.colour[1] & pos.pieces[Pawn]};
+
+        // For each piece type
         for (int p = 0; p < 6; ++p) {
             BB copy = pos.colour[0] & pos.pieces[p];
             while (copy) {
@@ -293,14 +316,22 @@ const int rook_rank78 = 24;
                 const int rank = sq / 8;
                 const int file = sq % 8;
                 const int centrality = (7 - abs(7 - rank - file) - abs(rank - file)) / 2;
+
+                // Material
+                score += material[p];
+
+                // Centrality
                 score += centrality * centralities[p];
+
                 if (p == Pawn) {
+                    // Passed pawns
                     BB blockers = 0x101010101010101ULL << sq;
                     blockers = nw(blockers) | ne(blockers);
                     if ((blockers & pawns[1]) == 0) {
                         score += passers[rank - 1];
                     }
                 } else if (p == Rook) {
+                    // Rook on open or semi-open files
                     const BB file_bb = 0x101010101010101ULL << file;
                     if ((file_bb & pawns[0]) == 0) {
                         if ((file_bb & pawns[1]) == 0) {
@@ -309,14 +340,17 @@ const int rook_rank78 = 24;
                             score += rook_semi_open;
                         }
                     }
+
+                    // Rook on 7th or 8th rank
                     if (rank >= 6) {
                         score += rook_rank78;
                     }
                 }
-                score += material[p];
             }
         }
+
         flip(pos);
+
         score = -score;
     }
     return score;
@@ -331,8 +365,11 @@ int alphabeta(Position &pos,
               Move *const pvline) {
     const int ksq = lsb(pos.colour[0] & pos.pieces[King]);
     const auto in_check = attacked(pos, ksq);
-    depth += in_check;
     const int static_eval = eval(pos);
+
+    // Check extensions
+    depth += in_check;
+
     const bool in_qsearch = depth <= 0;
     if (in_qsearch) {
         if (static_eval >= beta) {
@@ -341,17 +378,24 @@ int alphabeta(Position &pos,
         if (alpha < static_eval) {
             alpha = static_eval;
         }
-    } else if (depth < 3) {
+    }
+    // Reverse futility pruning
+    else if (depth < 3) {
         const int margin = 120;
         if (static_eval - margin * depth >= beta) {
             return beta;
         }
     }
+
+    // Exit early if out of time
     if (now() >= stop_time) {
         return 0;
     }
+
     Move moves[256];
     const int num_moves = movegen(pos, moves);
+
+    // Score moves
     int move_scores[256];
     for (int j = 0; j < num_moves; ++j) {
         int move_score = 0;
@@ -365,8 +409,10 @@ int alphabeta(Position &pos,
         }
         move_scores[j] = move_score;
     }
+
     int best_score = -INF;
     for (int i = 0; i < num_moves; ++i) {
+        // Find best move remaining
         int best_move_score = 0;
         int best_move_score_index = i;
         for (int j = i; j < num_moves; ++j) {
@@ -378,14 +424,19 @@ int alphabeta(Position &pos,
         const auto move = moves[best_move_score_index];
         moves[best_move_score_index] = moves[i];
         move_scores[best_move_score_index] = move_scores[i];
+
+        // qsearch needs captures only
         if (in_qsearch && piece_on(pos, move.to) == None) {
             break;
         }
+
         auto npos = pos;
         if (!makemove(npos, move)) {
             continue;
         }
+
         const int score = -alphabeta(npos, -beta, -alpha, depth - 1, ply + 1, stop_time, pvline);
+
         if (score > best_score) {
             best_score = score;
             if (score > alpha) {
@@ -393,13 +444,17 @@ int alphabeta(Position &pos,
                 pvline[ply] = move;
             }
         }
+
         if (alpha >= beta) {
             break;
         }
     }
+
+    // Return mate or draw scores if no moves found and not in qsearch
     if (!in_qsearch && best_score == -INF) {
         return in_check ? -MATE_SCORE : 0;
     }
+
     return alpha;
 }
 
