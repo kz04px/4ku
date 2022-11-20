@@ -320,6 +320,7 @@ def rename(tokens):
         "wtime":"bt",
         "btime":"bu",
         "func":"bv",
+        "best_move_index":"cb",
         # Labels
         "do_search":"bk",
         "full_search":"bl",

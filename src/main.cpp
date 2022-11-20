@@ -413,17 +413,15 @@ int alphabeta(Position &pos,
     int best_score = -INF;
     for (int i = 0; i < num_moves; ++i) {
         // Find best move remaining
-        int best_move_score = 0;
-        int best_move_score_index = i;
+        int best_move_index = i;
         for (int j = i; j < num_moves; ++j) {
-            if (move_scores[j] > best_move_score) {
-                best_move_score = move_scores[j];
-                best_move_score_index = j;
+            if (move_scores[j] > move_scores[best_move_index]) {
+                best_move_index = j;
             }
         }
-        const auto move = moves[best_move_score_index];
-        moves[best_move_score_index] = moves[i];
-        move_scores[best_move_score_index] = move_scores[i];
+        const auto move = moves[best_move_index];
+        moves[best_move_index] = moves[i];
+        move_scores[best_move_index] = move_scores[i];
 
         // qsearch needs captures only
         if (in_qsearch && piece_on(pos, move.to) == None) {
