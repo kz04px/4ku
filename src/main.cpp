@@ -47,6 +47,11 @@ struct [[nodiscard]] Position {
     bool flipped = false;
 };
 
+struct [[nodiscard]] Stack {
+    Move move;
+    Move killer;
+};
+
 [[nodiscard]] BB flip(const BB bb) {
     return __builtin_bswap64(bb);
 }
@@ -362,7 +367,7 @@ int alphabeta(Position &pos,
               int depth,
               const int ply,
               const long long int stop_time,
-              Move *const pvline) {
+              Stack *const stack) {
     const int ksq = lsb(pos.colour[0] & pos.pieces[King]);
     const auto in_check = attacked(pos, ksq);
     const int static_eval = eval(pos);
@@ -399,12 +404,14 @@ int alphabeta(Position &pos,
     int move_scores[256];
     for (int j = 0; j < num_moves; ++j) {
         int move_score = 0;
-        if (!in_qsearch && moves[j] == pvline[ply]) {
+        if (!in_qsearch && moves[j] == stack[ply].move) {
             move_score = 1 << 16;
         } else {
             const int capture = piece_on(pos, moves[j].to);
             if (capture != None) {
-                move_score = ((capture + 1) * 8) - piece_on(pos, moves[j].from);
+                move_score = ((capture + 1) * (1 << 10)) - piece_on(pos, moves[j].from);
+            } else if (moves[j] == stack[ply].killer) {
+                move_score = 1 << 8;
             }
         }
         move_scores[j] = move_score;
@@ -433,17 +440,21 @@ int alphabeta(Position &pos,
             continue;
         }
 
-        const int score = -alphabeta(npos, -beta, -alpha, depth - 1, ply + 1, stop_time, pvline);
+        const int score = -alphabeta(npos, -beta, -alpha, depth - 1, ply + 1, stop_time, stack);
 
         if (score > best_score) {
             best_score = score;
             if (score > alpha) {
                 alpha = score;
-                pvline[ply] = move;
+                stack[ply].move = move;
             }
         }
 
         if (alpha >= beta) {
+            const int capture = piece_on(pos, move.to);
+            if (capture == None) {
+                stack[ply].killer = move;
+            }
             break;
         }
     }
@@ -478,13 +489,13 @@ int main() {
             cin >> btime;
             const auto stop_time = now() + (pos.flipped ? btime : wtime) / 30;
             string bestmove_str;
-            Move pvline[128];
+            Stack stack[128];
             for (int i = 1; i < 128; ++i) {
-                alphabeta(pos, -INF, INF, i, 0, stop_time, pvline);
+                alphabeta(pos, -INF, INF, i, 0, stop_time, stack);
                 if (now() >= stop_time) {
                     break;
                 }
-                bestmove_str = move_str(pvline[0], pos.flipped);
+                bestmove_str = move_str(stack[0].move, pos.flipped);
             }
             cout << "bestmove " << bestmove_str << "\n";
         } else if (word == "position") {
