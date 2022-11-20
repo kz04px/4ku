@@ -245,6 +245,7 @@ def rename(tokens):
         # Types
         "Position":"a",
         "Move":"b",
+        "Stack":"cc",
         # Variable names
         "pos":"ac",
         "move":"d",
@@ -307,7 +308,7 @@ def rename(tokens):
         "movestr":"be",
         "word":"bf",
         "bestmove_str":"bg",
-        "pvline":"bh",
+        "stack":"bh",
         "new_alpha":"bi",
         "new_beta":"bj",
         "move_scores":"bm",
@@ -321,6 +322,7 @@ def rename(tokens):
         "btime":"bu",
         "func":"bv",
         "best_move_index":"cb",
+        "killer":"cd",
         # Labels
         "do_search":"bk",
         "full_search":"bl",

@@ -1,2 +1,5 @@
 build/
 .vscode/
+.vs/
+*.exe
+src/main-mini.cpp
