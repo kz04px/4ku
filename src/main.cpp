@@ -385,16 +385,7 @@ int alphabeta(Position &pos,
         if (!makemove(npos, move)) {
             continue;
         }
-        const int new_beta = -alpha;
-        int new_alpha = -alpha - 1;
-        goto do_search;
-    full_search:
-        new_alpha = -beta;
-    do_search:
-        const int score = -alphabeta(npos, new_alpha, new_beta, depth - 1, ply + 1, stop_time, pvline);
-        if (score > alpha && new_alpha != -beta) {
-            goto full_search;
-        }
+        const int score = -alphabeta(npos, -beta, -alpha, depth - 1, ply + 1, stop_time, pvline);
         if (score > best_score) {
             best_score = score;
             if (score > alpha) {
