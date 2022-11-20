@@ -295,12 +295,9 @@ const int rook_rank78 = 24;
                 const int centrality = (7 - abs(7 - rank - file) - abs(rank - file)) / 2;
                 score += centrality * centralities[p];
                 if (p == Pawn) {
-                    const BB bb = 1ULL << sq;
-                    BB attack = nw(bb) | ne(bb) | north(bb);
-                    for (int i = 0; i < 4; ++i) {
-                        attack |= north(attack);
-                    }
-                    if ((attack & pawns[1]) == 0) {
+                    BB blockers = 0x101010101010101ULL << sq;
+                    blockers = nw(blockers) | ne(blockers);
+                    if ((blockers & pawns[1]) == 0) {
                         score += passers[rank - 1];
                     }
                 } else if (p == Rook) {
