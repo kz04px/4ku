@@ -47,56 +47,56 @@ struct [[nodiscard]] Position {
     bool flipped = false;
 };
 
-[[nodiscard]] BB flip(BB bb) {
+[[nodiscard]] BB flip(const BB bb) {
     return __builtin_bswap64(bb);
 }
 
-[[nodiscard]] int lsb(BB bb) {
+[[nodiscard]] int lsb(const BB bb) {
     return __builtin_ctzll(bb);
 }
 
-[[nodiscard]] int count(BB bb) {
+[[nodiscard]] int count(const BB bb) {
     return __builtin_popcountll(bb);
 }
 
-[[nodiscard]] BB north(BB bb) {
+[[nodiscard]] BB north(const BB bb) {
     return bb << 8;
 }
 
-[[nodiscard]] BB south(BB bb) {
+[[nodiscard]] BB south(const BB bb) {
     return bb >> 8;
 }
 
-[[nodiscard]] BB east(BB bb) {
+[[nodiscard]] BB east(const BB bb) {
     return (bb << 1) & ~0x0101010101010101ULL;
 }
 
-[[nodiscard]] BB west(BB bb) {
+[[nodiscard]] BB west(const BB bb) {
     return (bb >> 1) & ~0x8080808080808080ULL;
 }
 
-[[nodiscard]] BB nw(BB bb) {
+[[nodiscard]] BB nw(const BB bb) {
     return (bb << 7) & ~0x8080808080808080ULL;
 }
 
-[[nodiscard]] BB ne(BB bb) {
+[[nodiscard]] BB ne(const BB bb) {
     return (bb << 9) & ~0x0101010101010101ULL;
 }
 
-[[nodiscard]] BB sw(BB bb) {
+[[nodiscard]] BB sw(const BB bb) {
     return (bb >> 9) & ~0x8080808080808080ULL;
 }
 
-[[nodiscard]] BB se(BB bb) {
+[[nodiscard]] BB se(const BB bb) {
     return (bb >> 7) & ~0x0101010101010101ULL;
 }
 
-[[nodiscard]] bool operator==(Move &lhs, Move &rhs) {
+[[nodiscard]] bool operator==(const Move &lhs, const Move &rhs) {
     return lhs.from == rhs.from && lhs.to == rhs.to && lhs.promo == rhs.promo;
 }
 
-void move_str(Move &move, char *str, bool flip) {
-    auto promos = "\0nbrq\0\0";
+void move_str(const Move &move, char *str, const bool flip) {
+    const auto promos = "\0nbrq\0\0";
     str[0] = (move.from % 8) + 'a';
     str[2] = (move.to % 8) + 'a';
     if (flip) {
@@ -110,8 +110,8 @@ void move_str(Move &move, char *str, bool flip) {
     str[5] = '\0';
 }
 
-[[nodiscard]] int piece_on(Position &pos, int sq) {
-    BB bb = 1ULL << sq;
+[[nodiscard]] int piece_on(const Position &pos, const int sq) {
+    const BB bb = 1ULL << sq;
     for (int i = 0; i < 6; ++i) {
         if (pos.pieces[i] & bb) {
             return i;
@@ -134,7 +134,7 @@ void flip(Position &pos) {
 }
 
 template <typename F>
-[[nodiscard]] BB ray(int sq, BB blockers, F f) {
+[[nodiscard]] BB ray(const int sq, const BB blockers, F f) {
     BB mask = f(1ULL << sq);
     for (int i = 1; i < 8; ++i) {
         mask |= f(mask & ~blockers);
@@ -142,44 +142,44 @@ template <typename F>
     return mask;
 }
 
-[[nodiscard]] BB knight(int sq, BB) {
-    BB bb = 1ULL << sq;
+[[nodiscard]] BB knight(const int sq, const BB) {
+    const BB bb = 1ULL << sq;
     return (((bb << 15) | (bb >> 17)) & 0x7F7F7F7F7F7F7F7FULL) | (((bb << 17) | (bb >> 15)) & 0xFEFEFEFEFEFEFEFEULL) |
            (((bb << 10) | (bb >> 6)) & 0xFCFCFCFCFCFCFCFCULL) | (((bb << 6) | (bb >> 10)) & 0x3F3F3F3F3F3F3F3FULL);
 }
 
-[[nodiscard]] BB bishop(int sq, BB blockers) {
+[[nodiscard]] BB bishop(const int sq, const BB blockers) {
     return ray(sq, blockers, nw) | ray(sq, blockers, ne) | ray(sq, blockers, sw) | ray(sq, blockers, se);
 }
 
-[[nodiscard]] BB rook(int sq, BB blockers) {
+[[nodiscard]] BB rook(const int sq, const BB blockers) {
     return ray(sq, blockers, north) | ray(sq, blockers, east) | ray(sq, blockers, south) | ray(sq, blockers, west);
 }
 
-[[nodiscard]] BB king(int sq, BB) {
-    BB bb = 1ULL << sq;
+[[nodiscard]] BB king(const int sq, const BB) {
+    const BB bb = 1ULL << sq;
     return (bb << 8) | (bb >> 8) | (((bb >> 1) | (bb >> 9) | (bb << 7)) & 0x7F7F7F7F7F7F7F7FULL) |
            (((bb << 1) | (bb << 9) | (bb >> 7)) & 0xFEFEFEFEFEFEFEFEULL);
 }
 
-[[nodiscard]] bool attacked(Position &pos, int sq, bool them = true) {
-    BB bb = 1ULL << sq;
-    BB kt = pos.colour[them] & pos.pieces[Knight];
-    BB BQ = pos.pieces[Bishop] | pos.pieces[Queen];
-    BB RQ = pos.pieces[Rook] | pos.pieces[Queen];
-    BB pawns = pos.colour[them] & pos.pieces[Pawn];
-    BB pawn_attacks = them ? sw(pawns) | se(pawns) : nw(pawns) | ne(pawns);
+[[nodiscard]] bool attacked(const Position &pos, const int sq, const bool them = true) {
+    const BB bb = 1ULL << sq;
+    const BB kt = pos.colour[them] & pos.pieces[Knight];
+    const BB BQ = pos.pieces[Bishop] | pos.pieces[Queen];
+    const BB RQ = pos.pieces[Rook] | pos.pieces[Queen];
+    const BB pawns = pos.colour[them] & pos.pieces[Pawn];
+    const BB pawn_attacks = them ? sw(pawns) | se(pawns) : nw(pawns) | ne(pawns);
     return (pawn_attacks & bb) | (kt & knight(sq, 0)) |
            (bishop(sq, pos.colour[0] | pos.colour[1]) & pos.colour[them] & BQ) |
            (rook(sq, pos.colour[0] | pos.colour[1]) & pos.colour[them] & RQ) |
            (king(sq, 0) & pos.colour[them] & pos.pieces[King]);
 }
 
-bool makemove(Position &pos, Move &move) {
-    int piece = piece_on(pos, move.from);
-    int captured = piece_on(pos, move.to);
-    BB to = 1ULL << move.to;
-    BB from = 1ULL << move.from;
+bool makemove(Position &pos, const Move &move) {
+    const int piece = piece_on(pos, move.from);
+    const int captured = piece_on(pos, move.to);
+    const BB to = 1ULL << move.to;
+    const BB from = 1ULL << move.from;
     pos.colour[0] ^= from | to;
     pos.pieces[piece] ^= from | to;
     if (piece == Pawn && to == pos.ep) {
@@ -195,7 +195,7 @@ bool makemove(Position &pos, Move &move) {
         pos.pieces[captured] ^= to;
     }
     if (piece == King) {
-        BB bb = move.to - move.from == 2 ? 0xa0ULL : move.to - move.from == -2 ? 0x9ULL : 0x0ULL;
+        const BB bb = move.to - move.from == 2 ? 0xa0ULL : move.to - move.from == -2 ? 0x9ULL : 0x0ULL;
         pos.colour[0] ^= bb;
         pos.pieces[Rook] ^= bb;
     }
@@ -208,18 +208,18 @@ bool makemove(Position &pos, Move &move) {
     pos.castling[2] &= !((from | to) & 0x9000000000000000ULL);
     pos.castling[3] &= !((from | to) & 0x1100000000000000ULL);
     flip(pos);
-    int ksq = lsb(pos.colour[1] & pos.pieces[King]);
+    const int ksq = lsb(pos.colour[1] & pos.pieces[King]);
     return !attacked(pos, ksq, false);
 }
 
-void add_move(Move *movelist, int &num_moves, int from, int to, int promo = None) {
+void add_move(Move *const movelist, int &num_moves, const int from, const int to, const int promo = None) {
     movelist[num_moves] = Move{from, to, promo};
     num_moves++;
 }
 
-void generate_pawn_moves(Move *movelist, int &num_moves, BB to_mask, int offset) {
+void generate_pawn_moves(Move *const movelist, int &num_moves, BB to_mask, const int offset) {
     while (to_mask) {
-        int to = lsb(to_mask);
+        const int to = lsb(to_mask);
         to_mask &= to_mask - 1;
         if (to >= 56) {
             add_move(movelist, num_moves, to + offset, to, Queen);
@@ -232,26 +232,30 @@ void generate_pawn_moves(Move *movelist, int &num_moves, BB to_mask, int offset)
     }
 }
 
-void generate_piece_moves(Move *movelist, int &num_moves, Position &pos, int piece, BB (*func)(int, BB)) {
+void generate_piece_moves(Move *const movelist,
+                          int &num_moves,
+                          const Position &pos,
+                          const int piece,
+                          BB (*func)(int, BB)) {
     BB copy = pos.colour[0] & pos.pieces[piece];
     while (copy) {
-        int fr = lsb(copy);
+        const int fr = lsb(copy);
         copy &= copy - 1;
         BB moves = func(fr, pos.colour[0] | pos.colour[1]);
         moves &= ~pos.colour[0];
         while (moves) {
-            int to = lsb(moves);
+            const int to = lsb(moves);
             moves &= moves - 1;
             add_move(movelist, num_moves, fr, to);
         }
     }
 }
 
-[[nodiscard]] int movegen(Position &pos, Move *movelist) {
+[[nodiscard]] int movegen(const Position &pos, Move *const movelist) {
     int num_moves = 0;
-    BB all = pos.colour[0] | pos.colour[1];
-    BB empty = ~all;
-    BB pawns = pos.colour[0] & pos.pieces[Pawn];
+    const BB all = pos.colour[0] | pos.colour[1];
+    const BB empty = ~all;
+    const BB pawns = pos.colour[0] & pos.pieces[Pawn];
     generate_pawn_moves(movelist, num_moves, north(pawns) & empty, -8);
     generate_pawn_moves(movelist, num_moves, north(north(pawns & 0xFF00ULL) & empty) & empty, -16);
     generate_pawn_moves(movelist, num_moves, nw(pawns) & (pos.colour[1] | pos.ep), -7);
@@ -271,12 +275,12 @@ void generate_piece_moves(Move *movelist, int &num_moves, Position &pos, int pie
     return num_moves;
 }
 
-int material[] = {100, 339, 372, 582, 1180};
-int centralities[] = {2, 20, 16, 1, 3, 11};
-int passers[] = {17, 11, 13, 31, 93, 192};
-int rook_semi_open = 25;
-int rook_open = 35;
-int rook_rank78 = 24;
+const int material[] = {100, 339, 372, 582, 1180};
+const int centralities[] = {2, 20, 16, 1, 3, 11};
+const int passers[] = {17, 11, 13, 31, 93, 192};
+const int rook_semi_open = 25;
+const int rook_open = 35;
+const int rook_rank78 = 24;
 
 [[nodiscard]] int eval(Position &pos) {
     int score = 10;
@@ -288,14 +292,14 @@ int rook_rank78 = 24;
         for (int p = 0; p < 6; ++p) {
             BB copy = pos.colour[0] & pos.pieces[p];
             while (copy) {
-                int sq = lsb(copy);
+                const int sq = lsb(copy);
                 copy &= copy - 1;
-                int rank = sq >> 3;
-                int file = sq & 7;
-                int centrality = (7 - abs(7 - rank - file) - abs(rank - file)) / 2;
+                const int rank = sq >> 3;
+                const int file = sq & 7;
+                const int centrality = (7 - abs(7 - rank - file) - abs(rank - file)) / 2;
                 score += centrality * centralities[p];
                 if (p == Pawn) {
-                    BB bb = 1ULL << sq;
+                    const BB bb = 1ULL << sq;
                     BB attack = nw(bb) | ne(bb);
                     for (int i = 0; i < 4; ++i) {
                         attack |= north(attack);
@@ -304,7 +308,7 @@ int rook_rank78 = 24;
                         score += passers[rank - 1];
                     }
                 } else if (p == Rook) {
-                    BB file_bb = 0x101010101010101ULL << file;
+                    const BB file_bb = 0x101010101010101ULL << file;
                     if ((file_bb & pawns[0]) == 0) {
                         if ((file_bb & pawns[1]) == 0) {
                             score += rook_open;
@@ -325,12 +329,18 @@ int rook_rank78 = 24;
     return score;
 }
 
-int alphabeta(Position &pos, int alpha, int beta, int depth, int ply, long long int stop_time, Move *pvline) {
-    int ksq = lsb(pos.colour[0] & pos.pieces[King]);
-    auto in_check = attacked(pos, ksq);
+int alphabeta(Position &pos,
+              int alpha,
+              const int beta,
+              int depth,
+              const int ply,
+              const long long int stop_time,
+              Move *const pvline) {
+    const int ksq = lsb(pos.colour[0] & pos.pieces[King]);
+    const auto in_check = attacked(pos, ksq);
     depth += in_check;
-    int static_eval = eval(pos);
-    bool in_qsearch = depth <= 0;
+    const int static_eval = eval(pos);
+    const bool in_qsearch = depth <= 0;
     if (in_qsearch) {
         if (static_eval >= beta) {
             return beta;
@@ -339,7 +349,7 @@ int alphabeta(Position &pos, int alpha, int beta, int depth, int ply, long long 
             alpha = static_eval;
         }
     } else if (depth < 3) {
-        int margin = 120;
+        const int margin = 120;
         if (static_eval - margin * depth >= beta) {
             return beta;
         }
@@ -348,14 +358,14 @@ int alphabeta(Position &pos, int alpha, int beta, int depth, int ply, long long 
         return 0;
     }
     Move moves[256];
-    int num_moves = movegen(pos, moves);
+    const int num_moves = movegen(pos, moves);
     int move_scores[256];
     for (int j = 0; j < num_moves; ++j) {
         int move_score = 0;
         if (!in_qsearch && moves[j] == pvline[ply]) {
             move_score = 1 << 16;
         } else {
-            int capture = piece_on(pos, moves[j].to);
+            const int capture = piece_on(pos, moves[j].to);
             if (capture != None) {
                 move_score = ((capture + 1) * 8) - piece_on(pos, moves[j].from);
             }
@@ -372,7 +382,7 @@ int alphabeta(Position &pos, int alpha, int beta, int depth, int ply, long long 
                 best_move_score_index = j;
             }
         }
-        auto move = moves[best_move_score_index];
+        const auto move = moves[best_move_score_index];
         moves[best_move_score_index] = moves[i];
         move_scores[best_move_score_index] = move_scores[i];
         if (in_qsearch && piece_on(pos, move.to) == None) {
@@ -382,13 +392,13 @@ int alphabeta(Position &pos, int alpha, int beta, int depth, int ply, long long 
         if (!makemove(npos, move)) {
             continue;
         }
-        int new_beta = -alpha;
+        const int new_beta = -alpha;
         int new_alpha = -alpha - 1;
         goto do_search;
     full_search:
         new_alpha = -beta;
     do_search:
-        int score = -alphabeta(npos, new_alpha, new_beta, depth - 1, ply + 1, stop_time, pvline);
+        const int score = -alphabeta(npos, new_alpha, new_beta, depth - 1, ply + 1, stop_time, pvline);
         if (score > alpha && new_alpha != -beta) {
             goto full_search;
         }
@@ -433,7 +443,7 @@ int main() {
             cin >> wtime;
             cin >> word;
             cin >> btime;
-            auto stop_time = now() + (pos.flipped ? btime : wtime) / 30;
+            const auto stop_time = now() + (pos.flipped ? btime : wtime) / 30;
             char bestmove_str[] = "bestmove       ";
             Move pvline[128];
             for (int i = 1; i < 128; ++i) {
@@ -447,7 +457,7 @@ int main() {
         } else if (word == "position") {
             pos = Position();
         } else {
-            int num_moves = movegen(pos, moves);
+            const int num_moves = movegen(pos, moves);
             for (int i = 0; i < num_moves; ++i) {
                 char movestr[6];
                 move_str(moves[i], movestr, pos.flipped);
