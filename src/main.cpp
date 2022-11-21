@@ -430,8 +430,10 @@ int alphabeta(Position &pos,
         moves[best_move_index] = moves[i];
         move_scores[best_move_index] = move_scores[i];
 
+        const int capture = piece_on(pos, move.to);
+
         // qsearch needs captures only
-        if (in_qsearch && piece_on(pos, move.to) == None) {
+        if (in_qsearch && capture == None) {
             break;
         }
 
@@ -451,7 +453,6 @@ int alphabeta(Position &pos,
         }
 
         if (alpha >= beta) {
-            const int capture = piece_on(pos, move.to);
             if (capture == None) {
                 stack[ply].killer = move;
             }
@@ -505,7 +506,6 @@ int main() {
             for (int i = 0; i < num_moves; ++i) {
                 if (word == move_str(moves[i], pos.flipped)) {
                     makemove(pos, moves[i]);
-                    break;
                 }
             }
         }
