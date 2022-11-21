@@ -318,8 +318,8 @@ const int rook_rank78 = 24;
             while (copy) {
                 const int sq = lsb(copy);
                 copy &= copy - 1;
-                const int rank = sq / 8;
-                const int file = sq % 8;
+                const int rank = sq >> 3;
+                const int file = sq & 7;
                 const int centrality = (7 - abs(7 - rank - file) - abs(rank - file)) / 2;
 
                 // Material
