@@ -299,16 +299,23 @@ void generate_piece_moves(Move *const movelist,
     return num_moves;
 }
 
-const int material[] = {100, 339, 372, 582, 1180};
-const int centralities[] = {2, 20, 16, 1, 3, 11};
-const int passers[] = {17, 11, 13, 31, 93, 192};
-const int rook_semi_open = 25;
-const int rook_open = 35;
-const int rook_rank78 = 24;
+const int phases[] = {0, 1, 1, 2, 4, 0};
+
+int S(const int mg, const int eg) {
+    return (eg << 16) + mg;
+}
+
+const int material[] = {S(75, 111), S(387, 286), S(419, 326), S(505, 589), S(1182, 1070), 0};
+const int centralities[] = {S(14, -8), S(19, 21), S(20, 10), S(-4, 4), S(-5, 28), S(-47, 28)};
+const int passers[] = {S(29, 7), S(18, 7), S(-4, 19), S(7, 39), S(27, 112), S(106, 205)};
+const int rook_semi_open = S(27, 13);
+const int rook_open = S(74, 3);
+const int rook_rank78 = S(46, 11);
 
 [[nodiscard]] int eval(Position &pos) {
     // Include side to move bonus
-    int score = 10;
+    int score = S(10, 10);
+    int phase = 0;
 
     for (int c = 0; c < 2; ++c) {
         // our pawns, their pawns
@@ -318,6 +325,8 @@ const int rook_rank78 = 24;
         for (int p = 0; p < 6; ++p) {
             BB copy = pos.colour[0] & pos.pieces[p];
             while (copy) {
+                phase += phases[p];
+
                 const int sq = lsb(copy);
                 copy &= copy - 1;
                 const int rank = sq / 8;
@@ -360,7 +369,10 @@ const int rook_rank78 = 24;
 
         score = -score;
     }
-    return score;
+
+    const int mg = (short)score;
+    const int eg = (short)((score + 0x8000) >> 16);
+    return (mg * phase + eg * (24 - phase)) / 24;
 }
 
 int alphabeta(Position &pos,
