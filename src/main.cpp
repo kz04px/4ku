@@ -390,7 +390,7 @@ int alphabeta(Position &pos,
 
     else if (ply > 0) {
         // Repetition detection
-        for (auto &old_pos : history) {
+        for (const auto &old_pos : history) {
             if (old_pos.pieces == pos.pieces && old_pos.colour == pos.colour && old_pos.flipped == pos.flipped) {
                 return 0;
             }
