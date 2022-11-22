@@ -323,6 +323,8 @@ def rename(tokens):
         "func":"bv",
         "best_move_index":"cb",
         "killer":"cd",
+        "history":"ce",
+        "old_pos":"cf",
         # Labels
         "do_search":"bk",
         "full_search":"bl",
