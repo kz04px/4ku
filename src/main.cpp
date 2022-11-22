@@ -241,8 +241,8 @@ int makemove(Position &pos, const Move &move) {
     return !attacked(pos, ksq, false);
 }
 
-void add_move(Move *const movelist, int &num_moves, const uint8_t from, const uint8_t to, const uint8_t promo = None) {
-    movelist[num_moves] = Move((uint16_t)from | (uint16_t)to << 6 | (uint16_t)promo << 12);
+void add_move(Move *const movelist, int &num_moves, const uint16_t from, const uint16_t to, const uint16_t promo = None) {
+    movelist[num_moves] = from | to << 6 | promo << 12;
     num_moves++;
 }
 
