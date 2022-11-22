@@ -1,9 +1,9 @@
+#include <array>
 #include <cstdint>
 #include <cstdio>
 #include <ctime>
 #include <iostream>
 #include <string>
-#include <array>
 #include <vector>
 
 #define MATE_SCORE (1 << 15)
@@ -39,11 +39,11 @@ using BB = uint64_t;
 struct [[nodiscard]] Position {
     array<BB, 2> colour = {0xFFFFULL, 0xFFFF000000000000ULL};
     array<BB, 6> pieces = {0xFF00000000FF00ULL,
-                    0x4200000000000042ULL,
-                    0x2400000000000024ULL,
-                    0x8100000000000081ULL,
-                    0x800000000000008ULL,
-                    0x1000000000000010ULL};
+                           0x4200000000000042ULL,
+                           0x2400000000000024ULL,
+                           0x8100000000000081ULL,
+                           0x800000000000008ULL,
+                           0x1000000000000010ULL};
     BB ep = 0x0ULL;
     array<int, 4> castling = {true, true, true, true};
     int flipped = false;
@@ -370,7 +370,7 @@ int alphabeta(Position &pos,
               const int ply,
               const long long int stop_time,
               Stack *const stack,
-              vector<Position>& history) {
+              vector<Position> &history) {
     const int ksq = lsb(pos.colour[0] & pos.pieces[King]);
     const auto in_check = attacked(pos, ksq);
     const int static_eval = eval(pos);
@@ -390,7 +390,7 @@ int alphabeta(Position &pos,
 
     else if (ply > 0) {
         // Repetition detection
-        for (auto& old_pos : history) {
+        for (auto &old_pos : history) {
             if (old_pos.pieces == pos.pieces && old_pos.colour == pos.colour && old_pos.flipped == pos.flipped) {
                 return 0;
             }
@@ -531,13 +531,12 @@ int main() {
             const int num_moves = movegen(pos, moves);
             for (int i = 0; i < num_moves; ++i) {
                 if (word == move_str(moves[i], pos.flipped)) {
-                    if(piece_on(pos, moves[i].to) != None || piece_on(pos, moves[i].from) == Pawn) {
+                    if (piece_on(pos, moves[i].to) != None || piece_on(pos, moves[i].from) == Pawn) {
                         history.clear();
-                    }
-                    else {
+                    } else {
                         history.push_back(pos);
                     }
-                    
+
                     makemove(pos, moves[i]);
                     break;
                 }
