@@ -380,10 +380,12 @@ int alphabeta(Position &pos,
               const int ply,
               const long long int stop_time,
               Stack *const stack,
-              vector<Position> &history) {
+              vector<Position> &history,
+              const int do_null = true) {
     const int ksq = lsb(pos.colour[0] & pos.pieces[King]);
     const auto in_check = attacked(pos, ksq);
     const int static_eval = eval(pos);
+    int raised_alpha = false;
 
     // Check extensions
     depth += in_check;
@@ -412,11 +414,11 @@ int alphabeta(Position &pos,
             }
         }
         // Null move pruning
-        else if (!in_check && static_eval >= beta && beta - alpha > 1) {
+        else if (!in_check && static_eval >= beta && do_null) {
             auto npos = pos;
             flip(npos);
             npos.ep = 0;
-            if (-alphabeta(npos, -beta, -beta + 1, depth - 3, ply + 1, stop_time, stack, history) >= beta) {
+            if (-alphabeta(npos, -beta, -beta + 1, depth - 3, ply + 1, stop_time, stack, history, false) >= beta) {
                 return beta;
             }
         }
@@ -457,6 +459,7 @@ int alphabeta(Position &pos,
                 best_move_index = j;
             }
         }
+        
         const auto move = moves[best_move_index];
         moves[best_move_index] = moves[i];
         move_scores[best_move_index] = move_scores[i];
@@ -471,11 +474,21 @@ int alphabeta(Position &pos,
             continue;
         }
 
-        const int score = -alphabeta(npos, -beta, -alpha, depth - 1, ply + 1, stop_time, stack, history);
+		int score;
+		if (in_qsearch || !raised_alpha) {
+			full_window:
+			score = -alphabeta(npos, -beta, -alpha, depth - 1, ply + 1, stop_time, stack, history);
+		} else {
+			score = -alphabeta(npos, -alpha - 1, -alpha, depth - 1, ply + 1, stop_time, stack, history);
+			if (score > alpha) {
+				goto full_window;
+			}
+		}
 
         if (score > best_score) {
             best_score = score;
             if (score > alpha) {
+            	raised_alpha = true;
                 alpha = score;
                 stack[ply].move = move;
             }

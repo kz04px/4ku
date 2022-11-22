@@ -327,6 +327,9 @@ def rename(tokens):
         "old_pos":"cf",
         "phase":"cg",
         "phases":"ch",
+        "do_null":"ci",
+        "full_window":"cj",
+        "raised_alpha":"ck",
         # Labels
         "do_search":"bk",
         "full_search":"bl",
