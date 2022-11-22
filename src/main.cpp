@@ -371,7 +371,7 @@ const int rook_rank78 = S(46, 11);
     }
 
     const short mg = score;
-    const int eg = score >> 16;
+    const int eg = (score + 0x8000) >> 16;
     return (mg * phase + eg * (24 - phase)) / 24;
 }
 
