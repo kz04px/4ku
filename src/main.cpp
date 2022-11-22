@@ -303,7 +303,7 @@ void generate_piece_moves(Move *const movelist,
     return (eg << 16) + mg;
 }
 
-const int phases[] = { 0, 1, 1, 2, 4, 0 };
+const int phases[] = {0, 1, 1, 2, 4, 0};
 const int material[] = {S(75, 111), S(387, 286), S(419, 326), S(505, 589), S(1182, 1070), 0};
 const int centralities[] = {S(14, -8), S(19, 21), S(20, 10), S(-4, 4), S(-5, 28), S(-47, 28)};
 const int passers[] = {S(29, 7), S(18, 7), S(-4, 19), S(7, 39), S(27, 112), S(106, 205)};
@@ -459,7 +459,7 @@ int alphabeta(Position &pos,
                 best_move_index = j;
             }
         }
-        
+
         const auto move = moves[best_move_index];
         moves[best_move_index] = moves[i];
         move_scores[best_move_index] = move_scores[i];
@@ -474,21 +474,21 @@ int alphabeta(Position &pos,
             continue;
         }
 
-		int score;
-		if (in_qsearch || !raised_alpha) {
-			full_window:
-			score = -alphabeta(npos, -beta, -alpha, depth - 1, ply + 1, stop_time, stack, history);
-		} else {
-			score = -alphabeta(npos, -alpha - 1, -alpha, depth - 1, ply + 1, stop_time, stack, history);
-			if (score > alpha) {
-				goto full_window;
-			}
-		}
+        int score;
+        if (in_qsearch || !raised_alpha) {
+        full_window:
+            score = -alphabeta(npos, -beta, -alpha, depth - 1, ply + 1, stop_time, stack, history);
+        } else {
+            score = -alphabeta(npos, -alpha - 1, -alpha, depth - 1, ply + 1, stop_time, stack, history);
+            if (score > alpha) {
+                goto full_window;
+            }
+        }
 
         if (score > best_score) {
             best_score = score;
             if (score > alpha) {
-            	raised_alpha = true;
+                raised_alpha = true;
                 alpha = score;
                 stack[ply].move = move;
             }
