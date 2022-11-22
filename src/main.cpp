@@ -386,9 +386,7 @@ int alphabeta(Position &pos,
         if (alpha < static_eval) {
             alpha = static_eval;
         }
-    }
-
-    else if (ply > 0) {
+    } else if (ply > 0) {
         // Repetition detection
         for (const auto &old_pos : history) {
             if (old_pos.pieces == pos.pieces && old_pos.colour == pos.colour && old_pos.flipped == pos.flipped) {
@@ -403,7 +401,6 @@ int alphabeta(Position &pos,
                 return beta;
             }
         }
-
         // Null move pruning
         else if (!in_check && static_eval >= beta && beta - alpha > 1) {
             auto npos = pos;
