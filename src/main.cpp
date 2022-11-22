@@ -10,6 +10,7 @@
 #define INF (1 << 16)
 
 using namespace std;
+using Move = uint16_t;
 
 [[nodiscard]] long long int now() {
     timespec t;
@@ -28,11 +29,17 @@ enum
     None
 };
 
-struct [[nodiscard]] Move {
-    int from;
-    int to;
-    int promo;
-};
+[[nodiscard]] uint8_t from_sq(Move move) {
+    return move & 0x3f;
+}
+
+[[nodiscard]] uint8_t to_sq(Move move) {
+    return move >> 6 & 0x3f;
+}
+
+[[nodiscard]] uint8_t promoted(Move move) {
+    return move >> 12 & 0x7;
+}
 
 using BB = uint64_t;
 
@@ -98,18 +105,14 @@ struct [[nodiscard]] Stack {
     return south(east(bb));
 }
 
-[[nodiscard]] bool operator==(const Move &lhs, const Move &rhs) {
-    return lhs.from == rhs.from && lhs.to == rhs.to && lhs.promo == rhs.promo;
-}
-
 [[nodiscard]] string move_str(const Move &move, const int flip) {
     string str;
-    str += 'a' + (move.from % 8);
-    str += '1' + (flip ? (7 - move.from / 8) : (move.from / 8));
-    str += 'a' + (move.to % 8);
-    str += '1' + (flip ? (7 - move.to / 8) : (move.to / 8));
-    if (move.promo != None) {
-        str += "\0nbrq\0\0"[move.promo];
+    str += 'a' + (from_sq(move) % 8);
+    str += '1' + (flip ? (7 - from_sq(move) / 8) : (from_sq(move) / 8));
+    str += 'a' + (to_sq(move) % 8);
+    str += '1' + (flip ? (7 - to_sq(move) / 8) : (to_sq(move) / 8));
+    if (promoted(move) != None) {
+        str += "\0nbrq\0\0"[promoted(move)];
     }
     return str;
 }
@@ -184,12 +187,12 @@ template <typename F>
 }
 
 int makemove(Position &pos, const Move &move) {
-    const int piece = piece_on(pos, move.from);
-    const int captured = piece_on(pos, move.to);
-    const BB to = 1ULL << move.to;
-    const BB from = 1ULL << move.from;
+    const int piece = piece_on(pos, from_sq(move));
+    const int captured = piece_on(pos, to_sq(move));
+    const BB to = 1ULL << to_sq(move);
+    const BB from = 1ULL << from_sq(move);
 
-    // Move the piece
+    // uint16_t the piece
     pos.colour[0] ^= from | to;
     pos.pieces[piece] ^= from | to;
 
@@ -202,7 +205,7 @@ int makemove(Position &pos, const Move &move) {
     pos.ep = 0x0ULL;
 
     // Pawn double move
-    if (piece == Pawn && move.to - move.from == 16) {
+    if (piece == Pawn && to_sq(move) - from_sq(move) == 16) {
         pos.ep = to >> 8;
     }
 
@@ -214,15 +217,15 @@ int makemove(Position &pos, const Move &move) {
 
     // Castling
     if (piece == King) {
-        const BB bb = move.to - move.from == 2 ? 0xa0ULL : move.to - move.from == -2 ? 0x9ULL : 0x0ULL;
+        const BB bb = to_sq(move) - from_sq(move) == 2 ? 0xa0ULL : to_sq(move) - from_sq(move) == -2 ? 0x9ULL : 0x0ULL;
         pos.colour[0] ^= bb;
         pos.pieces[Rook] ^= bb;
     }
 
     // Promotions
-    if (piece == Pawn && move.to >= 56) {
+    if (piece == Pawn && to_sq(move) >= 56) {
         pos.pieces[Pawn] ^= to;
-        pos.pieces[move.promo] ^= to;
+        pos.pieces[promoted(move)] ^= to;
     }
 
     // Update castling permissions
@@ -238,8 +241,8 @@ int makemove(Position &pos, const Move &move) {
     return !attacked(pos, ksq, false);
 }
 
-void add_move(Move *const movelist, int &num_moves, const int from, const int to, const int promo = None) {
-    movelist[num_moves] = Move{from, to, promo};
+void add_move(Move *const movelist, int &num_moves, const uint8_t from, const uint8_t to, const uint8_t promo = None) {
+    movelist[num_moves] = Move((uint16_t)from | (uint16_t)to << 6 | (uint16_t)promo << 12);
     num_moves++;
 }
 
@@ -427,9 +430,9 @@ int alphabeta(Position &pos,
         if (!in_qsearch && moves[j] == stack[ply].move) {
             move_score = 1 << 16;
         } else {
-            const int capture = piece_on(pos, moves[j].to);
+            const int capture = piece_on(pos, to_sq(moves[j]));
             if (capture != None) {
-                move_score = ((capture + 1) * (1 << 10)) - piece_on(pos, moves[j].from);
+                move_score = ((capture + 1) * (1 << 10)) - piece_on(pos, from_sq(moves[j]));
             } else if (moves[j] == stack[ply].killer) {
                 move_score = 1 << 8;
             }
@@ -452,7 +455,7 @@ int alphabeta(Position &pos,
         move_scores[best_move_index] = move_scores[i];
 
         // qsearch needs captures only
-        if (in_qsearch && piece_on(pos, move.to) == None) {
+        if (in_qsearch && piece_on(pos, to_sq(move)) == None) {
             break;
         }
 
@@ -472,7 +475,7 @@ int alphabeta(Position &pos,
         }
 
         if (alpha >= beta) {
-            const int capture = piece_on(pos, move.to);
+            const int capture = piece_on(pos, to_sq(move));
             if (capture == None) {
                 stack[ply].killer = move;
             }
@@ -528,7 +531,7 @@ int main() {
             const int num_moves = movegen(pos, moves);
             for (int i = 0; i < num_moves; ++i) {
                 if (word == move_str(moves[i], pos.flipped)) {
-                    if (piece_on(pos, moves[i].to) != None || piece_on(pos, moves[i].from) == Pawn) {
+                    if (piece_on(pos, to_sq(moves[i])) != None || piece_on(pos, from_sq(moves[i])) == Pawn) {
                         history.clear();
                     } else {
                         history.push_back(pos);

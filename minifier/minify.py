@@ -351,6 +351,9 @@ def rename(tokens):
         "east":"by",
         "west":"bz",
         "now":"ca",
+        'from_sq': "cg",
+        "to_sq": "ch",
+        "promoted": "ci",
         # Macros
         "MATE_SCORE":"af",
         "INF":"ag",
