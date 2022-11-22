@@ -325,6 +325,8 @@ def rename(tokens):
         "killer":"cd",
         "history":"ce",
         "old_pos":"cf",
+        "do_null":"cg",
+        "full_window":"ch",
         # Labels
         "do_search":"bk",
         "full_search":"bl",
