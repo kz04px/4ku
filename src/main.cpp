@@ -371,7 +371,7 @@ int alphabeta(Position &pos,
               const long long int stop_time,
               Stack *const stack,
               vector<Position> &history,
-              int do_null = true) {
+              const int do_null = true) {
     const int ksq = lsb(pos.colour[0] & pos.pieces[King]);
     const auto in_check = attacked(pos, ksq);
     const int static_eval = eval(pos);
