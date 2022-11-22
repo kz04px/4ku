@@ -14,7 +14,7 @@ sh build.sh
 
 ## Size
 ```
-2,466 bytes
+2,465 bytes
 ```
 
 ---
