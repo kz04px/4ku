@@ -430,10 +430,8 @@ int alphabeta(Position &pos,
         moves[best_move_index] = moves[i];
         move_scores[best_move_index] = move_scores[i];
 
-        const int capture = piece_on(pos, move.to);
-
         // qsearch needs captures only
-        if (in_qsearch && capture == None) {
+        if (in_qsearch && piece_on(pos, move.to) == None) {
             break;
         }
 
@@ -453,6 +451,7 @@ int alphabeta(Position &pos,
         }
 
         if (alpha >= beta) {
+            const int capture = piece_on(pos, move.to);
             if (capture == None) {
                 stack[ply].killer = move;
             }
