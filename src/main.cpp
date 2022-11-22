@@ -10,7 +10,9 @@
 #define INF (1 << 16)
 
 using namespace std;
+
 using Move = uint16_t;
+using BB = uint64_t;
 
 [[nodiscard]] long long int now() {
     timespec t;
@@ -29,19 +31,17 @@ enum
     None
 };
 
-[[nodiscard]] uint8_t from_sq(Move move) {
+[[nodiscard]] uint8_t from_sq(const Move move) {
     return move & 0x3f;
 }
 
-[[nodiscard]] uint8_t to_sq(Move move) {
+[[nodiscard]] uint8_t to_sq(const Move move) {
     return move >> 6 & 0x3f;
 }
 
-[[nodiscard]] uint8_t promoted(Move move) {
+[[nodiscard]] uint8_t promoted(const Move move) {
     return move >> 12 & 0x7;
 }
-
-using BB = uint64_t;
 
 struct [[nodiscard]] Position {
     array<BB, 2> colour = {0xFFFFULL, 0xFFFF000000000000ULL};
@@ -192,7 +192,7 @@ int makemove(Position &pos, const Move &move) {
     const BB to = 1ULL << to_sq(move);
     const BB from = 1ULL << from_sq(move);
 
-    // uint16_t the piece
+    // Move the piece
     pos.colour[0] ^= from | to;
     pos.pieces[piece] ^= from | to;
 
