@@ -1,8 +1,10 @@
+#include <array>
 #include <cstdint>
 #include <cstdio>
 #include <ctime>
 #include <iostream>
 #include <string>
+#include <vector>
 
 #define MATE_SCORE (1 << 15)
 #define INF (1 << 16)
@@ -35,15 +37,15 @@ struct [[nodiscard]] Move {
 using BB = uint64_t;
 
 struct [[nodiscard]] Position {
-    BB colour[2] = {0xFFFFULL, 0xFFFF000000000000ULL};
-    BB pieces[6] = {0xFF00000000FF00ULL,
-                    0x4200000000000042ULL,
-                    0x2400000000000024ULL,
-                    0x8100000000000081ULL,
-                    0x800000000000008ULL,
-                    0x1000000000000010ULL};
+    array<BB, 2> colour = {0xFFFFULL, 0xFFFF000000000000ULL};
+    array<BB, 6> pieces = {0xFF00000000FF00ULL,
+                           0x4200000000000042ULL,
+                           0x2400000000000024ULL,
+                           0x8100000000000081ULL,
+                           0x800000000000008ULL,
+                           0x1000000000000010ULL};
     BB ep = 0x0ULL;
-    int castling[4] = {true, true, true, true};
+    array<int, 4> castling = {true, true, true, true};
     int flipped = false;
 };
 
@@ -367,7 +369,8 @@ int alphabeta(Position &pos,
               int depth,
               const int ply,
               const long long int stop_time,
-              Stack *const stack) {
+              Stack *const stack,
+              vector<Position> &history) {
     const int ksq = lsb(pos.colour[0] & pos.pieces[King]);
     const auto in_check = attacked(pos, ksq);
     const int static_eval = eval(pos);
@@ -383,22 +386,30 @@ int alphabeta(Position &pos,
         if (alpha < static_eval) {
             alpha = static_eval;
         }
-    }
-    // Reverse futility pruning
-    else if (depth < 3) {
-        const int margin = 120;
-        if (static_eval - margin * depth >= beta) {
-            return beta;
+    } else if (ply > 0) {
+        // Repetition detection
+        for (const auto &old_pos : history) {
+            if (old_pos.pieces == pos.pieces && old_pos.colour == pos.colour && old_pos.flipped == pos.flipped) {
+                return 0;
+            }
         }
-    }
-    // Null move pruning
-    else if (!in_check && static_eval >= beta && beta - alpha > 1) {
-    	auto npos = pos;
-    	flip(npos);
-    	npos.ep = 0;
-    	if (-alphabeta(npos, -beta, -beta + 1, depth - 3, ply + 1, stop_time, stack) >= beta) {
-    		return beta;
-    	}
+
+        // Reverse futility pruning
+        if (depth < 3) {
+            const int margin = 120;
+            if (static_eval - margin * depth >= beta) {
+                return beta;
+            }
+        }
+        // Null move pruning
+        else if (!in_check && static_eval >= beta && beta - alpha > 1) {
+            auto npos = pos;
+            flip(npos);
+            npos.ep = 0;
+            if (-alphabeta(npos, -beta, -beta + 1, depth - 3, ply + 1, stop_time, stack, history) >= beta) {
+                return beta;
+            }
+        }
     }
 
     // Exit early if out of time
@@ -427,6 +438,7 @@ int alphabeta(Position &pos,
     }
 
     int best_score = -INF;
+    history.push_back(pos);
     for (int i = 0; i < num_moves; ++i) {
         // Find best move remaining
         int best_move_index = i;
@@ -449,7 +461,7 @@ int alphabeta(Position &pos,
             continue;
         }
 
-        const int score = -alphabeta(npos, -beta, -alpha, depth - 1, ply + 1, stop_time, stack);
+        const int score = -alphabeta(npos, -beta, -alpha, depth - 1, ply + 1, stop_time, stack, history);
 
         if (score > best_score) {
             best_score = score;
@@ -467,6 +479,7 @@ int alphabeta(Position &pos,
             break;
         }
     }
+    history.pop_back();
 
     // Return mate or draw scores if no moves found and not in qsearch
     if (!in_qsearch && best_score == -INF) {
@@ -479,6 +492,7 @@ int alphabeta(Position &pos,
 int main() {
     setbuf(stdout, NULL);
     Position pos;
+    vector<Position> history;
     Move moves[256];
     getchar();
     puts("id name 4ku2\nid author kz04px\nuciok");
@@ -500,7 +514,7 @@ int main() {
             string bestmove_str;
             Stack stack[128];
             for (int i = 1; i < 128; ++i) {
-                alphabeta(pos, -INF, INF, i, 0, stop_time, stack);
+                alphabeta(pos, -INF, INF, i, 0, stop_time, stack, history);
                 if (now() >= stop_time) {
                     break;
                 }
@@ -509,10 +523,17 @@ int main() {
             cout << "bestmove " << bestmove_str << "\n";
         } else if (word == "position") {
             pos = Position();
+            history.clear();
         } else {
             const int num_moves = movegen(pos, moves);
             for (int i = 0; i < num_moves; ++i) {
                 if (word == move_str(moves[i], pos.flipped)) {
+                    if (piece_on(pos, moves[i].to) != None || piece_on(pos, moves[i].from) == Pawn) {
+                        history.clear();
+                    } else {
+                        history.push_back(pos);
+                    }
+
                     makemove(pos, moves[i]);
                     break;
                 }
