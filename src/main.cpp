@@ -301,7 +301,7 @@ void generate_piece_moves(Move *const movelist,
 
 const int phases[] = {0, 1, 1, 2, 4, 0};
 
-int S(const int mg, const int eg) {
+[[nodiscard]] int S(const int mg, const int eg) {
     return (eg << 16) + mg;
 }
 
@@ -370,9 +370,8 @@ const int rook_rank78 = S(46, 11);
         score = -score;
     }
 
-    const short mg = score;
-    const int eg = (score + 0x8000) >> 16;
-    return (mg * phase + eg * (24 - phase)) / 24;
+    // Tapered eval
+    return ((short)score * phase + ((score + 0x8000) >> 16) * (24 - phase)) / 24;
 }
 
 int alphabeta(Position &pos,
