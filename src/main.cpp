@@ -403,15 +403,16 @@ int alphabeta(Position &pos,
                 return beta;
             }
         }
-    }
-    // Null move pruning
-    else if (!in_check && static_eval >= beta && beta - alpha > 1) {
-    	auto npos = pos;
-    	flip(npos);
-    	npos.ep = 0;
-    	if (-alphabeta(npos, -beta, -beta + 1, depth - 3, ply + 1, stop_time, stack) >= beta) {
-    		return beta;
-    	}
+
+        // Null move pruning
+        else if (!in_check && static_eval >= beta && beta - alpha > 1) {
+            auto npos = pos;
+            flip(npos);
+            npos.ep = 0;
+            if (-alphabeta(npos, -beta, -beta + 1, depth - 3, ply + 1, stop_time, stack, history) >= beta) {
+                return beta;
+            }
+        }
     }
 
     // Exit early if out of time
