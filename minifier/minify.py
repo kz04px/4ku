@@ -8,7 +8,7 @@ def get_args():
     return parser.parse_args()
 
 def get_keywords(src):
-    keywords = set({"int", "char", "auto", "bool", "void", "using", "namespace", "define", "else",
+    keywords = set({"int", "short", "char", "auto", "bool", "void", "using", "namespace", "define", "else",
 "long", "unsigned", "timespec", "struct", "class", "return", "operator", "typename", "const", "string", "goto",
 "uint64_t", "int64_t", "uint32_t", "int32_t", "uint16_t", "int16_t", "uint8_t", "int8_t"})
 
