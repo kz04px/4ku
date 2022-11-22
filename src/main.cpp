@@ -477,10 +477,12 @@ int alphabeta(Position &pos,
 		int score;
 		if (in_qsearch || !raised_alpha) {
 			full_window:
-				score = -alphabeta(npos, -beta, -alpha, depth - 1, ply + 1, stop_time, stack, history);
+			score = -alphabeta(npos, -beta, -alpha, depth - 1, ply + 1, stop_time, stack, history);
 		} else {
 			score = -alphabeta(npos, -alpha - 1, -alpha, depth - 1, ply + 1, stop_time, stack, history);
-			if (score > alpha) goto full_window;
+			if (score > alpha) {
+				goto full_window;
+			}
 		}
 
         if (score > best_score) {
