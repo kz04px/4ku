@@ -43,8 +43,8 @@ struct [[nodiscard]] Position {
                     0x800000000000008ULL,
                     0x1000000000000010ULL};
     BB ep = 0x0ULL;
-    bool castling[4] = {true, true, true, true};
-    bool flipped = false;
+    int castling[4] = {true, true, true, true};
+    int flipped = false;
 };
 
 struct [[nodiscard]] Stack {
@@ -100,7 +100,7 @@ struct [[nodiscard]] Stack {
     return lhs.from == rhs.from && lhs.to == rhs.to && lhs.promo == rhs.promo;
 }
 
-[[nodiscard]] string move_str(const Move &move, const bool flip) {
+[[nodiscard]] string move_str(const Move &move, const int flip) {
     string str;
     str += 'a' + (move.from % 8);
     str += '1' + (flip ? (7 - move.from / 8) : (move.from / 8));
@@ -168,7 +168,7 @@ template <typename F>
            (((bb << 1) | (bb << 9) | (bb >> 7)) & 0xFEFEFEFEFEFEFEFEULL);
 }
 
-[[nodiscard]] bool attacked(const Position &pos, const int sq, const bool them = true) {
+[[nodiscard]] bool attacked(const Position &pos, const int sq, const int them = true) {
     const BB bb = 1ULL << sq;
     const BB kt = pos.colour[them] & pos.pieces[Knight];
     const BB BQ = pos.pieces[Bishop] | pos.pieces[Queen];
@@ -181,7 +181,7 @@ template <typename F>
            (king(sq, 0) & pos.colour[them] & pos.pieces[King]);
 }
 
-bool makemove(Position &pos, const Move &move) {
+int makemove(Position &pos, const Move &move) {
     const int piece = piece_on(pos, move.from);
     const int captured = piece_on(pos, move.to);
     const BB to = 1ULL << move.to;
@@ -375,7 +375,7 @@ int alphabeta(Position &pos,
     // Check extensions
     depth += in_check;
 
-    const bool in_qsearch = depth <= 0;
+    const int in_qsearch = depth <= 0;
     if (in_qsearch) {
         if (static_eval >= beta) {
             return beta;
