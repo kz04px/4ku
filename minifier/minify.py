@@ -9,8 +9,8 @@ def get_args():
 
 def get_keywords(src):
     keywords = set({"int", "short", "char", "auto", "bool", "void", "using", "namespace", "define", "else",
-"long", "unsigned", "timespec", "struct", "class", "return", "operator", "typename", "const", "string", "goto",
-"uint64_t", "int64_t", "uint32_t", "int32_t", "uint16_t", "int16_t", "uint8_t", "int8_t"})
+                    "long", "unsigned", "timespec", "struct", "class", "return", "operator", "typename", "const", "string", "goto",
+                    "uint64_t", "int64_t", "uint32_t", "int32_t", "uint16_t", "int16_t", "uint8_t", "int8_t"})
 
     get_next = False
 
@@ -318,6 +318,8 @@ def rename(tokens):
         "best_score":"bq",
         "best_move_score":"br",
         "best_move_score_index":"bs",
+        "wtime":"bt",
+        "btime":"bu",
         "func":"bv",
         "best_move_index":"cb",
         "killer":"cd",
@@ -328,13 +330,6 @@ def rename(tokens):
         "do_null":"ci",
         "full_window":"cj",
         "raised_alpha":"ck",
-        # Time Management
-        "wtime":"bt",
-        "btime":"bu",
-        "winc":"cn",
-        "binc":"co",
-        "self_time":"cl",
-        "self_inc":"cm",
         # Labels
         "do_search":"bk",
         "full_search":"bl",
