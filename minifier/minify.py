@@ -330,6 +330,7 @@ def rename(tokens):
         "do_null":"ci",
         "full_window":"cj",
         "raised_alpha":"ck",
+        "bishop_pair":"cl",
         # Labels
         "do_search":"bk",
         "full_search":"bl",

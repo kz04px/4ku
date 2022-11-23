@@ -304,11 +304,12 @@ void generate_piece_moves(Move *const movelist,
 }
 
 const int phases[] = {0, 1, 1, 2, 4, 0};
-const int material[] = {S(75, 111), S(387, 286), S(419, 326), S(505, 589), S(1182, 1070), 0};
-const int centralities[] = {S(14, -8), S(19, 21), S(20, 10), S(-4, 4), S(-5, 28), S(-47, 28)};
-const int passers[] = {S(29, 7), S(18, 7), S(-4, 19), S(7, 39), S(27, 112), S(106, 205)};
+const int material[] = {S(75, 111), S(392, 288), S(394, 323), S(509, 593), S(1207, 1069)};
+const int centralities[] = {S(13, -8), S(19, 21), S(20, 10), S(-4, 3), S(-5, 27), S(-47, 28)};
+const int passers[] = {S(30, 6), S(18, 7), S(-3, 19), S(7, 39), S(27, 112), S(107, 206)};
+const int bishop_pair = S(30, 57);
 const int rook_semi_open = S(27, 13);
-const int rook_open = S(74, 3);
+const int rook_open = S(74, 2);
 const int rook_rank78 = S(46, 11);
 
 [[nodiscard]] int eval(Position &pos) {
@@ -319,6 +320,11 @@ const int rook_rank78 = S(46, 11);
     for (int c = 0; c < 2; ++c) {
         // our pawns, their pawns
         const BB pawns[] = {pos.colour[0] & pos.pieces[Pawn], pos.colour[1] & pos.pieces[Pawn]};
+
+        // Bishop pair
+        if (count(pos.colour[0] & pos.pieces[Bishop]) == 2) {
+            score += bishop_pair;
+        }
 
         // For each piece type
         for (int p = 0; p < 6; ++p) {
