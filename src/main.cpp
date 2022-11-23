@@ -303,13 +303,14 @@ void generate_piece_moves(Move *const movelist,
 }
 
 const int phases[] = {0, 1, 1, 2, 4, 0};
-const int material[] = {S(75, 111), S(392, 288), S(394, 323), S(509, 593), S(1207, 1069)};
-const int centralities[] = {S(13, -8), S(19, 21), S(20, 10), S(-4, 3), S(-5, 27), S(-47, 28)};
-const int passers[] = {S(30, 6), S(18, 7), S(-3, 19), S(7, 39), S(27, 112), S(107, 206)};
-const int bishop_pair = S(30, 57);
-const int rook_semi_open = S(27, 13);
-const int rook_open = S(74, 2);
-const int rook_rank78 = S(46, 11);
+const int material[] = { S(75, 110), S(361, 263), S(365, 296), S(470, 541), S(1111, 978) };
+const int centralities[] = { S(12, -7), S(17, 19), S(18, 9), S(-4, 3), S(-4, 25), S(-42, 26) };
+const int passers[] = { S(20, -1), S(11, -1), S(-6, 11), S(5, 29), S(22, 96), S(94, 181) };
+const int pawn_doubled = S(-21, -29);
+const int bishop_pair = S(30, 52);
+const int rook_semi_open = S(28, 15);
+const int rook_open = S(69, 3);
+const int rook_rank78 = S(42, 10);
 
 [[nodiscard]] int eval(Position &pos) {
     // Include side to move bonus
@@ -349,6 +350,12 @@ const int rook_rank78 = S(46, 11);
                     blockers = nw(blockers) | ne(blockers);
                     if (!(blockers & pawns[1])) {
                         score += passers[rank - 1];
+                    }
+
+                    // Doubled pawns
+                    const BB piece_bb = 1ULL << sq;
+                    if ((north(piece_bb) | north(north(piece_bb))) & pawns[0]) {
+                        score += pawn_doubled;
                     }
                 } else if (p == Rook) {
                     // Rook on open or semi-open files

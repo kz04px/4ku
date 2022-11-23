@@ -331,6 +331,7 @@ def rename(tokens):
         "full_window":"cj",
         "raised_alpha":"ck",
         "bishop_pair":"cl",
+        "pawn_doubled":"cm",
         # Labels
         "do_search":"bk",
         "full_search":"bl",
