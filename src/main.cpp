@@ -54,9 +54,7 @@ const auto keys = []() {
     // pieces from 1-12 multiplied the square + ep squares + castling rights
     array<uint64_t, 12 * 64 + 64 + 16> values;
     for (auto &val : values) {
-        val = rand();
-        val <<= 32;
-        val |= rand();
+        for (int i = 0; i < 64; i++) val = val*2 + rand()%2;
     }
 
     return values;
@@ -405,13 +403,12 @@ uint64_t get_tt_key(const string& key) {
 
 [[nodiscard]] auto get_hash(const Position &pos) {
     uint64_t hash = 0;
-    for(int sq = 0; sq < 64; sq++) {
-        if (((pos.colour[0] | pos.colour[1]) >> sq) & 1) {
-            // The piece must be from 0-11, then they are multiplied by the square to get the hash index.
-            // pieces from 0-5 are pos.flipped pieces, and 6-11 are the opponents pieces.
-            hash ^= keys[(piece_on(pos, sq) + 6 * ((pos.colour[pos.flipped ^ 1] >> sq) & 1)) * 64 + sq];
-            // std::cout << (1 + piece_on(pos, sq) + 6 * ((pos.colour[pos.flipped ^ 1] >> sq) & 1)) << std::endl;
-        }
+    uint64_t copy = pos.colour[0] | pos.colour[1];
+    while (copy)
+    {
+        int sq = lsb(copy);
+        copy &= copy -1;
+        hash ^= keys[(piece_on(pos, sq) + 6 * ((pos.colour[pos.flipped ^ 1] >> sq) & 1)) * 64 + sq];
     }
 
     if (lsb(pos.ep) != 64) hash ^= keys[768 + lsb(pos.ep)];
@@ -423,10 +420,9 @@ uint64_t get_tt_key(const string& key) {
 int MAX_TT_SIZE = 2000000;
 
 struct TT_Entry {
-    BB all_pieces = 0;
     uint64_t key = 0;
     int score = 0;
-    Move move = Move{0, 0, 0};
+    Move move = Move{};
     int depth = 0;
     int flag = 0;
 };
@@ -463,7 +459,7 @@ int alphabeta(Position &pos,
     // TT probing
     auto tt_key = get_hash(pos);
     TT_Entry& tt_entry = transposition_table[tt_key % MAX_TT_SIZE];
-    Move tt_move = Move{0, 0, 0};
+    Move tt_move = Move{};
 
     // Check extensions
     depth += in_check;
@@ -484,7 +480,7 @@ int alphabeta(Position &pos,
             }
         }
         // TT Probing
-        if (tt_entry.key == tt_key && tt_entry.all_pieces == (pos.colour[0] | pos.colour[1])) {
+        if (tt_entry.key == tt_key) {
             tt_move = tt_entry.move;
             if (tt_entry.depth >= depth) {
                 if (tt_entry.flag == 0) return tt_entry.score;
@@ -605,7 +601,6 @@ int alphabeta(Position &pos,
         tt_entry = transposition_table[tt_key % MAX_TT_SIZE];
         if (tt_entry.key != tt_key || depth >= tt_entry.depth || tt_flag == 0) {
             // tt_entry = TT_Entry{tt_string_key, best_score, stack[ply].move, depth, tt_flag};
-            tt_entry.all_pieces = pos.colour[0] | pos.colour[1];
             tt_entry.key = tt_key;
             tt_entry.depth = depth;
             tt_entry.flag = tt_flag;
@@ -657,7 +652,6 @@ int main() {
         } else if (word == "position") {
             pos = Position();
             history.clear();
-            cout << get_hash(pos) << std::endl;
         } else {
             const int num_moves = movegen(pos, moves);
             for (int i = 0; i < num_moves; ++i) {
@@ -669,7 +663,6 @@ int main() {
                     }
 
                     makemove(pos, moves[i]);
-                    cout << get_hash(pos) << std::endl;
                     break;
                 }
             }
