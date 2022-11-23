@@ -334,6 +334,9 @@ def rename(tokens):
         "pawn_doubled":"cm",
         "pawn_passed_blocked":"cn",
         "outside_files":"co",
+        "pawn_protection":"cp",
+        "protected_by_pawns":"cq",
+        "piece_bb":"cr",
         # Labels
         "do_search":"bk",
         "full_search":"bl",

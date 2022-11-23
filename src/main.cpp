@@ -303,16 +303,17 @@ void generate_piece_moves(Move *const movelist,
 }
 
 const int phases[] = {0, 1, 1, 2, 4, 0};
-const int material[] = {S(70, 132), S(393, 300), S(400, 332), S(546, 604), S(1244, 1079)};
-const int centralities[] = {S(18, -13), S(23, 18), S(21, 10), S(-8, 3), S(-4, 29), S(-36, 26)};
-const int outside_files[] = {S(7, -6), S(5, -3), S(6, -2), S(-7, 0), S(-3, 7), S(19, -4)};
-const int passers[] = {S(17, 8), S(8, 12), S(-9, 28), S(4, 50), S(26, 121), S(111, 214)};
-const int pawn_doubled = S(-25, -33);
-const int pawn_passed_blocked = S(7, -43);
-const int bishop_pair = S(34, 56);
-const int rook_semi_open = S(31, 13);
-const int rook_open = S(71, 5);
-const int rook_rank78 = S(50, 10);
+const int material[] = {S(70, 134), S(409, 314), S(415, 346), S(569, 627), S(1285, 1124), 0};
+const int centralities[] = {S(18, -14), S(22, 16), S(23, 8), S(-7, 2), S(-2, 28), S(-38, 27)};
+const int outside_files[] = {S(7, -6), S(3, -5), S(6, -3), S(-8, -0), S(-3, 6), S(19, -4)};
+const int pawn_protection[] = {S(8, 15), S(6, 23), S(-6, 18), S(-1, 14), S(-6, 16), 0};
+const int passers[] = {S(17, 6), S(3, 11), S(-12, 28), S(5, 52), S(31, 127), S(120, 223)};
+const int pawn_doubled = S(-25, -29);
+const int pawn_passed_blocked = S(8, -51);
+const int bishop_pair = S(35, 60);
+const int rook_semi_open = S(33, 12);
+const int rook_open = S(73, 4);
+const int rook_rank78 = S(51, 10);
 
 [[nodiscard]] int eval(Position &pos) {
     // Include side to move bonus
@@ -322,6 +323,7 @@ const int rook_rank78 = S(50, 10);
     for (int c = 0; c < 2; ++c) {
         // our pawns, their pawns
         const BB pawns[] = {pos.colour[0] & pos.pieces[Pawn], pos.colour[1] & pos.pieces[Pawn]};
+        const BB protected_by_pawns = nw(pawns[0]) | ne(pawns[0]);
 
         // Bishop pair
         if (count(pos.colour[0] & pos.pieces[Bishop]) == 2) {
@@ -349,9 +351,13 @@ const int rook_rank78 = S(50, 10);
                 // Closeness to outside files
                 score += abs(file - 3) * outside_files[p];
 
-                if (p == Pawn) {
-                    const BB piece_bb = 1ULL << sq;
+                // Pawn protection
+                const BB piece_bb = 1ULL << sq;
+                if (piece_bb & protected_by_pawns) {
+                    score += pawn_protection[p];
+                }
 
+                if (p == Pawn) {
                     // Passed pawns
                     BB blockers = 0x101010101010101ULL << sq;
                     blockers = nw(blockers) | ne(blockers);
