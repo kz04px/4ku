@@ -290,10 +290,10 @@ void generate_piece_moves(Move *const movelist,
     generate_piece_moves(movelist, num_moves, pos, Rook, rook);
     generate_piece_moves(movelist, num_moves, pos, Queen, rook);
     generate_piece_moves(movelist, num_moves, pos, King, king);
-    if (pos.castling[0] && !(all & (0x60ULL)) && !attacked(pos, 4) && !attacked(pos, 5)) {
+    if (pos.castling[0] && !(all & 0x60ULL) && !attacked(pos, 4) && !attacked(pos, 5)) {
         add_move(movelist, num_moves, 4, 6);
     }
-    if (pos.castling[1] && !(all & (0xEULL)) && !attacked(pos, 4) && !attacked(pos, 3)) {
+    if (pos.castling[1] && !(all & 0xEULL) && !attacked(pos, 4) && !attacked(pos, 3)) {
         add_move(movelist, num_moves, 4, 2);
     }
     return num_moves;
@@ -342,14 +342,14 @@ const int rook_rank78 = S(46, 11);
                     // Passed pawns
                     BB blockers = 0x101010101010101ULL << sq;
                     blockers = nw(blockers) | ne(blockers);
-                    if ((blockers & pawns[1]) == 0) {
+                    if (!(blockers & pawns[1])) {
                         score += passers[rank - 1];
                     }
                 } else if (p == Rook) {
                     // Rook on open or semi-open files
                     const BB file_bb = 0x101010101010101ULL << file;
-                    if ((file_bb & pawns[0]) == 0) {
-                        if ((file_bb & pawns[1]) == 0) {
+                    if (!(file_bb & pawns[0])) {
+                        if (!(file_bb & pawns[1])) {
                             score += rook_open;
                         } else {
                             score += rook_semi_open;
