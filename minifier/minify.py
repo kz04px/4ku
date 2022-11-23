@@ -332,6 +332,7 @@ def rename(tokens):
         "raised_alpha":"ck",
         "bishop_pair":"cl",
         "pawn_doubled":"cm",
+        "pawn_passed_blocked":"cn",
         # Labels
         "do_search":"bk",
         "full_search":"bl",

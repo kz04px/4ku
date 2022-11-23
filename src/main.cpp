@@ -303,14 +303,15 @@ void generate_piece_moves(Move *const movelist,
 }
 
 const int phases[] = {0, 1, 1, 2, 4, 0};
-const int material[] = { S(75, 110), S(361, 263), S(365, 296), S(470, 541), S(1111, 978) };
-const int centralities[] = { S(12, -7), S(17, 19), S(18, 9), S(-4, 3), S(-4, 25), S(-42, 26) };
-const int passers[] = { S(20, -1), S(11, -1), S(-6, 11), S(5, 29), S(22, 96), S(94, 181) };
-const int pawn_doubled = S(-21, -29);
-const int bishop_pair = S(30, 52);
-const int rook_semi_open = S(28, 15);
-const int rook_open = S(69, 3);
-const int rook_rank78 = S(42, 10);
+const int material[] = {S(80, 109), S(379, 276), S(383, 311), S(493, 570), S(1164, 1033)};
+const int centralities[] = {S(13, -8), S(18, 20), S(19, 9), S(-4, 3), S(-4, 26), S(-45, 27)};
+const int passers[] = {S(20, 7), S(10, 10), S(-7, 26), S(5, 46), S(25, 114), S(104, 203)};
+const int pawn_doubled = S(-21, -32);
+const int pawn_passed_blocked = S(5, -40);
+const int bishop_pair = S(31, 54);
+const int rook_semi_open = S(29, 13);
+const int rook_open = S(72, 4);
+const int rook_rank78 = S(44, 11);
 
 [[nodiscard]] int eval(Position &pos) {
     // Include side to move bonus
@@ -345,15 +346,21 @@ const int rook_rank78 = S(42, 10);
                 score += centrality * centralities[p];
 
                 if (p == Pawn) {
+                    const BB piece_bb = 1ULL << sq;
+
                     // Passed pawns
                     BB blockers = 0x101010101010101ULL << sq;
                     blockers = nw(blockers) | ne(blockers);
                     if (!(blockers & pawns[1])) {
                         score += passers[rank - 1];
+
+                        // Blocked passed pawns
+                        if (north(piece_bb) & pos.colour[1]) {
+                            score += pawn_passed_blocked;
+                        }
                     }
 
                     // Doubled pawns
-                    const BB piece_bb = 1ULL << sq;
                     if ((north(piece_bb) | north(north(piece_bb))) & pawns[0]) {
                         score += pawn_doubled;
                     }
