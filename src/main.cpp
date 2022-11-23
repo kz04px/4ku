@@ -525,7 +525,10 @@ int main() {
         } else if (word == "isready") {
             puts("readyok");
         } else if (word == "go") {
-            int wtime, btime, winc, binc;
+            int wtime;
+            int btime;
+            int winc;
+            int binc;
             cin >> word;
             cin >> wtime;
             cin >> word;
