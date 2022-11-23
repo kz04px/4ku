@@ -234,8 +234,7 @@ int makemove(Position &pos, const Move &move) {
     flip(pos);
 
     // Return move legality
-    const int ksq = lsb(pos.colour[1] & pos.pieces[King]);
-    return !attacked(pos, ksq, false);
+    return !attacked(pos, lsb(pos.colour[1] & pos.pieces[King]), false);
 }
 
 void add_move(Move *const movelist, int &num_moves, const int from, const int to, const int promo = None) {
@@ -290,10 +289,10 @@ void generate_piece_moves(Move *const movelist,
     generate_piece_moves(movelist, num_moves, pos, Rook, rook);
     generate_piece_moves(movelist, num_moves, pos, Queen, rook);
     generate_piece_moves(movelist, num_moves, pos, King, king);
-    if (pos.castling[0] && !(all & (0x60ULL)) && !attacked(pos, 4) && !attacked(pos, 5)) {
+    if (pos.castling[0] && !(all & 0x60ULL) && !attacked(pos, 4) && !attacked(pos, 5)) {
         add_move(movelist, num_moves, 4, 6);
     }
-    if (pos.castling[1] && !(all & (0xEULL)) && !attacked(pos, 4) && !attacked(pos, 3)) {
+    if (pos.castling[1] && !(all & 0xEULL) && !attacked(pos, 4) && !attacked(pos, 3)) {
         add_move(movelist, num_moves, 4, 2);
     }
     return num_moves;
@@ -342,14 +341,14 @@ const int rook_rank78 = S(46, 11);
                     // Passed pawns
                     BB blockers = 0x101010101010101ULL << sq;
                     blockers = nw(blockers) | ne(blockers);
-                    if ((blockers & pawns[1]) == 0) {
+                    if (!(blockers & pawns[1])) {
                         score += passers[rank - 1];
                     }
                 } else if (p == Rook) {
                     // Rook on open or semi-open files
                     const BB file_bb = 0x101010101010101ULL << file;
-                    if ((file_bb & pawns[0]) == 0) {
-                        if ((file_bb & pawns[1]) == 0) {
+                    if (!(file_bb & pawns[0])) {
+                        if (!(file_bb & pawns[1])) {
                             score += rook_open;
                         } else {
                             score += rook_semi_open;
@@ -382,8 +381,7 @@ int alphabeta(Position &pos,
               Stack *const stack,
               vector<Position> &history,
               const int do_null = true) {
-    const int ksq = lsb(pos.colour[0] & pos.pieces[King]);
-    const auto in_check = attacked(pos, ksq);
+    const auto in_check = attacked(pos, lsb(pos.colour[0] & pos.pieces[King]));
     const int static_eval = eval(pos);
     int raised_alpha = false;
 
