@@ -383,24 +383,6 @@ const int rook_rank78 = S(46, 11);
     return ((short)score * phase + ((score + 0x8000) >> 16) * (24 - phase)) / 24;
 }
 
-/*
-string get_string_key(const Position &pos) {
-    string key;
-    for(int sq = 0; sq < 64; sq++) {
-        // 12 == empty square. All the opponent's pieces are piece + 6. All of our pieces are just piece.
-        if (!(((pos.colour[0] | pos.colour[1]) >> sq) & 1)) key += "12";
-        else key += to_string(piece_on(pos, sq) + 6 * ((pos.colour[1] >> sq) & 1));
-    }
-    return key;
-}
-
-uint64_t get_tt_key(const string& key) {
-    int x = 0;
-    for (char c : key) x = (x * 10 + (c - '0')) % MAX_TT_SIZE;
-    return x;
-}
-*/
-
 [[nodiscard]] auto get_hash(const Position &pos) {
     uint64_t hash = 0;
     uint64_t copy = pos.colour[0] | pos.colour[1];
@@ -410,7 +392,6 @@ uint64_t get_tt_key(const string& key) {
         copy &= copy -1;
         hash ^= keys[(piece_on(pos, sq) + 6 * ((pos.colour[pos.flipped ^ 1] >> sq) & 1)) * 64 + sq];
     }
-
     if (lsb(pos.ep) != 64) hash ^= keys[768 + lsb(pos.ep)];
     hash ^= keys[832 + (pos.castling[0] | pos.castling[1] << 1 | pos.castling[2] << 2 | pos.castling[3] << 3)];
 
@@ -426,19 +407,6 @@ struct TT_Entry {
     int depth = 0;
     int flag = 0;
 };
-
-void print_pos(const Position &pos) {
-    string new_pos;
-    for(int sq = 0; sq < 64; sq++) {
-        if (sq % 8 == 0) new_pos += "\n";
-        if (((pos.colour[0] | pos.colour[1]) >> sq) & 1) {
-            new_pos += to_string(piece_on(pos, sq) + 6 * ((pos.colour[pos.flipped ^ 1] >> sq) & 1));
-        }
-        else new_pos += "_";
-        new_pos += " ";
-    }
-    std::cout << new_pos << "\n \n";
-}
 
 vector<TT_Entry> transposition_table;
 
@@ -590,7 +558,6 @@ int alphabeta(Position &pos,
         }
     }
     history.pop_back();
-
     // Prevent TT saving if the search ran out of time
     if (now() >= stop_time) return 0;
 
@@ -600,12 +567,7 @@ int alphabeta(Position &pos,
     } else if (!in_qsearch) {
         tt_entry = transposition_table[tt_key % MAX_TT_SIZE];
         if (tt_entry.key != tt_key || depth >= tt_entry.depth || tt_flag == 0) {
-            // tt_entry = TT_Entry{tt_string_key, best_score, stack[ply].move, depth, tt_flag};
-            tt_entry.key = tt_key;
-            tt_entry.depth = depth;
-            tt_entry.flag = tt_flag;
-            tt_entry.score = best_score;
-            tt_entry.move = stack[ply].move;
+            tt_entry = TT_Entry{tt_key, best_score, stack[ply].move, depth, tt_flag};
         }
     }
     return alpha;
@@ -625,8 +587,6 @@ int main() {
         if (word == "quit") {
             break;
         } else if (word == "ucinewgame") {
-            //transposition_table.resize(0);
-            //transposition_table.resize(MAX_TT_SIZE);
             memset(transposition_table.data(), 0, sizeof(TT_Entry) * transposition_table.size());
         } else if (word == "isready") {
             puts("readyok");
@@ -646,7 +606,7 @@ int main() {
                     break;
                 }
                 bestmove_str = move_str(stack[0].move, pos.flipped);
-                cout << "info depth " << i << " score cp " << score << " pv " << bestmove_str << std::endl;
+                // cout << "info depth " << i << " score cp " << score << " pv " << bestmove_str << std::endl;
             }
             cout << "bestmove " << bestmove_str << "\n";
         } else if (word == "position") {
@@ -661,7 +621,6 @@ int main() {
                     } else {
                         history.push_back(pos);
                     }
-
                     makemove(pos, moves[i]);
                     break;
                 }
