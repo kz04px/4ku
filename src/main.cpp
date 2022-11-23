@@ -514,13 +514,17 @@ int main() {
         } else if (word == "isready") {
             puts("readyok");
         } else if (word == "go") {
-            int wtime;
-            int btime;
+            int wtime, btime, winc, binc;
             cin >> word;
             cin >> wtime;
             cin >> word;
             cin >> btime;
-            const auto stop_time = now() + (pos.flipped ? btime : wtime) / 30;
+            cin >> word;
+            cin >> winc;
+            cin >> word;
+            cin >> binc;
+            int self_time = (pos.flipped ? btime : wtime), self_inc = (pos.flipped ? binc : winc);
+            auto stop_time = now() + self_time/24 + (8*self_inc/23 > self_time ? 0: self_inc/3);
             string bestmove_str;
             Stack stack[128];
             for (int i = 1; i < 128; ++i) {
@@ -545,6 +549,7 @@ int main() {
                     }
 
                     makemove(pos, moves[i]);
+                    break;
                 }
             }
         }
