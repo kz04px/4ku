@@ -422,7 +422,6 @@ int alphabeta(Position &pos,
     const auto in_check = attacked(pos, lsb(pos.colour[0] & pos.pieces[King]));
     const int static_eval = eval(pos);
     int raised_alpha = false;
-    int pv_node = alpha != beta - 1;
 
     // TT probing
     auto tt_key = get_hash(pos);
