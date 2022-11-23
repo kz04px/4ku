@@ -234,8 +234,7 @@ int makemove(Position &pos, const Move &move) {
     flip(pos);
 
     // Return move legality
-    const int ksq = lsb(pos.colour[1] & pos.pieces[King]);
-    return !attacked(pos, ksq, false);
+    return !attacked(pos, lsb(pos.colour[1] & pos.pieces[King]), false);
 }
 
 void add_move(Move *const movelist, int &num_moves, const int from, const int to, const int promo = None) {
@@ -382,8 +381,7 @@ int alphabeta(Position &pos,
               Stack *const stack,
               vector<Position> &history,
               const int do_null = true) {
-    const int ksq = lsb(pos.colour[0] & pos.pieces[King]);
-    const auto in_check = attacked(pos, ksq);
+    const auto in_check = attacked(pos, lsb(pos.colour[0] & pos.pieces[King]));
     const int static_eval = eval(pos);
     int raised_alpha = false;
 
