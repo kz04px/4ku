@@ -537,7 +537,8 @@ int main() {
             cin >> winc;
             cin >> word;
             cin >> binc;
-            int self_time = (pos.flipped ? btime : wtime), self_inc = (pos.flipped ? binc : winc);
+            const int self_time = (pos.flipped ? btime : wtime);
+            const int self_inc = (pos.flipped ? binc : winc);
             auto stop_time = now() + self_time/24 + (8*self_inc/23 > self_time ? 0: self_inc/3);
             string bestmove_str;
             Stack stack[128];
