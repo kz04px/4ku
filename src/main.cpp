@@ -303,15 +303,16 @@ void generate_piece_moves(Move *const movelist,
 }
 
 const int phases[] = {0, 1, 1, 2, 4, 0};
-const int material[] = {S(80, 109), S(379, 276), S(383, 311), S(493, 570), S(1164, 1033)};
-const int centralities[] = {S(13, -8), S(18, 20), S(19, 9), S(-4, 3), S(-4, 26), S(-45, 27)};
-const int passers[] = {S(20, 7), S(10, 10), S(-7, 26), S(5, 46), S(25, 114), S(104, 203)};
-const int pawn_doubled = S(-21, -32);
-const int pawn_passed_blocked = S(5, -40);
-const int bishop_pair = S(31, 54);
-const int rook_semi_open = S(29, 13);
-const int rook_open = S(72, 4);
-const int rook_rank78 = S(44, 11);
+const int material[] = {S(70, 132), S(393, 300), S(400, 332), S(546, 604), S(1244, 1079)};
+const int centralities[] = {S(18, -13), S(23, 18), S(21, 10), S(-8, 3), S(-4, 29), S(-36, 26)};
+const int outside_files[] = {S(7, -6), S(5, -3), S(6, -2), S(-7, 0), S(-3, 7), S(19, -4)};
+const int passers[] = {S(17, 8), S(8, 12), S(-9, 28), S(4, 50), S(26, 121), S(111, 214)};
+const int pawn_doubled = S(-25, -33);
+const int pawn_passed_blocked = S(7, -43);
+const int bishop_pair = S(34, 56);
+const int rook_semi_open = S(31, 13);
+const int rook_open = S(71, 5);
+const int rook_rank78 = S(50, 10);
 
 [[nodiscard]] int eval(Position &pos) {
     // Include side to move bonus
@@ -344,6 +345,9 @@ const int rook_rank78 = S(44, 11);
 
                 // Centrality
                 score += centrality * centralities[p];
+
+                // Closeness to outside files
+                score += abs(file - 3) * outside_files[p];
 
                 if (p == Pawn) {
                     const BB piece_bb = 1ULL << sq;

@@ -333,6 +333,7 @@ def rename(tokens):
         "bishop_pair":"cl",
         "pawn_doubled":"cm",
         "pawn_passed_blocked":"cn",
+        "outside_files":"co",
         # Labels
         "do_search":"bk",
         "full_search":"bl",
