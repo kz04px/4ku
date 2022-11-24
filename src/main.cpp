@@ -430,7 +430,7 @@ int alphabeta(Position &pos,
     // TT probing
     const uint64_t tt_key = in_qsearch ? 0 : get_hash(pos);
     TT_Entry &tt_entry = transposition_table[tt_key % MAX_TT_SIZE];
-    Move tt_move = Move{};
+    Move tt_move{};
 
     // Check extensions
     depth += in_check;
@@ -449,6 +449,7 @@ int alphabeta(Position &pos,
                 return 0;
             }
         }
+
         // TT Probing
         if (tt_entry.key == tt_key) {
             tt_move = tt_entry.move;
@@ -464,6 +465,7 @@ int alphabeta(Position &pos,
                 }
             }
         }
+
         // Reverse futility pruning
         if (depth < 3) {
             const int margin = 120;
