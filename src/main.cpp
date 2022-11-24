@@ -423,7 +423,6 @@ int alphabeta(Position &pos,
               const int do_null = true) {
     const auto in_check = attacked(pos, lsb(pos.colour[0] & pos.pieces[King]));
     const int static_eval = eval(pos);
-    int raised_alpha = false;
 
     // Check extensions
     depth += in_check;
@@ -511,6 +510,7 @@ int alphabeta(Position &pos,
         move_scores[j] = move_score;
     }
 
+    int legal_moves = 0;
     int best_score = -INF;
     uint16_t tt_flag = 1;  // Alpha flag
     history.push_back(pos);
@@ -537,22 +537,20 @@ int alphabeta(Position &pos,
             continue;
         }
 
-        int score;
-        if (in_qsearch || !raised_alpha) {
-        full_window:
-            score = -alphabeta(npos, -beta, -alpha, depth - 1, ply + 1, stop_time, stack, history);
-        } else {
-            score = -alphabeta(npos, -alpha - 1, -alpha, depth - 1, ply + 1, stop_time, stack, history);
-            if (score > alpha) {
-                goto full_window;
-            }
+        int new_alpha = legal_moves == 0 ? -beta : -alpha - 1;
+        goto do_search;
+    full_window:
+        new_alpha = -beta;
+    do_search:
+        const int score = -alphabeta(npos, new_alpha, -alpha, depth - 1, ply + 1, stop_time, stack, history);
+        if (score > alpha && new_alpha != -beta) {
+            goto full_window;
         }
 
         if (score > best_score) {
             best_score = score;
             if (score > alpha) {
                 tt_flag = 0;  // Exact flag
-                raised_alpha = true;
                 alpha = score;
                 stack[ply].move = move;
             }
@@ -566,6 +564,8 @@ int alphabeta(Position &pos,
             }
             break;
         }
+
+        legal_moves++;
     }
     history.pop_back();
 
