@@ -1,6 +1,7 @@
 #include <array>
 #include <cstdint>
 #include <cstdio>
+#include <cstring>
 #include <ctime>
 #include <iostream>
 #include <string>
@@ -29,9 +30,9 @@ enum
 };
 
 struct [[nodiscard]] Move {
-    int from;
-    int to;
-    int promo;
+    int from = 0;
+    int to = 0;
+    int promo = 0;
 };
 
 using BB = uint64_t;
@@ -53,6 +54,29 @@ struct [[nodiscard]] Stack {
     Move move;
     Move killer;
 };
+
+struct [[nodiscard]] TT_Entry {
+    uint64_t key;
+    Move move;
+    int score;
+    int depth;
+    uint16_t flag;
+};
+
+const auto keys = []() {
+    // pieces from 1-12 multiplied the square + ep squares + castling rights
+    array<uint64_t, 12 * 64 + 64 + 16> values{};
+    for (auto &val : values) {
+        for (int i = 0; i < 64; ++i) {
+            val = val * 2 + rand() % 2;
+        }
+    }
+
+    return values;
+}();
+
+const int MAX_TT_SIZE = 2000000;
+vector<TT_Entry> transposition_table;
 
 [[nodiscard]] BB flip(const BB bb) {
     return __builtin_bswap64(bb);
@@ -372,6 +396,22 @@ const int rook_rank78 = S(46, 11);
     return ((short)score * phase + ((score + 0x8000) >> 16) * (24 - phase)) / 24;
 }
 
+[[nodiscard]] auto get_hash(const Position &pos) {
+    uint64_t hash = 0;
+    BB copy = pos.colour[0] | pos.colour[1];
+    while (copy) {
+        const int sq = lsb(copy);
+        copy &= copy - 1;
+        hash ^= keys[(piece_on(pos, sq) + 6 * ((pos.colour[pos.flipped] >> sq) & 1)) * 64 + sq];
+    }
+    if (pos.ep) {
+        hash ^= keys[768 + lsb(pos.ep)];
+    }
+    hash ^= keys[832 + (pos.castling[0] | pos.castling[1] << 1 | pos.castling[2] << 2 | pos.castling[3] << 3)];
+
+    return hash;
+}
+
 int alphabeta(Position &pos,
               int alpha,
               const int beta,
@@ -389,6 +429,12 @@ int alphabeta(Position &pos,
     depth += in_check;
 
     const int in_qsearch = depth <= 0;
+
+    // TT probing
+    const uint64_t tt_key = in_qsearch ? 0 : get_hash(pos);
+    TT_Entry &tt_entry = transposition_table[tt_key % MAX_TT_SIZE];
+    Move tt_move{};
+
     if (in_qsearch) {
         if (static_eval >= beta) {
             return beta;
@@ -401,6 +447,22 @@ int alphabeta(Position &pos,
         for (const auto &old_pos : history) {
             if (old_pos.pieces == pos.pieces && old_pos.colour == pos.colour && old_pos.flipped == pos.flipped) {
                 return 0;
+            }
+        }
+
+        // TT Probing
+        if (tt_entry.key == tt_key) {
+            tt_move = tt_entry.move;
+            if (tt_entry.depth >= depth) {
+                if (tt_entry.flag == 0) {
+                    return tt_entry.score;
+                }
+                if (tt_entry.flag == 1 && tt_entry.score <= alpha) {
+                    return tt_entry.score;
+                }
+                if (tt_entry.flag == 2 && tt_entry.score >= beta) {
+                    return tt_entry.score;
+                }
             }
         }
 
@@ -434,10 +496,12 @@ int alphabeta(Position &pos,
     int move_scores[256];
     for (int j = 0; j < num_moves; ++j) {
         int move_score = 0;
+        const int capture = piece_on(pos, moves[j].to);
         if (!in_qsearch && moves[j] == stack[ply].move) {
             move_score = 1 << 16;
+        } else if (!in_qsearch && moves[j] == tt_move) {
+            move_score = 1 << 15;
         } else {
-            const int capture = piece_on(pos, moves[j].to);
             if (capture != None) {
                 move_score = ((capture + 1) * (1 << 10)) - piece_on(pos, moves[j].from);
             } else if (moves[j] == stack[ply].killer) {
@@ -448,6 +512,7 @@ int alphabeta(Position &pos,
     }
 
     int best_score = -INF;
+    uint16_t tt_flag = 1;  // Alpha flag
     history.push_back(pos);
     for (int i = 0; i < num_moves; ++i) {
         // Find best move remaining
@@ -486,6 +551,7 @@ int alphabeta(Position &pos,
         if (score > best_score) {
             best_score = score;
             if (score > alpha) {
+                tt_flag = 0;  // Exact flag
                 raised_alpha = true;
                 alpha = score;
                 stack[ply].move = move;
@@ -493,6 +559,7 @@ int alphabeta(Position &pos,
         }
 
         if (alpha >= beta) {
+            tt_flag = 2;  // Beta flag
             const int capture = piece_on(pos, move.to);
             if (capture == None) {
                 stack[ply].killer = move;
@@ -502,9 +569,16 @@ int alphabeta(Position &pos,
     }
     history.pop_back();
 
+    // Prevent TT saving if the search ran out of time
+    if (now() >= stop_time) {
+        return 0;
+    }
+
     // Return mate or draw scores if no moves found and not in qsearch
     if (!in_qsearch && best_score == -INF) {
         return in_check ? -MATE_SCORE : 0;
+    } else if (!in_qsearch && (tt_entry.key != tt_key || depth >= tt_entry.depth || tt_flag == 0)) {
+        tt_entry = TT_Entry{tt_key, stack[ply].move, best_score, depth, tt_flag};
     }
 
     return alpha;
@@ -517,11 +591,15 @@ int main() {
     Move moves[256];
     getchar();
     puts("id name 4ku2\nid author kz04px\nuciok");
+    transposition_table.resize(MAX_TT_SIZE);
+    memset(transposition_table.data(), 0, sizeof(TT_Entry) * transposition_table.size());
     while (true) {
         string word;
         cin >> word;
         if (word == "quit") {
             break;
+        } else if (word == "ucinewgame") {
+            memset(transposition_table.data(), 0, sizeof(TT_Entry) * transposition_table.size());
         } else if (word == "isready") {
             puts("readyok");
         } else if (word == "go") {
