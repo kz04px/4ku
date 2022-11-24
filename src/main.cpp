@@ -50,18 +50,6 @@ struct [[nodiscard]] Position {
     int flipped = false;
 };
 
-const auto keys = []() {
-    // pieces from 1-12 multiplied the square + ep squares + castling rights
-    array<uint64_t, 12 * 64 + 64 + 16> values{};
-    for (auto &val : values) {
-        for (int i = 0; i < 64; ++i) {
-            val = val * 2 + rand() % 2;
-        }
-    }
-
-    return values;
-}();
-
 struct [[nodiscard]] Stack {
     Move move;
     Move killer;
@@ -74,6 +62,18 @@ struct TT_Entry {
     int depth;
     uint16_t flag;
 };
+
+const auto keys = []() {
+    // pieces from 1-12 multiplied the square + ep squares + castling rights
+    array<uint64_t, 12 * 64 + 64 + 16> values{};
+    for (auto &val : values) {
+        for (int i = 0; i < 64; ++i) {
+            val = val * 2 + rand() % 2;
+        }
+    }
+
+    return values;
+}();
 
 const int MAX_TT_SIZE = 2000000;
 vector<TT_Entry> transposition_table;
