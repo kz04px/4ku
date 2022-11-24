@@ -30,9 +30,9 @@ enum
 };
 
 struct [[nodiscard]] Move {
-    int from;
-    int to;
-    int promo;
+    int from = 0;
+    int to = 0;
+    int promo = 0;
 };
 
 using BB = uint64_t;
