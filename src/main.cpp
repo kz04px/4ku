@@ -578,6 +578,7 @@ int alphabeta(Position &pos,
     } else if (!in_qsearch && (tt_entry.key != tt_key || depth >= tt_entry.depth || tt_flag == 0)) {
         tt_entry = TT_Entry{tt_key, stack[ply].move, best_score, depth, tt_flag};
     }
+
     return alpha;
 }
 
@@ -629,6 +630,7 @@ int main() {
                     } else {
                         history.push_back(pos);
                     }
+
                     makemove(pos, moves[i]);
                     break;
                 }
