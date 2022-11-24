@@ -423,16 +423,17 @@ int alphabeta(Position &pos,
               const int do_null = true) {
     const auto in_check = attacked(pos, lsb(pos.colour[0] & pos.pieces[King]));
     const int static_eval = eval(pos);
-    const int in_qsearch = depth <= 0;
     int raised_alpha = false;
+
+    // Check extensions
+    depth += in_check;
+    
+    const int in_qsearch = depth <= 0;
 
     // TT probing
     const uint64_t tt_key = in_qsearch ? 0 : get_hash(pos);
     TT_Entry &tt_entry = transposition_table[tt_key % MAX_TT_SIZE];
     Move tt_move{};
-
-    // Check extensions
-    depth += in_check;
 
     if (in_qsearch) {
         if (static_eval >= beta) {
