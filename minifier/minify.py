@@ -9,8 +9,8 @@ def get_args():
 
 def get_keywords(src):
     keywords = set({"int", "short", "char", "auto", "bool", "void", "using", "namespace", "define", "else",
-"long", "unsigned", "timespec", "struct", "class", "return", "operator", "typename", "const", "string", "goto",
-"uint64_t", "int64_t", "uint32_t", "int32_t", "uint16_t", "int16_t", "uint8_t", "int8_t"})
+                    "long", "unsigned", "timespec", "struct", "class", "return", "operator", "typename", "const", "string", "goto",
+                    "uint64_t", "int64_t", "uint32_t", "int32_t", "uint16_t", "int16_t", "uint8_t", "int8_t"})
 
     get_next = False
 
@@ -330,13 +330,22 @@ def rename(tokens):
         "do_null":"ci",
         "full_window":"cj",
         "raised_alpha":"ck",
+        "keys":"cl",
+        "transposition_table":"cm",
+        "tt_key":"cn",
+        "tt_entry":"co",
+        "tt_move":"cp",
+        "flag":"cq",
+        "tt_flag":"cr",
+        "TT_Entry":"cs",
+        "MAX_TT_SIZE":"ct",
         "bishop_pair":"cl",
-        "pawn_doubled":"cm",
-        "pawn_passed_blocked":"cn",
-        "outside_files":"co",
-        "pawn_protection":"cp",
-        "protected_by_pawns":"cq",
-        "piece_bb":"cr",
+        "pawn_doubled":"cu",
+        "pawn_passed_blocked":"cv",
+        "outside_files":"cw",
+        "pawn_protection":"cx",
+        "protected_by_pawns":"cy",
+        "piece_bb":"cz",
         # Labels
         "do_search":"bk",
         "full_search":"bl",
