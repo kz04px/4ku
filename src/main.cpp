@@ -52,9 +52,11 @@ struct [[nodiscard]] Position {
 
 const auto keys = []() {
     // pieces from 1-12 multiplied the square + ep squares + castling rights
-    array<uint64_t, 12 * 64 + 64 + 16> values;
+    array<uint64_t, 12 * 64 + 64 + 16> values{};
     for (auto &val : values) {
-        for (int i = 0; i < 64; ++i) val = val*2 + rand()%2;
+        for (int i = 0; i < 64; ++i) {
+            val = val * 2 + rand() % 2;
+        }
     }
 
     return values;
@@ -406,8 +408,8 @@ struct TT_Entry {
     uint64_t key;
     Move move;
     int score;
-    uint8_t depth;
-    uint8_t flag;
+    int depth;
+    uint16_t flag;
 };
 
 vector<TT_Entry> transposition_table;
@@ -504,7 +506,7 @@ int alphabeta(Position &pos,
     }
 
     int best_score = -INF;
-    int tt_flag = 1;  // Alpha flag
+    uint16_t tt_flag = 1;  // Alpha flag
     history.push_back(pos);
     for (int i = 0; i < num_moves; ++i) {
         // Find best move remaining
@@ -569,7 +571,7 @@ int alphabeta(Position &pos,
     if (!in_qsearch && best_score == -INF) {
         return in_check ? -MATE_SCORE : 0;
     } else if (!in_qsearch && (tt_entry.key != tt_key || depth >= tt_entry.depth || tt_flag == 0)) {
-        tt_entry = TT_Entry{tt_key, stack[ply].move, best_score, (uint8_t)depth, (uint8_t)tt_flag};
+        tt_entry = TT_Entry{tt_key, stack[ply].move, best_score, depth, tt_flag};
     }
     return alpha;
 }
