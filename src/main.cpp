@@ -55,7 +55,7 @@ struct [[nodiscard]] Stack {
     Move killer;
 };
 
-struct TT_Entry {
+struct [[nodiscard]] TT_Entry {
     uint64_t key;
     Move move;
     int score;
