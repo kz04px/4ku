@@ -567,6 +567,7 @@ int alphabeta(Position &pos,
             break;
         }
     }
+
     history.pop_back();
     // Prevent TT saving if the search ran out of time
     if (now() >= stop_time) {
