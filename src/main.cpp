@@ -67,6 +67,18 @@ struct [[nodiscard]] Stack {
     Move killer;
 };
 
+const int MAX_TT_SIZE = 2000000;
+
+struct TT_Entry {
+    uint64_t key;
+    Move move;
+    int score;
+    int depth;
+    uint16_t flag;
+};
+
+vector<TT_Entry> transposition_table;
+
 [[nodiscard]] BB flip(const BB bb) {
     return __builtin_bswap64(bb);
 }
@@ -401,18 +413,6 @@ const int rook_rank78 = S(46, 11);
     return hash;
 }
 
-const int MAX_TT_SIZE = 2000000;
-
-struct TT_Entry {
-    uint64_t key;
-    Move move;
-    int score;
-    int depth;
-    uint16_t flag;
-};
-
-vector<TT_Entry> transposition_table;
-
 int alphabeta(Position &pos,
               int alpha,
               const int beta,
@@ -424,9 +424,8 @@ int alphabeta(Position &pos,
               const int do_null = true) {
     const auto in_check = attacked(pos, lsb(pos.colour[0] & pos.pieces[King]));
     const int static_eval = eval(pos);
-    int raised_alpha = false;
-
     const int in_qsearch = depth <= 0;
+    int raised_alpha = false;
 
     // TT probing
     const uint64_t tt_key = in_qsearch ? 0 : get_hash(pos);
