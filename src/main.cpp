@@ -402,7 +402,7 @@ const int rook_rank78 = S(46, 11);
     while (copy) {
         const int sq = lsb(copy);
         copy &= copy - 1;
-        hash ^= keys[(piece_on(pos, sq) + 6 * ((pos.colour[pos.flipped ^ 1] >> sq) & 1)) * 64 + sq];
+        hash ^= keys[(piece_on(pos, sq) + 6 * ((pos.colour[pos.flipped] >> sq) & 1)) * 64 + sq];
     }
     if (pos.ep) {
         hash ^= keys[768 + lsb(pos.ep)];
