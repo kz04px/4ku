@@ -388,8 +388,7 @@ const int rook_rank78 = S(46, 11);
 [[nodiscard]] auto get_hash(const Position &pos) {
     uint64_t hash = 0;
     BB copy = pos.colour[0] | pos.colour[1];
-    while (copy)
-    {
+    while (copy) {
         const int sq = lsb(copy);
         copy &= copy -1;
         hash ^= keys[(piece_on(pos, sq) + 6 * ((pos.colour[pos.flipped ^ 1] >> sq) & 1)) * 64 + sq];
