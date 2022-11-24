@@ -427,7 +427,7 @@ int alphabeta(Position &pos,
 
     // Check extensions
     depth += in_check;
-    
+
     const int in_qsearch = depth <= 0;
 
     // TT probing
