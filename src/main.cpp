@@ -603,12 +603,11 @@ int main() {
             string bestmove_str;
             Stack stack[128];
             for (int i = 1; i < 128; ++i) {
-                int score = alphabeta(pos, -INF, INF, i, 0, stop_time, stack, history);
+                alphabeta(pos, -INF, INF, i, 0, stop_time, stack, history);
                 if (now() >= stop_time) {
                     break;
                 }
                 bestmove_str = move_str(stack[0].move, pos.flipped);
-                cout << "info depth " << i << " score cp " << score << " pv " << bestmove_str << std::endl;
             }
             cout << "bestmove " << bestmove_str << "\n";
         } else if (word == "position") {
