@@ -54,7 +54,7 @@ const auto keys = []() {
     // pieces from 1-12 multiplied the square + ep squares + castling rights
     array<uint64_t, 12 * 64 + 64 + 16> values;
     for (auto &val : values) {
-        for (int i = 0; i < 64; i++) val = val*2 + rand()%2;
+        for (int i = 0; i < 64; ++i) val = val*2 + rand()%2;
     }
 
     return values;
@@ -385,27 +385,29 @@ const int rook_rank78 = S(46, 11);
 
 [[nodiscard]] auto get_hash(const Position &pos) {
     uint64_t hash = 0;
-    uint64_t copy = pos.colour[0] | pos.colour[1];
+    BB copy = pos.colour[0] | pos.colour[1];
     while (copy)
     {
-        int sq = lsb(copy);
+        const int sq = lsb(copy);
         copy &= copy -1;
         hash ^= keys[(piece_on(pos, sq) + 6 * ((pos.colour[pos.flipped ^ 1] >> sq) & 1)) * 64 + sq];
     }
-    if (pos.ep) hash ^= keys[768 + lsb(pos.ep)];
+    if (pos.ep) {
+        hash ^= keys[768 + lsb(pos.ep)];
+    }
     hash ^= keys[832 + (pos.castling[0] | pos.castling[1] << 1 | pos.castling[2] << 2 | pos.castling[3] << 3)];
 
     return hash;
 }
 
-int MAX_TT_SIZE = 2000000;
+const int MAX_TT_SIZE = 2000000;
 
 struct TT_Entry {
-    uint64_t key = 0;
-    Move move = Move{};
-    int score = 0;
-    uint8_t depth = 0;
-    uint8_t flag = 0;
+    uint64_t key;
+    Move move;
+    int score;
+    uint8_t depth;
+    uint8_t flag;
 };
 
 vector<TT_Entry> transposition_table;
@@ -423,15 +425,16 @@ int alphabeta(Position &pos,
     const int static_eval = eval(pos);
     int raised_alpha = false;
 
+    const int in_qsearch = depth <= 0;
+
     // TT probing
-    auto tt_key = get_hash(pos);
-    TT_Entry& tt_entry = transposition_table[tt_key % MAX_TT_SIZE];
+    const uint64_t tt_key = in_qsearch ? 0 : get_hash(pos);
+    TT_Entry &tt_entry = transposition_table[tt_key % MAX_TT_SIZE];
     Move tt_move = Move{};
 
     // Check extensions
     depth += in_check;
 
-    const int in_qsearch = depth <= 0;
     if (in_qsearch) {
         if (static_eval >= beta) {
             return beta;
@@ -439,7 +442,7 @@ int alphabeta(Position &pos,
         if (alpha < static_eval) {
             alpha = static_eval;
         }
-    } else if (ply > 0){
+    } else if (ply > 0) {
         // Repetition detection
         for (const auto &old_pos : history) {
             if (old_pos.pieces == pos.pieces && old_pos.colour == pos.colour && old_pos.flipped == pos.flipped) {
@@ -558,7 +561,9 @@ int alphabeta(Position &pos,
     }
     history.pop_back();
     // Prevent TT saving if the search ran out of time
-    if (now() >= stop_time) return 0;
+    if (now() >= stop_time) {
+        return 0;
+    }
 
     // Return mate or draw scores if no moves found and not in qsearch
     if (!in_qsearch && best_score == -INF) {
@@ -577,6 +582,7 @@ int main() {
     getchar();
     puts("id name 4ku2\nid author kz04px\nuciok");
     transposition_table.resize(MAX_TT_SIZE);
+    memset(transposition_table.data(), 0, sizeof(TT_Entry) * transposition_table.size());
     while (true) {
         string word;
         cin >> word;
@@ -597,11 +603,12 @@ int main() {
             string bestmove_str;
             Stack stack[128];
             for (int i = 1; i < 128; ++i) {
-                alphabeta(pos, -INF, INF, i, 0, stop_time, stack, history);
+                int score = alphabeta(pos, -INF, INF, i, 0, stop_time, stack, history);
                 if (now() >= stop_time) {
                     break;
                 }
                 bestmove_str = move_str(stack[0].move, pos.flipped);
+                cout << "info depth " << i << " score cp " << score << " pv " << bestmove_str << std::endl;
             }
             cout << "bestmove " << bestmove_str << "\n";
         } else if (word == "position") {
