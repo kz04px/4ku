@@ -454,9 +454,15 @@ int alphabeta(Position &pos,
         if (tt_entry.key == tt_key) {
             tt_move = tt_entry.move;
             if (tt_entry.depth >= depth) {
-                if (tt_entry.flag == 0) return tt_entry.score;
-                if (tt_entry.flag == 1 && tt_entry.score <= alpha) return tt_entry.score;
-                if (tt_entry.flag == 2 && tt_entry.score >= beta) return tt_entry.score;
+                if (tt_entry.flag == 0) {
+                    return tt_entry.score;
+                }
+                if (tt_entry.flag == 1 && tt_entry.score <= alpha) {
+                    return tt_entry.score;
+                }
+                if (tt_entry.flag == 2 && tt_entry.score >= beta) {
+                    return tt_entry.score;
+                }
             }
         }
         // Reverse futility pruning
