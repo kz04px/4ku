@@ -392,7 +392,7 @@ const int rook_rank78 = S(46, 11);
         copy &= copy -1;
         hash ^= keys[(piece_on(pos, sq) + 6 * ((pos.colour[pos.flipped ^ 1] >> sq) & 1)) * 64 + sq];
     }
-    if (lsb(pos.ep) != 64) hash ^= keys[768 + lsb(pos.ep)];
+    if (pos.ep) hash ^= keys[768 + lsb(pos.ep)];
     hash ^= keys[832 + (pos.castling[0] | pos.castling[1] << 1 | pos.castling[2] << 2 | pos.castling[3] << 3)];
 
     return hash;
@@ -402,10 +402,10 @@ int MAX_TT_SIZE = 2000000;
 
 struct TT_Entry {
     uint64_t key = 0;
-    int score = 0;
     Move move = Move{};
-    int depth = 0;
-    int flag = 0;
+    int score = 0;
+    uint8_t depth = 0;
+    uint8_t flag = 0;
 };
 
 vector<TT_Entry> transposition_table;
@@ -563,11 +563,8 @@ int alphabeta(Position &pos,
     // Return mate or draw scores if no moves found and not in qsearch
     if (!in_qsearch && best_score == -INF) {
         return in_check ? -MATE_SCORE : 0;
-    } else if (!in_qsearch) {
-        tt_entry = transposition_table[tt_key % MAX_TT_SIZE];
-        if (tt_entry.key != tt_key || depth >= tt_entry.depth || tt_flag == 0) {
-            tt_entry = TT_Entry{tt_key, best_score, stack[ply].move, depth, tt_flag};
-        }
+    } else if (!in_qsearch && (tt_entry.key != tt_key || depth >= tt_entry.depth || tt_flag == 0)) {
+        tt_entry = TT_Entry{tt_key, stack[ply].move, best_score, (uint8_t)depth, (uint8_t)tt_flag};
     }
     return alpha;
 }
@@ -600,12 +597,11 @@ int main() {
             string bestmove_str;
             Stack stack[128];
             for (int i = 1; i < 128; ++i) {
-                int score = alphabeta(pos, -INF, INF, i, 0, stop_time, stack, history);
+                alphabeta(pos, -INF, INF, i, 0, stop_time, stack, history);
                 if (now() >= stop_time) {
                     break;
                 }
                 bestmove_str = move_str(stack[0].move, pos.flipped);
-                // cout << "info depth " << i << " score cp " << score << " pv " << bestmove_str << std::endl;
             }
             cout << "bestmove " << bestmove_str << "\n";
         } else if (word == "position") {
