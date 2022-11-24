@@ -67,8 +67,6 @@ struct [[nodiscard]] Stack {
     Move killer;
 };
 
-const int MAX_TT_SIZE = 2000000;
-
 struct TT_Entry {
     uint64_t key;
     Move move;
@@ -77,6 +75,7 @@ struct TT_Entry {
     uint16_t flag;
 };
 
+const int MAX_TT_SIZE = 2000000;
 vector<TT_Entry> transposition_table;
 
 [[nodiscard]] BB flip(const BB bb) {
