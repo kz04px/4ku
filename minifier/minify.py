@@ -339,6 +339,7 @@ def rename(tokens):
         "tt_flag":"cr",
         "TT_Entry":"cs",
         "MAX_TT_SIZE":"ct",
+        "best_move":"cu",
         # Labels
         "do_search":"bk",
         "full_search":"bl",
