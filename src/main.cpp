@@ -537,7 +537,7 @@ int alphabeta(Position &pos,
             continue;
         }
 
-        int new_alpha = legal_moves == 0 ? -beta : -alpha - 1;
+        int new_alpha = (legal_moves == 0 || in_qsearch || move == tt_move) ? -beta : -alpha - 1;
         goto do_search;
     full_window:
         new_alpha = -beta;
