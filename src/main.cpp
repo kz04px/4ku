@@ -566,13 +566,15 @@ int alphabeta(Position &pos,
             continue;
         }
 
-        int new_alpha = legal_moves == 0 || in_qsearch ? -beta : -alpha - 1;
-    do_search:
-        const int score = -alphabeta(npos, new_alpha, -alpha, depth - 1, ply + 1, stop_time, stack, history);
-
-        if (score > alpha && new_alpha != -beta) {
-            new_alpha = -beta;
-            goto do_search;
+        int score;
+        if (in_qsearch || !legal_moves) {
+        full_window:
+            score = -alphabeta(npos, -beta, -alpha, depth - 1, ply + 1, stop_time, stack, history);
+        } else {
+            score = -alphabeta(npos, -alpha - 1, -alpha, depth - 1, ply + 1, stop_time, stack, history);
+            if (score > alpha) {
+                goto full_window;
+            }
         }
 
         if (score > best_score) {
