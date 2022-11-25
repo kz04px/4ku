@@ -348,6 +348,9 @@ def rename(tokens):
         "protected_by_pawns":"da",
         "piece_bb":"db",
         "legal_moves":"dc",
+        "quiet":"dd",
+        "new_depth":"de",
+        "pv_node":"df",
         # Labels
         "do_search":"bk",
         "full_search":"bl",
