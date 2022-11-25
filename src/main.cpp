@@ -365,19 +365,19 @@ const int king_shield[] = { S(23, -10), S(10, -15) };
                 copy &= copy - 1;
                 const int rank = sq / 8;
                 const int file = sq % 8;
-                const int centrality = (7 - abs(7 - rank - file) - abs(rank - file)) / 2;
+                const BB piece_bb = 1ULL << sq;
 
                 // Material
                 score += material[p];
 
                 // Centrality
+                const int centrality = (7 - abs(7 - rank - file) - abs(rank - file)) / 2;
                 score += centrality * centralities[p];
 
                 // Closeness to outside files
                 score += abs(file - 3) * outside_files[p];
 
                 // Pawn protection
-                const BB piece_bb = 1ULL << sq;
                 if (piece_bb & protected_by_pawns) {
                     score += pawn_protection[p];
                 }
@@ -416,7 +416,7 @@ const int king_shield[] = { S(23, -10), S(10, -15) };
                     }
                 }
                 // King safety
-                else if (p == King && rank == 0 && file != 3 && file != 4) {
+                else if (p == King && piece_bb & 0xE7) {
                     const BB shield = file < 3 ? 0x700 : 0xE000;
                     score += count(shield & pawns[0]) * king_shield[0] + count(north(shield) & pawns[0]) * king_shield[1];
                 }
