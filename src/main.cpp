@@ -474,8 +474,8 @@ int alphabeta(Position &pos,
         }
     } else if (ply > 0) {
         // Repetition detection
-        for (const auto &old_pos : hash_history) {
-            if (old_pos == tt_key) {
+        for (const auto &old_hash : hash_history) {
+            if (old_hash == tt_key) {
                 return 0;
             }
         }
