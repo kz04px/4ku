@@ -340,6 +340,13 @@ def rename(tokens):
         "TT_Entry":"cs",
         "MAX_TT_SIZE":"ct",
         "best_move":"cu",
+        "bishop_pair":"cv",
+        "pawn_doubled":"cw",
+        "pawn_passed_blocked":"cx",
+        "outside_files":"cy",
+        "pawn_protection":"cz",
+        "protected_by_pawns":"da",
+        "piece_bb":"db",
         # Labels
         "do_search":"bk",
         "full_search":"bl",
