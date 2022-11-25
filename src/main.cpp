@@ -554,6 +554,7 @@ int alphabeta(Position &pos,
         }
 
         const auto move = moves[best_move_index];
+        const int move_score = move_scores[best_move_index];
         moves[best_move_index] = moves[i];
         move_scores[best_move_index] = move_scores[i];
 
@@ -571,7 +572,7 @@ int alphabeta(Position &pos,
 
         int new_alpha = in_qsearch || !legal_moves ? -beta : -alpha - 1;
 
-        int new_depth = depth > 3 && legal_moves > 4 && !in_check && quiet && !pv_node ? depth - 2 : depth - 1;
+        int new_depth = depth > 3 && legal_moves > 4 && !in_check && move_score < (1 << 8) && !pv_node ? depth - 2 : depth - 1;
 
     do_search:
         int score = -alphabeta(npos, new_alpha, -alpha, new_depth, ply + 1, stop_time, stack, history);
