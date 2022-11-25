@@ -3,6 +3,7 @@
 #include <cstdio>
 #include <cstring>
 #include <ctime>
+#include <cmath>
 #include <iostream>
 #include <string>
 #include <vector>
@@ -453,6 +454,7 @@ int alphabeta(Position &pos,
               const int do_null = true) {
     const auto in_check = attacked(pos, lsb(pos.colour[0] & pos.pieces[King]));
     const int static_eval = eval(pos);
+    const bool pv_node = alpha != beta - 1;
 
     // Check extensions
     depth += in_check;
@@ -556,8 +558,10 @@ int alphabeta(Position &pos,
         moves[best_move_index] = moves[i];
         move_scores[best_move_index] = move_scores[i];
 
+        const bool quiet = piece_on(pos, move.to) == None;
+
         // qsearch needs captures only
-        if (in_qsearch && piece_on(pos, move.to) == None) {
+        if (in_qsearch && quiet) {
             break;
         }
 
@@ -566,15 +570,24 @@ int alphabeta(Position &pos,
             continue;
         }
 
-        int score;
-        if (in_qsearch || !legal_moves) {
-        full_window:
-            score = -alphabeta(npos, -beta, -alpha, depth - 1, ply + 1, stop_time, stack, history);
-        } else {
-            score = -alphabeta(npos, -alpha - 1, -alpha, depth - 1, ply + 1, stop_time, stack, history);
-            if (score > alpha) {
-                goto full_window;
+        int new_alpha = in_qsearch || !legal_moves ? -beta : -alpha - 1;
+
+        int new_depth = depth - 1;
+        if (depth > 3 && legal_moves > 3 && !in_check && quiet && !pv_node) {
+            new_depth -= int(sqrt(depth) * 0.5 + sqrt(legal_moves) * 0.55 - 0.3);
+            new_depth = min(depth - 1, new_depth);
+        }
+
+    do_search:
+        int score = -alphabeta(npos, new_alpha, -alpha, new_depth, ply + 1, stop_time, stack, history);
+
+        if (score > alpha && new_alpha != -beta) {
+            if (new_depth != depth - 1) {
+                new_depth = depth - 1;
+            } else {
+                new_alpha = -beta;
             }
+            goto do_search;
         }
 
         if (score > best_score) {
@@ -589,8 +602,7 @@ int alphabeta(Position &pos,
 
         if (alpha >= beta) {
             tt_flag = 2;  // Beta flag
-            const int capture = piece_on(pos, move.to);
-            if (capture == None) {
+            if (quiet) {
                 stack[ply].killer = move;
             }
             break;
