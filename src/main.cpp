@@ -339,6 +339,17 @@ const int rook_semi_open = S(33, 10);
 const int rook_open = S(74, 2);
 const int rook_rank78 = S(47, 10);
 const int king_shield[] = { S(23, -10), S(10, -15) };
+const int material[] = {S(70, 134), S(409, 314), S(415, 346), S(569, 627), S(1285, 1124), 0};
+const int centralities[] = {S(18, -14), S(22, 16), S(23, 8), S(-7, 2), S(-2, 28), S(-38, 27)};
+const int outside_files[] = {S(7, -6), S(3, -5), S(6, -3), S(-8, -0), S(-3, 6), S(19, -4)};
+const int pawn_protection[] = {S(8, 15), S(6, 23), S(-6, 18), S(-1, 14), S(-6, 16), 0};
+const int passers[] = {S(17, 6), S(3, 11), S(-12, 28), S(5, 52), S(31, 127), S(120, 223)};
+const int pawn_doubled = S(-25, -29);
+const int pawn_passed_blocked = S(8, -51);
+const int bishop_pair = S(35, 60);
+const int rook_semi_open = S(33, 12);
+const int rook_open = S(73, 4);
+const int rook_rank78 = S(51, 10);
 
 [[nodiscard]] int eval(Position &pos) {
     // Include side to move bonus
