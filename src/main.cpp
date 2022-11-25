@@ -572,11 +572,7 @@ int alphabeta(Position &pos,
 
         int new_alpha = in_qsearch || !legal_moves ? -beta : -alpha - 1;
 
-        int new_depth = depth - 1;
-        if (depth > 3 && legal_moves > 3 && !in_check && quiet && !pv_node) {
-            new_depth -= int(sqrt(depth) * 0.5 + sqrt(legal_moves) * 0.55 - 0.3);
-            new_depth = min(depth - 1, new_depth);
-        }
+        int new_depth = depth > 3 && legal_moves > 4 && !in_check && quiet && !pv_node ? depth - 2 : depth - 1;
 
     do_search:
         int score = -alphabeta(npos, new_alpha, -alpha, new_depth, ply + 1, stop_time, stack, history);
