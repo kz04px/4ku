@@ -537,14 +537,13 @@ int alphabeta(Position &pos,
             continue;
         }
 
-        int new_alpha = (legal_moves == 0 || in_qsearch || move == tt_move) ? -beta : -alpha - 1;
-        goto do_search;
-    full_window:
-        new_alpha = -beta;
+        int new_alpha = legal_moves == 0 || in_qsearch || move == tt_move ? -beta : -alpha - 1;
     do_search:
         const int score = -alphabeta(npos, new_alpha, -alpha, depth - 1, ply + 1, stop_time, stack, history);
+
         if (score > alpha && new_alpha != -beta) {
-            goto full_window;
+            new_alpha = -beta;
+            goto do_search;
         }
 
         if (score > best_score) {
