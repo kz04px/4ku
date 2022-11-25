@@ -497,10 +497,8 @@ int alphabeta(Position &pos,
     for (int j = 0; j < num_moves; ++j) {
         int move_score = 0;
         const int capture = piece_on(pos, moves[j].to);
-        if (!in_qsearch && moves[j] == stack[ply].move) {
+        if (!in_qsearch && moves[j] == tt_move) {
             move_score = 1 << 16;
-        } else if (!in_qsearch && moves[j] == tt_move) {
-            move_score = 1 << 15;
         } else {
             if (capture != None) {
                 move_score = ((capture + 1) * (1 << 10)) - piece_on(pos, moves[j].from);
@@ -512,6 +510,7 @@ int alphabeta(Position &pos,
     }
 
     int best_score = -INF;
+    Move best_move{};
     uint16_t tt_flag = 1;  // Alpha flag
     history.push_back(pos);
     for (int i = 0; i < num_moves; ++i) {
@@ -550,6 +549,7 @@ int alphabeta(Position &pos,
 
         if (score > best_score) {
             best_score = score;
+            best_move = move;
             if (score > alpha) {
                 tt_flag = 0;  // Exact flag
                 raised_alpha = true;
@@ -569,16 +569,14 @@ int alphabeta(Position &pos,
     }
     history.pop_back();
 
-    // Prevent TT saving if the search ran out of time
-    if (now() >= stop_time) {
-        return 0;
-    }
-
     // Return mate or draw scores if no moves found and not in qsearch
     if (!in_qsearch && best_score == -INF) {
-        return in_check ? -MATE_SCORE : 0;
-    } else if (!in_qsearch && (tt_entry.key != tt_key || depth >= tt_entry.depth || tt_flag == 0)) {
-        tt_entry = TT_Entry{tt_key, stack[ply].move, best_score, depth, tt_flag};
+        return in_check ? ply - MATE_SCORE : 0;
+    }
+
+    // Save to TT if didn't run out of time
+    if (!in_qsearch && (tt_entry.key != tt_key || depth >= tt_entry.depth || tt_flag == 0) && now() < stop_time) {
+        tt_entry = TT_Entry{tt_key, best_move, best_score, depth, tt_flag};
     }
 
     return alpha;
