@@ -323,7 +323,7 @@ def rename(tokens):
         "func":"bv",
         "best_move_index":"cb",
         "killer":"cd",
-        "history":"ce",
+        "repetition_table":"ce",
         "old_pos":"cf",
         "phase":"cg",
         "phases":"ch",

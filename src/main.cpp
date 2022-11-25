@@ -449,11 +449,11 @@ int alphabeta(Position &pos,
               const int ply,
               const long long int stop_time,
               Stack *const stack,
-              vector<Position> &history,
+              vector<uint64_t> &repetition_table,
               const int do_null = true) {
     const auto in_check = attacked(pos, lsb(pos.colour[0] & pos.pieces[King]));
     const int static_eval = eval(pos);
-    const bool pv_node = alpha != beta - 1;
+    int raised_alpha = false;
 
     // Check extensions
     depth += in_check;
@@ -474,8 +474,8 @@ int alphabeta(Position &pos,
         }
     } else if (ply > 0) {
         // Repetition detection
-        for (const auto &old_pos : history) {
-            if (old_pos.pieces == pos.pieces && old_pos.colour == pos.colour && old_pos.flipped == pos.flipped) {
+        for (const auto &old_pos : repetition_table) {
+            if (old_pos == tt_key) {
                 return 0;
             }
         }
@@ -508,7 +508,7 @@ int alphabeta(Position &pos,
             auto npos = pos;
             flip(npos);
             npos.ep = 0;
-            if (-alphabeta(npos, -beta, -beta + 1, depth - 3, ply + 1, stop_time, stack, history, false) >= beta) {
+            if (-alphabeta(npos, -beta, -beta + 1, depth - 3, ply + 1, stop_time, stack, repetition_table, false) >= beta) {
                 return beta;
             }
         }
@@ -539,11 +539,10 @@ int alphabeta(Position &pos,
         move_scores[j] = move_score;
     }
 
-    int legal_moves = 0;
     int best_score = -INF;
     Move best_move{};
     uint16_t tt_flag = 1;  // Alpha flag
-    history.push_back(pos);
+    repetition_table.push_back(tt_key);
     for (int i = 0; i < num_moves; ++i) {
         // Find best move remaining
         int best_move_index = i;
@@ -554,14 +553,11 @@ int alphabeta(Position &pos,
         }
 
         const auto move = moves[best_move_index];
-        const int move_score = move_scores[best_move_index];
         moves[best_move_index] = moves[i];
         move_scores[best_move_index] = move_scores[i];
 
-        const bool quiet = piece_on(pos, move.to) == None;
-
         // qsearch needs captures only
-        if (in_qsearch && quiet) {
+        if (in_qsearch && piece_on(pos, move.to) == None) {
             break;
         }
 
@@ -570,26 +566,15 @@ int alphabeta(Position &pos,
             continue;
         }
 
-        int new_alpha = in_qsearch || !legal_moves ? -beta : -alpha - 1;
-
-        int new_depth = depth - 1;
-        if (depth > 2 && legal_moves > 4 && !in_check && move_score < (1 << 8) && !pv_node) {
-            new_depth--;
-            if (legal_moves > 9) {
-                new_depth--;
+        int score;
+        if (in_qsearch || !raised_alpha) {
+        full_window:
+            score = -alphabeta(npos, -beta, -alpha, depth - 1, ply + 1, stop_time, stack, repetition_table);
+        } else {
+            score = -alphabeta(npos, -alpha - 1, -alpha, depth - 1, ply + 1, stop_time, stack, repetition_table);
+            if (score > alpha) {
+                goto full_window;
             }
-        }
-
-    do_search:
-        int score = -alphabeta(npos, new_alpha, -alpha, new_depth, ply + 1, stop_time, stack, history);
-
-        if (score > alpha && new_alpha != -beta) {
-            if (new_depth != depth - 1) {
-                new_depth = depth - 1;
-            } else {
-                new_alpha = -beta;
-            }
-            goto do_search;
         }
 
         if (score > best_score) {
@@ -597,6 +582,7 @@ int alphabeta(Position &pos,
             best_move = move;
             if (score > alpha) {
                 tt_flag = 0;  // Exact flag
+                raised_alpha = true;
                 alpha = score;
                 stack[ply].move = move;
             }
@@ -604,15 +590,14 @@ int alphabeta(Position &pos,
 
         if (alpha >= beta) {
             tt_flag = 2;  // Beta flag
-            if (quiet) {
+            const int capture = piece_on(pos, move.to);
+            if (capture == None) {
                 stack[ply].killer = move;
             }
             break;
         }
-
-        legal_moves++;
     }
-    history.pop_back();
+    repetition_table.pop_back();
 
     // Return mate or draw scores if no moves found and not in qsearch
     if (!in_qsearch && best_score == -INF) {
@@ -630,7 +615,7 @@ int alphabeta(Position &pos,
 int main() {
     setbuf(stdout, NULL);
     Position pos;
-    vector<Position> history;
+    vector<uint64_t> repetition_table;
     Move moves[256];
     getchar();
     puts("id name 4ku2\nid author kz04px\nuciok");
@@ -656,7 +641,7 @@ int main() {
             string bestmove_str;
             Stack stack[128];
             for (int i = 1; i < 128; ++i) {
-                alphabeta(pos, -INF, INF, i, 0, stop_time, stack, history);
+                alphabeta(pos, -INF, INF, i, 0, stop_time, stack, repetition_table);
                 if (now() >= stop_time) {
                     break;
                 }
@@ -665,15 +650,15 @@ int main() {
             cout << "bestmove " << bestmove_str << "\n";
         } else if (word == "position") {
             pos = Position();
-            history.clear();
+            repetition_table.clear();
         } else {
             const int num_moves = movegen(pos, moves);
             for (int i = 0; i < num_moves; ++i) {
                 if (word == move_str(moves[i], pos.flipped)) {
                     if (piece_on(pos, moves[i].to) != None || piece_on(pos, moves[i].from) == Pawn) {
-                        history.clear();
+                        repetition_table.clear();
                     } else {
-                        history.push_back(pos);
+                        repetition_table.push_back(get_hash(pos));
                     }
 
                     makemove(pos, moves[i]);
