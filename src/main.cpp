@@ -327,12 +327,17 @@ void generate_piece_moves(Move *const movelist,
 }
 
 const int phases[] = {0, 1, 1, 2, 4, 0};
-const int material[] = {S(75, 111), S(387, 286), S(419, 326), S(505, 589), S(1182, 1070), 0};
-const int centralities[] = {S(14, -8), S(19, 21), S(20, 10), S(-4, 4), S(-5, 28), S(-47, 28)};
-const int passers[] = {S(29, 7), S(18, 7), S(-4, 19), S(7, 39), S(27, 112), S(106, 205)};
-const int rook_semi_open = S(27, 13);
-const int rook_open = S(74, 3);
-const int rook_rank78 = S(46, 11);
+const int material[] = {S(70, 134), S(409, 314), S(415, 346), S(569, 627), S(1285, 1124), 0};
+const int centralities[] = {S(18, -14), S(22, 16), S(23, 8), S(-7, 2), S(-2, 28), S(-38, 27)};
+const int outside_files[] = {S(7, -6), S(3, -5), S(6, -3), S(-8, -0), S(-3, 6), S(19, -4)};
+const int pawn_protection[] = {S(8, 15), S(6, 23), S(-6, 18), S(-1, 14), S(-6, 16), 0};
+const int passers[] = {S(17, 6), S(3, 11), S(-12, 28), S(5, 52), S(31, 127), S(120, 223)};
+const int pawn_doubled = S(-25, -29);
+const int pawn_passed_blocked = S(8, -51);
+const int bishop_pair = S(35, 60);
+const int rook_semi_open = S(33, 12);
+const int rook_open = S(73, 4);
+const int rook_rank78 = S(51, 10);
 
 [[nodiscard]] int eval(Position &pos) {
     // Include side to move bonus
@@ -342,6 +347,12 @@ const int rook_rank78 = S(46, 11);
     for (int c = 0; c < 2; ++c) {
         // our pawns, their pawns
         const BB pawns[] = {pos.colour[0] & pos.pieces[Pawn], pos.colour[1] & pos.pieces[Pawn]};
+        const BB protected_by_pawns = nw(pawns[0]) | ne(pawns[0]);
+
+        // Bishop pair
+        if (count(pos.colour[0] & pos.pieces[Bishop]) == 2) {
+            score += bishop_pair;
+        }
 
         // For each piece type
         for (int p = 0; p < 6; ++p) {
@@ -361,12 +372,31 @@ const int rook_rank78 = S(46, 11);
                 // Centrality
                 score += centrality * centralities[p];
 
+                // Closeness to outside files
+                score += abs(file - 3) * outside_files[p];
+
+                // Pawn protection
+                const BB piece_bb = 1ULL << sq;
+                if (piece_bb & protected_by_pawns) {
+                    score += pawn_protection[p];
+                }
+
                 if (p == Pawn) {
                     // Passed pawns
                     BB blockers = 0x101010101010101ULL << sq;
                     blockers = nw(blockers) | ne(blockers);
                     if (!(blockers & pawns[1])) {
                         score += passers[rank - 1];
+
+                        // Blocked passed pawns
+                        if (north(piece_bb) & pos.colour[1]) {
+                            score += pawn_passed_blocked;
+                        }
+                    }
+
+                    // Doubled pawns
+                    if ((north(piece_bb) | north(north(piece_bb))) & pawns[0]) {
+                        score += pawn_doubled;
                     }
                 } else if (p == Rook) {
                     // Rook on open or semi-open files
@@ -496,10 +526,8 @@ int alphabeta(Position &pos,
     for (int j = 0; j < num_moves; ++j) {
         int move_score = 0;
         const int capture = piece_on(pos, moves[j].to);
-        if (!in_qsearch && moves[j] == stack[ply].move) {
+        if (!in_qsearch && moves[j] == tt_move) {
             move_score = 1 << 16;
-        } else if (!in_qsearch && moves[j] == tt_move) {
-            move_score = 1 << 15;
         } else {
             if (capture != None) {
                 move_score = ((capture + 1) * (1 << 10)) - piece_on(pos, moves[j].from);
@@ -512,6 +540,7 @@ int alphabeta(Position &pos,
 
     int legal_moves = 0;
     int best_score = -INF;
+    Move best_move{};
     uint16_t tt_flag = 1;  // Alpha flag
     history.push_back(pos);
     for (int i = 0; i < num_moves; ++i) {
@@ -548,6 +577,7 @@ int alphabeta(Position &pos,
 
         if (score > best_score) {
             best_score = score;
+            best_move = move;
             if (score > alpha) {
                 tt_flag = 0;  // Exact flag
                 alpha = score;
@@ -568,16 +598,14 @@ int alphabeta(Position &pos,
     }
     history.pop_back();
 
-    // Prevent TT saving if the search ran out of time
-    if (now() >= stop_time) {
-        return 0;
-    }
-
     // Return mate or draw scores if no moves found and not in qsearch
     if (!in_qsearch && best_score == -INF) {
-        return in_check ? -MATE_SCORE : 0;
-    } else if (!in_qsearch && (tt_entry.key != tt_key || depth >= tt_entry.depth || tt_flag == 0)) {
-        tt_entry = TT_Entry{tt_key, stack[ply].move, best_score, depth, tt_flag};
+        return in_check ? ply - MATE_SCORE : 0;
+    }
+
+    // Save to TT if didn't run out of time
+    if (!in_qsearch && (tt_entry.key != tt_key || depth >= tt_entry.depth || tt_flag == 0) && now() < stop_time) {
+        tt_entry = TT_Entry{tt_key, best_move, best_score, depth, tt_flag};
     }
 
     return alpha;
