@@ -347,6 +347,8 @@ def rename(tokens):
         "pawn_protection":"cz",
         "protected_by_pawns":"da",
         "piece_bb":"db",
+        "king_shield":"dc",
+        "shield": "dd",
         # Labels
         "do_search":"bk",
         "full_search":"bl",
