@@ -566,7 +566,7 @@ int alphabeta(Position &pos,
             continue;
         }
 
-        int new_alpha = legal_moves == 0 || in_qsearch || move == tt_move ? -beta : -alpha - 1;
+        int new_alpha = legal_moves == 0 || in_qsearch ? -beta : -alpha - 1;
     do_search:
         const int score = -alphabeta(npos, new_alpha, -alpha, depth - 1, ply + 1, stop_time, stack, history);
 
