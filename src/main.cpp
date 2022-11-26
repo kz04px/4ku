@@ -37,6 +37,8 @@ struct [[nodiscard]] Move {
 
 using BB = uint64_t;
 
+uint64_t hh_table[64][64];
+
 struct [[nodiscard]] Position {
     array<BB, 2> colour = {0xFFFFULL, 0xFFFF000000000000ULL};
     array<BB, 6> pieces = {0xFF00000000FF00ULL,
@@ -455,7 +457,7 @@ int alphabeta(Position &pos,
               const int ply,
               const long long int stop_time,
               Stack *const stack,
-              vector<Position> &history,
+              vector<uint64_t> &hash_history,
               const int do_null = true) {
     const auto in_check = attacked(pos, lsb(pos.colour[0] & pos.pieces[King]));
     const int static_eval = eval(pos);
@@ -480,25 +482,9 @@ int alphabeta(Position &pos,
         }
     } else if (ply > 0) {
         // Repetition detection
-        for (const auto &old_pos : history) {
-            if (old_pos.pieces == pos.pieces && old_pos.colour == pos.colour && old_pos.flipped == pos.flipped) {
+        for (const auto old_hash : hash_history) {
+            if (old_hash == tt_key) {
                 return 0;
-            }
-        }
-
-        // TT Probing
-        if (tt_entry.key == tt_key) {
-            tt_move = tt_entry.move;
-            if (tt_entry.depth >= depth) {
-                if (tt_entry.flag == 0) {
-                    return tt_entry.score;
-                }
-                if (tt_entry.flag == 1 && tt_entry.score <= alpha) {
-                    return tt_entry.score;
-                }
-                if (tt_entry.flag == 2 && tt_entry.score >= beta) {
-                    return tt_entry.score;
-                }
             }
         }
 
@@ -514,8 +500,24 @@ int alphabeta(Position &pos,
             auto npos = pos;
             flip(npos);
             npos.ep = 0;
-            if (-alphabeta(npos, -beta, -beta + 1, depth - 3, ply + 1, stop_time, stack, history, false) >= beta) {
+            if (-alphabeta(npos, -beta, -beta + 1, depth - 3, ply + 1, stop_time, stack, hash_history, false) >= beta) {
                 return beta;
+            }
+        }
+    }
+
+    // TT Probing
+    if (tt_entry.key == tt_key) {
+        tt_move = tt_entry.move;
+        if (!in_qsearch && ply > 0 && tt_entry.depth >= depth) {
+            if (tt_entry.flag == 0) {
+                return tt_entry.score;
+            }
+            if (tt_entry.flag == 1 && tt_entry.score <= alpha) {
+                return tt_entry.score;
+            }
+            if (tt_entry.flag == 2 && tt_entry.score >= beta) {
+                return tt_entry.score;
             }
         }
     }
@@ -548,13 +550,18 @@ int alphabeta(Position &pos,
     int best_score = -INF;
     Move best_move{};
     uint16_t tt_flag = 1;  // Alpha flag
-    history.push_back(pos);
+    hash_history.push_back(tt_key);
     for (int i = 0; i < num_moves; ++i) {
         // Find best move remaining
         int best_move_index = i;
         for (int j = i; j < num_moves; ++j) {
             if (move_scores[j] > move_scores[best_move_index]) {
                 best_move_index = j;
+            } else if (move_scores[j] == move_scores[best_move_index]) {
+                if (hh_table[moves[j].from][moves[j].to] >
+                    hh_table[moves[best_move_index].from][moves[best_move_index].to]) {
+                    best_move_index = j;
+                }
             }
         }
 
@@ -575,9 +582,9 @@ int alphabeta(Position &pos,
         int score;
         if (in_qsearch || !raised_alpha) {
         full_window:
-            score = -alphabeta(npos, -beta, -alpha, depth - 1, ply + 1, stop_time, stack, history);
+            score = -alphabeta(npos, -beta, -alpha, depth - 1, ply + 1, stop_time, stack, hash_history);
         } else {
-            score = -alphabeta(npos, -alpha - 1, -alpha, depth - 1, ply + 1, stop_time, stack, history);
+            score = -alphabeta(npos, -alpha - 1, -alpha, depth - 1, ply + 1, stop_time, stack, hash_history);
             if (score > alpha) {
                 goto full_window;
             }
@@ -598,12 +605,13 @@ int alphabeta(Position &pos,
             tt_flag = 2;  // Beta flag
             const int capture = piece_on(pos, move.to);
             if (capture == None) {
+            	hh_table[move.from][move.to] += depth * depth;
                 stack[ply].killer = move;
             }
             break;
         }
     }
-    history.pop_back();
+    hash_history.pop_back();
 
     // Return mate or draw scores if no moves found and not in qsearch
     if (!in_qsearch && best_score == -INF) {
@@ -621,7 +629,7 @@ int alphabeta(Position &pos,
 int main() {
     setbuf(stdout, NULL);
     Position pos;
-    vector<Position> history;
+    vector<uint64_t> hash_history;
     Move moves[256];
     getchar();
     puts("id name 4ku2\nid author kz04px\nuciok");
@@ -646,8 +654,9 @@ int main() {
             const auto stop_time = now() + (pos.flipped ? btime : wtime) / 30;
             string bestmove_str;
             Stack stack[128];
+            memset(hh_table, 0, sizeof(hh_table));
             for (int i = 1; i < 128; ++i) {
-                alphabeta(pos, -INF, INF, i, 0, stop_time, stack, history);
+                alphabeta(pos, -INF, INF, i, 0, stop_time, stack, hash_history);
                 if (now() >= stop_time) {
                     break;
                 }
@@ -656,15 +665,15 @@ int main() {
             cout << "bestmove " << bestmove_str << "\n";
         } else if (word == "position") {
             pos = Position();
-            history.clear();
+            hash_history.clear();
         } else {
             const int num_moves = movegen(pos, moves);
             for (int i = 0; i < num_moves; ++i) {
                 if (word == move_str(moves[i], pos.flipped)) {
                     if (piece_on(pos, moves[i].to) != None || piece_on(pos, moves[i].from) == Pawn) {
-                        history.clear();
+                        hash_history.clear();
                     } else {
-                        history.push_back(pos);
+                        hash_history.push_back(get_hash(pos));
                     }
 
                     makemove(pos, moves[i]);
