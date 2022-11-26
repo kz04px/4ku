@@ -347,6 +347,7 @@ def rename(tokens):
         "pawn_protection":"cz",
         "protected_by_pawns":"da",
         "piece_bb":"db",
+        "hh_table":"dc",
         # Labels
         "do_search":"bk",
         "full_search":"bl",
