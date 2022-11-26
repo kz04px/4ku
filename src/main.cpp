@@ -474,25 +474,9 @@ int alphabeta(Position &pos,
         }
     } else if (ply > 0) {
         // Repetition detection
-        for (const auto &old_pos : hash_history) {
-            if (old_pos == tt_key) {
+        for (const auto old_hash : hash_history) {
+            if (old_hash == tt_key) {
                 return 0;
-            }
-        }
-
-        // TT Probing
-        if (tt_entry.key == tt_key) {
-            tt_move = tt_entry.move;
-            if (tt_entry.depth >= depth) {
-                if (tt_entry.flag == 0) {
-                    return tt_entry.score;
-                }
-                if (tt_entry.flag == 1 && tt_entry.score <= alpha) {
-                    return tt_entry.score;
-                }
-                if (tt_entry.flag == 2 && tt_entry.score >= beta) {
-                    return tt_entry.score;
-                }
             }
         }
 
@@ -510,6 +494,22 @@ int alphabeta(Position &pos,
             npos.ep = 0;
             if (-alphabeta(npos, -beta, -beta + 1, depth - 3, ply + 1, stop_time, stack, hash_history, false) >= beta) {
                 return beta;
+            }
+        }
+    }
+
+    // TT Probing
+    if (tt_entry.key == tt_key) {
+        tt_move = tt_entry.move;
+        if (!in_qsearch && ply > 0 && tt_entry.depth >= depth) {
+            if (tt_entry.flag == 0) {
+                return tt_entry.score;
+            }
+            if (tt_entry.flag == 1 && tt_entry.score <= alpha) {
+                return tt_entry.score;
+            }
+            if (tt_entry.flag == 2 && tt_entry.score >= beta) {
+                return tt_entry.score;
             }
         }
     }

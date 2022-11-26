@@ -324,7 +324,7 @@ def rename(tokens):
         "best_move_index":"cb",
         "killer":"cd",
         "hash_history":"ce",
-        "old_pos":"cf",
+        "old_hash":"cf",
         "phase":"cg",
         "phases":"ch",
         "do_null":"ci",
