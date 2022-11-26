@@ -37,6 +37,8 @@ struct [[nodiscard]] Move {
 
 using BB = uint64_t;
 
+uint64_t hh_table[64][64];
+
 struct [[nodiscard]] Position {
     array<BB, 2> colour = {0xFFFFULL, 0xFFFF000000000000ULL};
     array<BB, 6> pieces = {0xFF00000000FF00ULL,
@@ -549,6 +551,11 @@ int alphabeta(Position &pos,
         for (int j = i; j < num_moves; ++j) {
             if (move_scores[j] > move_scores[best_move_index]) {
                 best_move_index = j;
+            } else if (move_scores[j] == move_scores[best_move_index]) {
+                if (hh_table[moves[j].from][moves[j].to] >
+                    hh_table[moves[best_move_index].from][moves[best_move_index].to]) {
+                    best_move_index = j;
+                }
             }
         }
 
@@ -592,6 +599,7 @@ int alphabeta(Position &pos,
             tt_flag = 2;  // Beta flag
             const int capture = piece_on(pos, move.to);
             if (capture == None) {
+            	hh_table[move.from][move.to] += depth * depth;
                 stack[ply].killer = move;
             }
             break;
@@ -640,6 +648,7 @@ int main() {
             const auto stop_time = now() + (pos.flipped ? btime : wtime) / 30;
             string bestmove_str;
             Stack stack[128];
+            memset(hh_table, 0, sizeof(hh_table));
             for (int i = 1; i < 128; ++i) {
                 alphabeta(pos, -INF, INF, i, 0, stop_time, stack, hash_history);
                 if (now() >= stop_time) {
