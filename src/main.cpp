@@ -601,7 +601,7 @@ int alphabeta(Position &pos,
             tt_flag = 2;  // Beta flag
             const int capture = piece_on(pos, move.to);
             if (capture == None) {
-            	hh_table[move.from][move.to] += depth * depth;
+                hh_table[move.from][move.to] += depth * depth;
                 stack[ply].killer = move;
             }
             break;
