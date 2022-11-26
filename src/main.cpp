@@ -480,22 +480,6 @@ int alphabeta(Position &pos,
             }
         }
 
-        // TT Probing
-        if (tt_entry.key == tt_key) {
-            tt_move = tt_entry.move;
-            if (tt_entry.depth >= depth) {
-                if (tt_entry.flag == 0) {
-                    return tt_entry.score;
-                }
-                if (tt_entry.flag == 1 && tt_entry.score <= alpha) {
-                    return tt_entry.score;
-                }
-                if (tt_entry.flag == 2 && tt_entry.score >= beta) {
-                    return tt_entry.score;
-                }
-            }
-        }
-
         // Reverse futility pruning
         if (depth < 3) {
             const int margin = 120;
@@ -510,6 +494,22 @@ int alphabeta(Position &pos,
             npos.ep = 0;
             if (-alphabeta(npos, -beta, -beta + 1, depth - 3, ply + 1, stop_time, stack, hash_history, false) >= beta) {
                 return beta;
+            }
+        }
+    }
+
+    // TT Probing
+    if (tt_entry.key == tt_key) {
+        tt_move = tt_entry.move;
+        if (!in_qsearch && ply > 0 && tt_entry.depth >= depth) {
+            if (tt_entry.flag == 0) {
+                return tt_entry.score;
+            }
+            if (tt_entry.flag == 1 && tt_entry.score <= alpha) {
+                return tt_entry.score;
+            }
+            if (tt_entry.flag == 2 && tt_entry.score >= beta) {
+                return tt_entry.score;
             }
         }
     }
