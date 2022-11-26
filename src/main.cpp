@@ -552,7 +552,8 @@ int alphabeta(Position &pos,
             if (move_scores[j] > move_scores[best_move_index]) {
                 best_move_index = j;
             } else if (move_scores[j] == move_scores[best_move_index]) {
-                if (hh_table[moves[j].from][moves[j].to] > hh_table[moves[best_move_index].from][moves[best_move_index].to]) {
+                if (hh_table[moves[j].from][moves[j].to] >
+                    hh_table[moves[best_move_index].from][moves[best_move_index].to]) {
                     best_move_index = j;
                 }
             }
