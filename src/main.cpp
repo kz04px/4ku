@@ -329,18 +329,17 @@ void generate_piece_moves(Move *const movelist,
 }
 
 const int phases[] = {0, 1, 1, 2, 4, 0};
-const int material[] = { S(65, 129), S(396, 301), S(403, 331), S(539, 608), S(1259, 1072) };
-const int centralities[] = { S(18, -13), S(22, 15), S(23, 8), S(-3, -0), S(-2, 27), S(-33, 24) };
-const int outside_files[] = { S(8, -6), S(4, -5), S(7, -3), S(-2, -3), S(-2, 6), S(5, -1) };
-const int pawn_protection[] = { S(9, 14), S(5, 23), S(-7, 17), S(-4, 14), S(-6, 14), S(0, 0) };
-const int passers[] = { S(14, 7), S(3, 11), S(-12, 27), S(3, 50), S(30, 121), S(117, 214) };
-const int pawn_doubled = S(-23, -28);
-const int pawn_passed_blocked = S(7, -49);
-const int bishop_pair = S(35, 58);
-const int rook_semi_open = S(33, 10);
-const int rook_open = S(74, 2);
-const int rook_rank78 = S(47, 10);
-const int king_shield[] = { S(23, -10), S(10, -15) };
+const int material[] = {S(70, 135), S(408, 320), S(416, 345), S(570, 621), S(1299, 1077)};
+const int centralities[] = {S(18, -13), S(22, 16), S(23, 8), S(-7, 2), S(-3, 29), S(-36, 26)};
+const int outside_files[] = {S(6, -6), S(3, -6), S(6, -4), S(-8, -0), S(-3, 9), S(17, -5)};
+const int pawn_protection[] = {S(7, 14), S(6, 23), S(-5, 18), S(-1, 14), S(-7, 15), S(0, 0)};
+const int semi_open_file[] = {S(-1, 0), S(-4, 11), S(29, 15), S(-1, 21), S(-24, 20)};
+const int open_file[] = {S(-6, -11), S(-10, -3), S(68, 7), S(-9, 43), S(-61, 1)};
+const int passers[] = {S(16, 6), S(4, 10), S(-10, 26), S(6, 50), S(32, 125), S(121, 221)};
+const int pawn_doubled = S(-21, -33);
+const int pawn_passed_blocked = S(6, -47);
+const int bishop_pair = S(35, 59);
+const int rook_rank78 = S(52, 10);
 
 [[nodiscard]] int eval(Position &pos) {
     // Include side to move bonus
@@ -401,26 +400,23 @@ const int king_shield[] = { S(23, -10), S(10, -15) };
                     if ((north(piece_bb) | north(north(piece_bb))) & pawns[0]) {
                         score += pawn_doubled;
                     }
-                } else if (p == Rook) {
-                    // Rook on open or semi-open files
+                } else {
+                    // Piece on open or semi-open files
                     const BB file_bb = 0x101010101010101ULL << file;
                     if (!(file_bb & pawns[0])) {
                         if (!(file_bb & pawns[1])) {
-                            score += rook_open;
+                            score += open_file[p - 1];
                         } else {
-                            score += rook_semi_open;
+                            score += semi_open_file[p - 1];
                         }
                     }
 
-                    // Rook on 7th or 8th rank
-                    if (rank >= 6) {
-                        score += rook_rank78;
+                    if (p == Rook) {
+                        // Rook on 7th or 8th rank
+                        if (rank >= 6) {
+                            score += rook_rank78;
+                        }
                     }
-                }
-                // King safety
-                else if (p == King && piece_bb & 0xE7) {
-                    const BB shield = file < 3 ? 0x700 : 0xE000;
-                    score += count(shield & pawns[0]) * king_shield[0] + count(north(shield) & pawns[0]) * king_shield[1];
                 }
             }
         }
