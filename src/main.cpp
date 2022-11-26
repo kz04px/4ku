@@ -514,7 +514,7 @@ int alphabeta(Position &pos,
         }
     }
 
-    depth -= tt_move.from == tt_move.to && depth >= 4;
+    depth -= tt_move.from == tt_move.to && depth > 3;
 
     // Exit early if out of time
     if (now() >= stop_time) {
