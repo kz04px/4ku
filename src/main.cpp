@@ -669,9 +669,9 @@ int main() {
             // Lazy SMP
             vector<thread> threads;
             for (int i = 1; i < thread_count; ++i) {
-                threads.emplace_back([=]() mutable { iterative_deepen(pos, hash_history, stop_time); });
+                threads.emplace_back([=]() mutable { iteratively_deepen(pos, hash_history, stop_time); });
             }
-            const auto best_move = iterative_deepen(pos, hash_history, stop_time);
+            const auto best_move = iteratively_deepen(pos, hash_history, stop_time);
             for (int i = 1; i < thread_count; ++i) {
                 threads[i - 1].join();
             }
