@@ -666,6 +666,7 @@ int main() {
             cin >> btime;
             const auto stop_time = now() + (pos.flipped ? btime : wtime) / 30;
 
+            // Lazy SMP
             vector<thread> threads;
             for (int i = 1; i < thread_count; ++i) {
                 threads.emplace_back([=]() mutable { iterative_deepen(pos, hash_history, stop_time); });
