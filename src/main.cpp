@@ -663,7 +663,7 @@ int main() {
             cin >> btime;
             const auto stop_time = now() + (pos.flipped ? btime : wtime) / 30;
 
-            const int thread_count = 2;  // TODO: Read from UCI options
+            const int thread_count = 1;  // TODO: Read from UCI options
             auto threads = vector<thread>();
             for (int helper_id = 1; helper_id < thread_count; helper_id++) {
                 threads.emplace_back([=]() mutable { iterative_deepen(pos, hash_history, stop_time); });
