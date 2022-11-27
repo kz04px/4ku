@@ -5,6 +5,7 @@
 #include <ctime>
 #include <iostream>
 #include <string>
+#include <thread>
 #include <vector>
 
 #define MATE_SCORE (1 << 15)
@@ -29,15 +30,13 @@ enum
     None
 };
 
-struct [[nodiscard]] Move {
+struct Move {
     int from = 0;
     int to = 0;
     int promo = 0;
 };
 
 using BB = uint64_t;
-
-uint64_t hh_table[64][64];
 
 struct [[nodiscard]] Position {
     array<BB, 2> colour = {0xFFFFULL, 0xFFFF000000000000ULL};
@@ -77,7 +76,10 @@ const auto keys = []() {
     return values;
 }();
 
+// Engine options
 const int MAX_TT_SIZE = 2000000;
+const int thread_count = 1;
+
 vector<TT_Entry> transposition_table;
 
 [[nodiscard]] BB flip(const BB bb) {
@@ -451,6 +453,7 @@ int alphabeta(Position &pos,
               const int ply,
               const long long int stop_time,
               Stack *const stack,
+              uint64_t (&hh_table)[64][64],
               vector<uint64_t> &hash_history,
               const int do_null = true) {
     const auto in_check = attacked(pos, lsb(pos.colour[0] & pos.pieces[King]));
@@ -494,7 +497,9 @@ int alphabeta(Position &pos,
             auto npos = pos;
             flip(npos);
             npos.ep = 0;
-            if (-alphabeta(npos, -beta, -beta + 1, depth - 3, ply + 1, stop_time, stack, hash_history, false) >= beta) {
+            if (-alphabeta(
+                    npos, -beta, -beta + 1, depth - 3, ply + 1, stop_time, stack, hh_table, hash_history, false) >=
+                beta) {
                 return beta;
             }
         }
@@ -576,9 +581,9 @@ int alphabeta(Position &pos,
         int score;
         if (in_qsearch || !raised_alpha) {
         full_window:
-            score = -alphabeta(npos, -beta, -alpha, depth - 1, ply + 1, stop_time, stack, hash_history);
+            score = -alphabeta(npos, -beta, -alpha, depth - 1, ply + 1, stop_time, stack, hh_table, hash_history);
         } else {
-            score = -alphabeta(npos, -alpha - 1, -alpha, depth - 1, ply + 1, stop_time, stack, hash_history);
+            score = -alphabeta(npos, -alpha - 1, -alpha, depth - 1, ply + 1, stop_time, stack, hh_table, hash_history);
             if (score > alpha) {
                 goto full_window;
             }
@@ -620,6 +625,20 @@ int alphabeta(Position &pos,
     return alpha;
 }
 
+Move iteratively_deepen(Position &pos, vector<uint64_t> &hash_history, const int64_t stop_time) {
+    Move best_move;
+    Stack stack[128];
+    uint64_t hh_table[64][64] = {};
+    for (int i = 1; i < 128; ++i) {
+        alphabeta(pos, -INF, INF, i, 0, stop_time, stack, hh_table, hash_history);
+        if (now() >= stop_time) {
+            break;
+        }
+        best_move = stack[0].move;
+    }
+    return best_move;
+}
+
 int main() {
     setbuf(stdout, NULL);
     Position pos;
@@ -646,17 +665,18 @@ int main() {
             cin >> word;
             cin >> btime;
             const auto stop_time = now() + (pos.flipped ? btime : wtime) / 30;
-            string bestmove_str;
-            Stack stack[128];
-            memset(hh_table, 0, sizeof(hh_table));
-            for (int i = 1; i < 128; ++i) {
-                alphabeta(pos, -INF, INF, i, 0, stop_time, stack, hash_history);
-                if (now() >= stop_time) {
-                    break;
-                }
-                bestmove_str = move_str(stack[0].move, pos.flipped);
+
+            // Lazy SMP
+            vector<thread> threads;
+            for (int i = 1; i < thread_count; ++i) {
+                threads.emplace_back([=]() mutable { iteratively_deepen(pos, hash_history, stop_time); });
             }
-            cout << "bestmove " << bestmove_str << "\n";
+            const auto best_move = iteratively_deepen(pos, hash_history, stop_time);
+            for (int i = 1; i < thread_count; ++i) {
+                threads[i - 1].join();
+            }
+
+            cout << "bestmove " << move_str(best_move, pos.flipped) << "\n";
         } else if (word == "position") {
             pos = Position();
             hash_history.clear();
