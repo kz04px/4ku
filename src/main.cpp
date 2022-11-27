@@ -498,6 +498,11 @@ int alphabeta(Position &pos,
                 return beta;
             }
         }
+
+        // Razoring
+        if (depth < 3 && !in_check && static_eval + depth * 300 < alpha) {
+            return alphabeta(pos, alpha, beta, 0, ply, stop_time, stack, hash_history, do_null);
+        }
     }
 
     // TT Probing
