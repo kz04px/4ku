@@ -665,12 +665,12 @@ int main() {
 
             const int thread_count = 1;  // TODO: Read from UCI options
             vector<thread> threads;
-            for (int helper_id = 1; helper_id < thread_count; helper_id++) {
+            for (int i = 1; i < thread_count; ++i) {
                 threads.emplace_back([=]() mutable { iterative_deepen(pos, hash_history, stop_time); });
             }
             const auto best_move = iterative_deepen(pos, hash_history, stop_time);
-            for (int helper_id = 1; helper_id < thread_count; helper_id++) {
-                threads[helper_id - 1].join();
+            for (int i = 1; i < thread_count; ++i) {
+                threads[i - 1].join();
             }
 
             cout << "bestmove " << move_str(best_move, pos.flipped) << "\n";
