@@ -76,7 +76,10 @@ const auto keys = []() {
     return values;
 }();
 
+// TODO: Read from UCI options
 const int MAX_TT_SIZE = 2000000;
+const int thread_count = 1;
+
 vector<TT_Entry> transposition_table;
 
 [[nodiscard]] BB flip(const BB bb) {
@@ -663,7 +666,6 @@ int main() {
             cin >> btime;
             const auto stop_time = now() + (pos.flipped ? btime : wtime) / 30;
 
-            const int thread_count = 1;  // TODO: Read from UCI options
             vector<thread> threads;
             for (int i = 1; i < thread_count; ++i) {
                 threads.emplace_back([=]() mutable { iterative_deepen(pos, hash_history, stop_time); });
