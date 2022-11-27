@@ -1,9 +1,11 @@
 #include <array>
 #include <cstdint>
 #include <cstdio>
+#include <cstring>
 #include <ctime>
 #include <iostream>
 #include <string>
+#include <thread>
 #include <vector>
 
 #define MATE_SCORE (1 << 15)
@@ -28,10 +30,10 @@ enum
     None
 };
 
-struct [[nodiscard]] Move {
-    int from;
-    int to;
-    int promo;
+struct Move {
+    int from = 0;
+    int to = 0;
+    int promo = 0;
 };
 
 using BB = uint64_t;
@@ -53,6 +55,32 @@ struct [[nodiscard]] Stack {
     Move move;
     Move killer;
 };
+
+struct [[nodiscard]] TT_Entry {
+    uint64_t key;
+    Move move;
+    int score;
+    int depth;
+    uint16_t flag;
+};
+
+const auto keys = []() {
+    // pieces from 1-12 multiplied the square + ep squares + castling rights
+    array<uint64_t, 12 * 64 + 64 + 16> values{};
+    for (auto &val : values) {
+        for (int i = 0; i < 64; ++i) {
+            val = val * 2 + rand() % 2;
+        }
+    }
+
+    return values;
+}();
+
+// Engine options
+const int MAX_TT_SIZE = 2000000;
+const int thread_count = 1;
+
+vector<TT_Entry> transposition_table;
 
 [[nodiscard]] BB flip(const BB bb) {
     return __builtin_bswap64(bb);
@@ -303,12 +331,17 @@ void generate_piece_moves(Move *const movelist,
 }
 
 const int phases[] = {0, 1, 1, 2, 4, 0};
-const int material[] = {S(75, 111), S(387, 286), S(419, 326), S(505, 589), S(1182, 1070), 0};
-const int centralities[] = {S(14, -8), S(19, 21), S(20, 10), S(-4, 4), S(-5, 28), S(-47, 28)};
-const int passers[] = {S(29, 7), S(18, 7), S(-4, 19), S(7, 39), S(27, 112), S(106, 205)};
-const int rook_semi_open = S(27, 13);
-const int rook_open = S(74, 3);
-const int rook_rank78 = S(46, 11);
+const int material[] = {S(70, 134), S(409, 314), S(415, 346), S(569, 627), S(1285, 1124), 0};
+const int centralities[] = {S(18, -14), S(22, 16), S(23, 8), S(-7, 2), S(-2, 28), S(-38, 27)};
+const int outside_files[] = {S(7, -6), S(3, -5), S(6, -3), S(-8, -0), S(-3, 6), S(19, -4)};
+const int pawn_protection[] = {S(8, 15), S(6, 23), S(-6, 18), S(-1, 14), S(-6, 16), 0};
+const int passers[] = {S(17, 6), S(3, 11), S(-12, 28), S(5, 52), S(31, 127), S(120, 223)};
+const int pawn_doubled = S(-25, -29);
+const int pawn_passed_blocked = S(8, -51);
+const int bishop_pair = S(35, 60);
+const int rook_semi_open = S(33, 12);
+const int rook_open = S(73, 4);
+const int rook_rank78 = S(51, 10);
 
 [[nodiscard]] int eval(Position &pos) {
     // Include side to move bonus
@@ -318,6 +351,12 @@ const int rook_rank78 = S(46, 11);
     for (int c = 0; c < 2; ++c) {
         // our pawns, their pawns
         const BB pawns[] = {pos.colour[0] & pos.pieces[Pawn], pos.colour[1] & pos.pieces[Pawn]};
+        const BB protected_by_pawns = nw(pawns[0]) | ne(pawns[0]);
+
+        // Bishop pair
+        if (count(pos.colour[0] & pos.pieces[Bishop]) == 2) {
+            score += bishop_pair;
+        }
 
         // For each piece type
         for (int p = 0; p < 6; ++p) {
@@ -337,12 +376,31 @@ const int rook_rank78 = S(46, 11);
                 // Centrality
                 score += centrality * centralities[p];
 
+                // Closeness to outside files
+                score += abs(file - 3) * outside_files[p];
+
+                // Pawn protection
+                const BB piece_bb = 1ULL << sq;
+                if (piece_bb & protected_by_pawns) {
+                    score += pawn_protection[p];
+                }
+
                 if (p == Pawn) {
                     // Passed pawns
                     BB blockers = 0x101010101010101ULL << sq;
                     blockers = nw(blockers) | ne(blockers);
                     if (!(blockers & pawns[1])) {
                         score += passers[rank - 1];
+
+                        // Blocked passed pawns
+                        if (north(piece_bb) & pos.colour[1]) {
+                            score += pawn_passed_blocked;
+                        }
+                    }
+
+                    // Doubled pawns
+                    if ((north(piece_bb) | north(north(piece_bb))) & pawns[0]) {
+                        score += pawn_doubled;
                     }
                 } else if (p == Rook) {
                     // Rook on open or semi-open files
@@ -372,6 +430,22 @@ const int rook_rank78 = S(46, 11);
     return ((short)score * phase + ((score + 0x8000) >> 16) * (24 - phase)) / 24;
 }
 
+[[nodiscard]] auto get_hash(const Position &pos) {
+    uint64_t hash = 0;
+    BB copy = pos.colour[0] | pos.colour[1];
+    while (copy) {
+        const int sq = lsb(copy);
+        copy &= copy - 1;
+        hash ^= keys[(piece_on(pos, sq) + 6 * ((pos.colour[pos.flipped] >> sq) & 1)) * 64 + sq];
+    }
+    if (pos.ep) {
+        hash ^= keys[768 + lsb(pos.ep)];
+    }
+    hash ^= keys[832 + (pos.castling[0] | pos.castling[1] << 1 | pos.castling[2] << 2 | pos.castling[3] << 3)];
+
+    return hash;
+}
+
 int alphabeta(Position &pos,
               int alpha,
               const int beta,
@@ -379,7 +453,8 @@ int alphabeta(Position &pos,
               const int ply,
               const long long int stop_time,
               Stack *const stack,
-              vector<Position> &history,
+              uint64_t (&hh_table)[64][64],
+              vector<uint64_t> &hash_history,
               const int do_null = true) {
     const auto in_check = attacked(pos, lsb(pos.colour[0] & pos.pieces[King]));
     const int static_eval = eval(pos);
@@ -389,6 +464,12 @@ int alphabeta(Position &pos,
     depth += in_check;
 
     const int in_qsearch = depth <= 0;
+
+    // TT probing
+    const uint64_t tt_key = in_qsearch ? 0 : get_hash(pos);
+    TT_Entry &tt_entry = transposition_table[tt_key % MAX_TT_SIZE];
+    Move tt_move{};
+
     if (in_qsearch) {
         if (static_eval >= beta) {
             return beta;
@@ -398,8 +479,8 @@ int alphabeta(Position &pos,
         }
     } else if (ply > 0) {
         // Repetition detection
-        for (const auto &old_pos : history) {
-            if (old_pos.pieces == pos.pieces && old_pos.colour == pos.colour && old_pos.flipped == pos.flipped) {
+        for (const auto old_hash : hash_history) {
+            if (old_hash == tt_key) {
                 return 0;
             }
         }
@@ -416,8 +497,26 @@ int alphabeta(Position &pos,
             auto npos = pos;
             flip(npos);
             npos.ep = 0;
-            if (-alphabeta(npos, -beta, -beta + 1, depth - 3, ply + 1, stop_time, stack, history, false) >= beta) {
+            if (-alphabeta(
+                    npos, -beta, -beta + 1, depth - 3, ply + 1, stop_time, stack, hh_table, hash_history, false) >=
+                beta) {
                 return beta;
+            }
+        }
+    }
+
+    // TT Probing
+    if (tt_entry.key == tt_key) {
+        tt_move = tt_entry.move;
+        if (!in_qsearch && ply > 0 && tt_entry.depth >= depth) {
+            if (tt_entry.flag == 0) {
+                return tt_entry.score;
+            }
+            if (tt_entry.flag == 1 && tt_entry.score <= alpha) {
+                return tt_entry.score;
+            }
+            if (tt_entry.flag == 2 && tt_entry.score >= beta) {
+                return tt_entry.score;
             }
         }
     }
@@ -434,10 +533,10 @@ int alphabeta(Position &pos,
     int move_scores[256];
     for (int j = 0; j < num_moves; ++j) {
         int move_score = 0;
-        if (!in_qsearch && moves[j] == stack[ply].move) {
+        const int capture = piece_on(pos, moves[j].to);
+        if (!in_qsearch && moves[j] == tt_move) {
             move_score = 1 << 16;
         } else {
-            const int capture = piece_on(pos, moves[j].to);
             if (capture != None) {
                 move_score = ((capture + 1) * (1 << 10)) - piece_on(pos, moves[j].from);
             } else if (moves[j] == stack[ply].killer) {
@@ -448,13 +547,20 @@ int alphabeta(Position &pos,
     }
 
     int best_score = -INF;
-    history.push_back(pos);
+    Move best_move{};
+    uint16_t tt_flag = 1;  // Alpha flag
+    hash_history.push_back(tt_key);
     for (int i = 0; i < num_moves; ++i) {
         // Find best move remaining
         int best_move_index = i;
         for (int j = i; j < num_moves; ++j) {
             if (move_scores[j] > move_scores[best_move_index]) {
                 best_move_index = j;
+            } else if (move_scores[j] == move_scores[best_move_index]) {
+                if (hh_table[moves[j].from][moves[j].to] >
+                    hh_table[moves[best_move_index].from][moves[best_move_index].to]) {
+                    best_move_index = j;
+                }
             }
         }
 
@@ -475,9 +581,9 @@ int alphabeta(Position &pos,
         int score;
         if (in_qsearch || !raised_alpha) {
         full_window:
-            score = -alphabeta(npos, -beta, -alpha, depth - 1, ply + 1, stop_time, stack, history);
+            score = -alphabeta(npos, -beta, -alpha, depth - 1, ply + 1, stop_time, stack, hh_table, hash_history);
         } else {
-            score = -alphabeta(npos, -alpha - 1, -alpha, depth - 1, ply + 1, stop_time, stack, history);
+            score = -alphabeta(npos, -alpha - 1, -alpha, depth - 1, ply + 1, stop_time, stack, hh_table, hash_history);
             if (score > alpha) {
                 goto full_window;
             }
@@ -485,7 +591,9 @@ int alphabeta(Position &pos,
 
         if (score > best_score) {
             best_score = score;
+            best_move = move;
             if (score > alpha) {
+                tt_flag = 0;  // Exact flag
                 raised_alpha = true;
                 alpha = score;
                 stack[ply].move = move;
@@ -493,74 +601,93 @@ int alphabeta(Position &pos,
         }
 
         if (alpha >= beta) {
+            tt_flag = 2;  // Beta flag
             const int capture = piece_on(pos, move.to);
             if (capture == None) {
+                hh_table[move.from][move.to] += depth * depth;
                 stack[ply].killer = move;
             }
             break;
         }
     }
-    history.pop_back();
+    hash_history.pop_back();
 
     // Return mate or draw scores if no moves found and not in qsearch
     if (!in_qsearch && best_score == -INF) {
-        return in_check ? -MATE_SCORE : 0;
+        return in_check ? ply - MATE_SCORE : 0;
+    }
+
+    // Save to TT if didn't run out of time
+    if (!in_qsearch && (tt_entry.key != tt_key || depth >= tt_entry.depth || tt_flag == 0) && now() < stop_time) {
+        tt_entry = TT_Entry{tt_key, best_move, best_score, depth, tt_flag};
     }
 
     return alpha;
 }
 
+Move iteratively_deepen(Position &pos, vector<uint64_t> &hash_history, const int64_t stop_time) {
+    Move best_move;
+    Stack stack[128];
+    uint64_t hh_table[64][64] = {};
+    for (int i = 1; i < 128; ++i) {
+        alphabeta(pos, -INF, INF, i, 0, stop_time, stack, hh_table, hash_history);
+        if (now() >= stop_time) {
+            break;
+        }
+        best_move = stack[0].move;
+    }
+    return best_move;
+}
+
 int main() {
     setbuf(stdout, NULL);
     Position pos;
-    vector<Position> history;
+    vector<uint64_t> hash_history;
     Move moves[256];
     getchar();
     puts("id name 4ku2\nid author kz04px\nuciok");
+    transposition_table.resize(MAX_TT_SIZE);
+    memset(transposition_table.data(), 0, sizeof(TT_Entry) * transposition_table.size());
     while (true) {
         string word;
         cin >> word;
         if (word == "quit") {
             break;
+        } else if (word == "ucinewgame") {
+            memset(transposition_table.data(), 0, sizeof(TT_Entry) * transposition_table.size());
         } else if (word == "isready") {
             puts("readyok");
         } else if (word == "go") {
             int wtime;
             int btime;
-            int winc;
-            int binc;
             cin >> word;
             cin >> wtime;
             cin >> word;
             cin >> btime;
-            cin >> word;
-            cin >> winc;
-            cin >> word;
-            cin >> binc;
-            const int self_time = (pos.flipped ? btime : wtime);
-            const int self_inc = (pos.flipped ? binc : winc);
-            auto stop_time = now() + self_time/24 + (8*self_inc/23 > self_time ? 0: self_inc/3);
-            string bestmove_str;
-            Stack stack[128];
-            for (int i = 1; i < 128; ++i) {
-                alphabeta(pos, -INF, INF, i, 0, stop_time, stack, history);
-                if (now() >= stop_time) {
-                    break;
-                }
-                bestmove_str = move_str(stack[0].move, pos.flipped);
+            const auto stop_time = now() + (pos.flipped ? btime : wtime) / 30;
+
+            // Lazy SMP
+            vector<thread> threads;
+            for (int i = 1; i < thread_count; ++i) {
+                threads.emplace_back([=]() mutable { iteratively_deepen(pos, hash_history, stop_time); });
             }
-            cout << "bestmove " << bestmove_str << "\n";
+            const auto best_move = iteratively_deepen(pos, hash_history, stop_time);
+            for (int i = 1; i < thread_count; ++i) {
+                threads[i - 1].join();
+            }
+
+            cout << "bestmove " << move_str(best_move, pos.flipped) << "\n";
         } else if (word == "position") {
             pos = Position();
-            history.clear();
+            hash_history.clear();
         } else {
             const int num_moves = movegen(pos, moves);
             for (int i = 0; i < num_moves; ++i) {
                 if (word == move_str(moves[i], pos.flipped)) {
                     if (piece_on(pos, moves[i].to) != None || piece_on(pos, moves[i].from) == Pawn) {
-                        history.clear();
+                        hash_history.clear();
                     } else {
-                        history.push_back(pos);
+                        hash_history.push_back(get_hash(pos));
                     }
 
                     makemove(pos, moves[i]);

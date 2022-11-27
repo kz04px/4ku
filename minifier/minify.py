@@ -9,8 +9,8 @@ def get_args():
 
 def get_keywords(src):
     keywords = set({"int", "short", "char", "auto", "bool", "void", "using", "namespace", "define", "else",
-"long", "unsigned", "timespec", "struct", "class", "return", "operator", "typename", "const", "string", "goto",
-"uint64_t", "int64_t", "uint32_t", "int32_t", "uint16_t", "int16_t", "uint8_t", "int8_t"})
+                    "long", "unsigned", "timespec", "struct", "class", "return", "operator", "typename", "const", "string", "goto",
+                    "uint64_t", "int64_t", "uint32_t", "int32_t", "uint16_t", "int16_t", "uint8_t", "int8_t"})
 
     get_next = False
 
@@ -318,23 +318,38 @@ def rename(tokens):
         "best_score":"bq",
         "best_move_score":"br",
         "best_move_score_index":"bs",
+        "wtime":"bt",
+        "btime":"bu",
         "func":"bv",
         "best_move_index":"cb",
         "killer":"cd",
-        "history":"ce",
-        "old_pos":"cf",
+        "hash_history":"ce",
+        "old_hash":"cf",
         "phase":"cg",
         "phases":"ch",
         "do_null":"ci",
         "full_window":"cj",
         "raised_alpha":"ck",
-        # Time Management
-        "wtime":"bt",
-        "btime":"bu",
-        "winc":"cn",
-        "binc":"co",
-        "self_time":"cl",
-        "self_inc":"cm",
+        "keys":"cl",
+        "transposition_table":"cm",
+        "tt_key":"cn",
+        "tt_entry":"co",
+        "tt_move":"cp",
+        "flag":"cq",
+        "tt_flag":"cr",
+        "TT_Entry":"cs",
+        "MAX_TT_SIZE":"ct",
+        "best_move":"cu",
+        "bishop_pair":"cv",
+        "pawn_doubled":"cw",
+        "pawn_passed_blocked":"cx",
+        "outside_files":"cy",
+        "pawn_protection":"cz",
+        "protected_by_pawns":"da",
+        "piece_bb":"db",
+        "hh_table":"dc",
+        "thread_count": "de",
+        "threads": "df",
         # Labels
         "do_search":"bk",
         "full_search":"bl",
@@ -361,6 +376,7 @@ def rename(tokens):
         "east":"by",
         "west":"bz",
         "now":"ca",
+        "iteratively_deepen": "dd",
         # Macros
         "MATE_SCORE":"af",
         "INF":"ag",
