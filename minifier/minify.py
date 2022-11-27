@@ -376,7 +376,7 @@ def rename(tokens):
         "east":"by",
         "west":"bz",
         "now":"ca",
-        "iterative_deepen": "dd",
+        "iteratively_deepen": "dd",
         # Macros
         "MATE_SCORE":"af",
         "INF":"ag",

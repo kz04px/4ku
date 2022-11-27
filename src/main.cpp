@@ -625,7 +625,7 @@ int alphabeta(Position &pos,
     return alpha;
 }
 
-Move iterative_deepen(Position &pos, vector<uint64_t> &hash_history, const int64_t stop_time) {
+Move iteratively_deepen(Position &pos, vector<uint64_t> &hash_history, const int64_t stop_time) {
     Move best_move;
     Stack stack[128];
     uint64_t hh_table[64][64] = {};
