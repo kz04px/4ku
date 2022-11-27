@@ -348,9 +348,9 @@ def rename(tokens):
         "protected_by_pawns":"da",
         "piece_bb":"db",
         "hh_table":"dc",
-        "thread_count": "dd",
-        "threads": "de",
-        "helper_id": "df",
+        "thread_count": "de",
+        "threads": "df",
+        "helper_id": "dg",
         # Labels
         "do_search":"bk",
         "full_search":"bl",
@@ -377,6 +377,7 @@ def rename(tokens):
         "east":"by",
         "west":"bz",
         "now":"ca",
+        "iterative_deepen": "dd",
         # Macros
         "MATE_SCORE":"af",
         "INF":"ag",
