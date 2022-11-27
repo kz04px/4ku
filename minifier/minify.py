@@ -348,6 +348,9 @@ def rename(tokens):
         "protected_by_pawns":"da",
         "piece_bb":"db",
         "hh_table":"dc",
+        "thread_count": "dd",
+        "threads": "de",
+        "helper_id": "df",
         # Labels
         "do_search":"bk",
         "full_search":"bl",
