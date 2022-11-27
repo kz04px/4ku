@@ -329,17 +329,17 @@ void generate_piece_moves(Move *const movelist,
 }
 
 const int phases[] = {0, 1, 1, 2, 4, 0};
-const int material[] = {S(70, 135), S(408, 320), S(416, 345), S(570, 621), S(1299, 1077)};
-const int centralities[] = {S(18, -13), S(22, 16), S(23, 8), S(-7, 2), S(-3, 29), S(-36, 26)};
-const int outside_files[] = {S(6, -6), S(3, -6), S(6, -4), S(-8, -0), S(-3, 9), S(17, -5)};
-const int pawn_protection[] = {S(7, 14), S(6, 23), S(-5, 18), S(-1, 14), S(-7, 15), S(0, 0)};
-const int semi_open_file[] = {S(-1, 0), S(-4, 11), S(29, 15), S(-1, 21), S(-24, 20)};
-const int open_file[] = {S(-6, -11), S(-10, -3), S(68, 7), S(-9, 43), S(-61, 1)};
-const int passers[] = {S(16, 6), S(4, 10), S(-10, 26), S(6, 50), S(32, 125), S(121, 221)};
+const int material[] = {S(70, 133), S(405, 320), S(415, 339), S(567, 611), S(1318, 1017)};
+const int centralities[] = {S(17, -13), S(22, 14), S(23, 8), S(-7, 2), S(-4, 38), S(-36, 26)};
+const int outside_files[] = {S(6, -6), S(3, -7), S(6, -4), S(-8, -0), S(-3, 11), S(16, -5)};
+const int pawn_protection[] = {S(7, 14), S(7, 22), S(-6, 17), S(-1, 14), S(-8, 16), S(0, 0)};
+const int semi_open_file[] = {S(-1, -0), S(-4, 11), S(29, 15), S(-1, 22), S(-24, 20)};
+const int open_file[] = {S(-6, -11), S(-10, -3), S(67, 7), S(-8, 41), S(-60, 1)};
+const int rank78[] = {S(4, -13), S(-20, 4), S(51, 10), S(-30, 69), S(47, 6)};
+const int passers[] = {S(17, 6), S(5, 10), S(-10, 26), S(6, 49), S(32, 123), S(118, 217)};
 const int pawn_doubled = S(-21, -33);
 const int pawn_passed_blocked = S(6, -47);
-const int bishop_pair = S(35, 59);
-const int rook_rank78 = S(52, 10);
+const int bishop_pair = S(33, 60);
 
 [[nodiscard]] int eval(Position &pos) {
     // Include side to move bonus
@@ -411,11 +411,9 @@ const int rook_rank78 = S(52, 10);
                         }
                     }
 
-                    if (p == Rook) {
-                        // Rook on 7th or 8th rank
-                        if (rank >= 6) {
-                            score += rook_rank78;
-                        }
+                    // Rook on 7th or 8th rank
+                    if (rank >= 6) {
+                        score += rank78[p - 1];
                     }
                 }
             }

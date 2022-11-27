@@ -277,7 +277,7 @@ def rename(tokens):
         "passers":"E",
         "semi_open_file":"F",
         "open_file":"G",
-        "rook_rank78":"H",
+        "rank78":"H",
         "lhs":"J",
         "rhs":"K",
         "copy":"L",
