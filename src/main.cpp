@@ -76,7 +76,7 @@ const auto keys = []() {
     return values;
 }();
 
-// TODO: Read from UCI options
+// Engine options
 const int MAX_TT_SIZE = 2000000;
 const int thread_count = 1;
 
