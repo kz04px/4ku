@@ -637,7 +637,7 @@ int alphabeta(Position &pos,
 
 Move iteratively_deepen(Position &pos, vector<uint64_t> &hash_history, const int64_t stop_time) {
     Move best_move;
-    Stack stack[128];
+    Stack stack[128] = {};
     uint64_t hh_table[64][64] = {};
     for (int i = 1; i < 128; ++i) {
         alphabeta(pos, -INF, INF, i, 0, stop_time, stack, hh_table, hash_history);
