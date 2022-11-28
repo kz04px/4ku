@@ -604,11 +604,10 @@ int alphabeta(Position &pos,
             npos, new_alpha, -alpha, depth - reduction - 1, ply + 1, stop_time, stack, hh_table, hash_history, true);
 
         if (score > alpha && new_alpha != -beta) {
-            if (reduction) {
-                reduction = 0;
-            } else {
+            if (!reduction) {
                 new_alpha = -beta;
             }
+            reduction = 0;
             goto do_search;
         }
 
