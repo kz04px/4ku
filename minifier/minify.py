@@ -352,6 +352,7 @@ def rename(tokens):
         "threads": "df",
         "shield": "dg",
         "king_shield": "dh",
+        "moves_evaluated": "di",
         # Labels
         "do_search":"bk",
         "full_search":"bl",
