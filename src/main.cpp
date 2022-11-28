@@ -594,6 +594,7 @@ int alphabeta(Position &pos,
                 goto full_window;
             }
         }
+        moves_evaluated++;
 
         if (score > best_score) {
             best_score = score;
