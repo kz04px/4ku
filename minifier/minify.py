@@ -352,7 +352,8 @@ def rename(tokens):
         "threads": "df",
         "shield": "dg",
         "king_shield": "dh",
-        "moves_evaluated": "di",
+        "key":"di",
+        "moves_evaluated": "dj",
         # Labels
         "do_search":"bk",
         "full_search":"bl",
@@ -380,6 +381,7 @@ def rename(tokens):
         "west":"bz",
         "now":"ca",
         "iteratively_deepen": "dd",
+        "ray":"dj",
         # Macros
         "MATE_SCORE":"af",
         "INF":"ag",
