@@ -350,6 +350,9 @@ def rename(tokens):
         "hh_table":"dc",
         "thread_count": "de",
         "threads": "df",
+        "shield": "dg",
+        "king_shield": "dh",
+        "key":"di",
         # Labels
         "do_search":"bk",
         "full_search":"bl",
@@ -377,6 +380,7 @@ def rename(tokens):
         "west":"bz",
         "now":"ca",
         "iteratively_deepen": "dd",
+        "ray":"dj",
         # Macros
         "MATE_SCORE":"af",
         "INF":"ag",

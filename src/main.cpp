@@ -331,17 +331,18 @@ void generate_piece_moves(Move *const movelist,
 }
 
 const int phases[] = {0, 1, 1, 2, 4, 0};
-const int material[] = {S(70, 134), S(409, 314), S(415, 346), S(569, 627), S(1285, 1124), 0};
-const int centralities[] = {S(18, -14), S(22, 16), S(23, 8), S(-7, 2), S(-2, 28), S(-38, 27)};
-const int outside_files[] = {S(7, -6), S(3, -5), S(6, -3), S(-8, -0), S(-3, 6), S(19, -4)};
-const int pawn_protection[] = {S(8, 15), S(6, 23), S(-6, 18), S(-1, 14), S(-6, 16), 0};
-const int passers[] = {S(17, 6), S(3, 11), S(-12, 28), S(5, 52), S(31, 127), S(120, 223)};
-const int pawn_doubled = S(-25, -29);
-const int pawn_passed_blocked = S(8, -51);
-const int bishop_pair = S(35, 60);
-const int rook_semi_open = S(33, 12);
-const int rook_open = S(73, 4);
-const int rook_rank78 = S(51, 10);
+const int material[] = {S(65, 127), S(392, 297), S(400, 328), S(534, 602), S(1246, 1061)};
+const int centralities[] = {S(18, -13), S(23, 15), S(22, 7), S(-4, -0), S(-2, 27), S(-32, 24)};
+const int outside_files[] = {S(7, -6), S(4, -5), S(7, -3), S(-2, -3), S(-3, 6), S(5, -1)};
+const int pawn_protection[] = {S(9, 14), S(5, 22), S(-7, 17), S(-4, 14), S(-7, 14), S(0, 0)};
+const int passers[] = {S(13, 7), S(3, 11), S(-12, 27), S(3, 49), S(30, 120), S(115, 212)};
+const int pawn_doubled = S(-23, -28);
+const int pawn_passed_blocked = S(6, -48);
+const int bishop_pair = S(34, 57);
+const int rook_open = S(73, 2);
+const int rook_semi_open = S(33, 10);
+const int rook_rank78 = S(47, 10);
+const int king_shield[] = {S(23, -10), S(10, -15)};
 
 [[nodiscard]] int eval(Position &pos) {
     // Include side to move bonus
@@ -417,6 +418,10 @@ const int rook_rank78 = S(51, 10);
                     if (rank >= 6) {
                         score += rook_rank78;
                     }
+                } else if (p == King && piece_bb & 0xE7) {
+                    const BB shield = file < 3 ? 0x700 : 0xE000;
+                    score += count(shield & pawns[0]) * king_shield[0];
+                    score += count(north(shield) & pawns[0]) * king_shield[1];
                 }
             }
         }
@@ -502,6 +507,11 @@ int alphabeta(Position &pos,
                 beta) {
                 return beta;
             }
+        }
+
+        // Razoring
+        if (depth == 1 && !in_check && static_eval + 300 < alpha) {
+            return alphabeta(pos, alpha, beta, 0, ply, stop_time, stack, hh_table, hash_history, do_null);
         }
     }
 
@@ -627,7 +637,7 @@ int alphabeta(Position &pos,
 
 Move iteratively_deepen(Position &pos, vector<uint64_t> &hash_history, const int64_t stop_time) {
     Move best_move;
-    Stack stack[128];
+    Stack stack[128] = {};
     uint64_t hh_table[64][64] = {};
     for (int i = 1; i < 128; ++i) {
         alphabeta(pos, -INF, INF, i, 0, stop_time, stack, hh_table, hash_history);
