@@ -592,16 +592,16 @@ int alphabeta(Position &pos,
 
         int new_alpha = legal_moves && !in_qsearch ? -alpha - 1 : -beta;
         int reduction = 0;
-        if (depth > 3 && legal_moves > 3 + 3 * pv_node && !in_check && quiet) {
-            reduction += 1;
-            if (legal_moves > 8 + 3 * pv_node) {
-                reduction += 1;
+        if (depth > 3 && legal_moves > 4 + pv_node && !in_check && quiet) {
+            reduction++;
+            if (legal_moves > 9 + pv_node) {
+                reduction++;
             }
         }
 
     do_search:
         int score = -alphabeta(
-                        npos, new_alpha, -alpha, depth - reduction - 1, ply + 1, stop_time, stack, hh_table, hash_history, true);
+            npos, new_alpha, -alpha, depth - reduction - 1, ply + 1, stop_time, stack, hh_table, hash_history, true);
 
         if (score > alpha && new_alpha != -beta) {
             if (reduction) {
