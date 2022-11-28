@@ -350,6 +350,8 @@ def rename(tokens):
         "hh_table":"dc",
         "thread_count": "de",
         "threads": "df",
+        "shield": "dg",
+        "king_shield": "dh",
         # Labels
         "do_search":"bk",
         "full_search":"bl",
