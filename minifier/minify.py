@@ -353,6 +353,9 @@ def rename(tokens):
         "shield": "dg",
         "king_shield": "dh",
         "key":"di",
+        "legal_moves":"dk",
+        "reduction":"dl",
+        "pv_node":"dm",
         # Labels
         "do_search":"bk",
         "full_search":"bl",
