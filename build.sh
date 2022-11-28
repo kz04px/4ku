@@ -17,8 +17,11 @@ python3 ../minifier/minify.py ../src/main.cpp > ../src/main-mini.cpp
 ######################## Minify Code ########################
 
 
-c++ ../src/main.cpp -O3 -Wall -Wextra -Wconversion -Wno-misleading-indentation -pthread -o 4ku-executable
-c++ ../src/main-mini.cpp -O3 -Wall -Wextra -Wconversion -Wno-misleading-indentation -pthread -o 4ku-executable-mini
+c++ ../src/main.cpp -O3 -Wall -Wextra -Wconversion -Wno-misleading-indentation -pthread -o 4ku2-executable
+strip -s 4ku2-executable
+
+c++ ../src/main-mini.cpp -O3 -Wall -Wextra -Wconversion -Wno-misleading-indentation -pthread -o 4ku2-executable-mini
+strip -s 4ku2-executable-mini
 
 
 ######################## Normal Version ########################
