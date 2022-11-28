@@ -331,18 +331,18 @@ void generate_piece_moves(Move *const movelist,
 }
 
 const int phases[] = {0, 1, 1, 2, 4, 0};
-const int material[] = { S(65, 127), S(392, 297), S(400, 328), S(534, 602), S(1246, 1061) };
-const int centralities[] = { S(18, -13), S(23, 15), S(22, 7), S(-4, -0), S(-2, 27), S(-32, 24) };
-const int outside_files[] = { S(7, -6), S(4, -5), S(7, -3), S(-2, -3), S(-3, 6), S(5, -1) };
-const int pawn_protection[] = { S(9, 14), S(5, 22), S(-7, 17), S(-4, 14), S(-7, 14), S(0, 0) };
-const int passers[] = { S(13, 7), S(3, 11), S(-12, 27), S(3, 49), S(30, 120), S(115, 212) };
+const int material[] = {S(65, 127), S(392, 297), S(400, 328), S(534, 602), S(1246, 1061)};
+const int centralities[] = {S(18, -13), S(23, 15), S(22, 7), S(-4, -0), S(-2, 27), S(-32, 24)};
+const int outside_files[] = {S(7, -6), S(4, -5), S(7, -3), S(-2, -3), S(-3, 6), S(5, -1)};
+const int pawn_protection[] = {S(9, 14), S(5, 22), S(-7, 17), S(-4, 14), S(-7, 14), S(0, 0)};
+const int passers[] = {S(13, 7), S(3, 11), S(-12, 27), S(3, 49), S(30, 120), S(115, 212)};
 const int pawn_doubled = S(-23, -28);
 const int pawn_passed_blocked = S(6, -48);
 const int bishop_pair = S(34, 57);
 const int rook_open = S(73, 2);
 const int rook_semi_open = S(33, 10);
 const int rook_rank78 = S(47, 10);
-const int king_shield[] = { S(23, -10), S(10, -15) };
+const int king_shield[] = {S(23, -10), S(10, -15)};
 
 [[nodiscard]] int eval(Position &pos) {
     // Include side to move bonus
