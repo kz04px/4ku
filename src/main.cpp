@@ -599,6 +599,11 @@ int alphabeta(Position &pos,
             }
         }
 
+        // Exit early if out of time
+        if (now() >= stop_time) {
+            return 0;
+        }
+
         if (score > best_score) {
             best_score = score;
             best_move = move;
@@ -627,8 +632,8 @@ int alphabeta(Position &pos,
         return in_check ? ply - MATE_SCORE : 0;
     }
 
-    // Save to TT if didn't run out of time
-    if (!in_qsearch && (tt_entry.key != tt_key || depth >= tt_entry.depth || tt_flag == 0) && now() < stop_time) {
+    // Save to TT
+    if (!in_qsearch && (tt_entry.key != tt_key || depth >= tt_entry.depth || tt_flag == 0)) {
         tt_entry = TT_Entry{tt_key, best_move, best_score, depth, tt_flag};
     }
 
@@ -636,7 +641,6 @@ int alphabeta(Position &pos,
 }
 
 Move iteratively_deepen(Position &pos, vector<uint64_t> &hash_history, const int64_t stop_time) {
-    Move best_move;
     Stack stack[128] = {};
     uint64_t hh_table[64][64] = {};
     for (int i = 1; i < 128; ++i) {
@@ -644,9 +648,8 @@ Move iteratively_deepen(Position &pos, vector<uint64_t> &hash_history, const int
         if (now() >= stop_time) {
             break;
         }
-        best_move = stack[0].move;
     }
-    return best_move;
+    return stack[0].move;
 }
 
 int main() {
