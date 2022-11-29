@@ -609,6 +609,11 @@ int alphabeta(Position &pos,
         }
         moves_evaluated++;
 
+        // Exit early if out of time
+        if (now() >= stop_time) {
+            return 0;
+        }
+
         if (score > best_score) {
             best_score = score;
             best_move = move;
@@ -636,26 +641,44 @@ int alphabeta(Position &pos,
         return in_check ? ply - MATE_SCORE : 0;
     }
 
-    // Save to TT if didn't run out of time
-    if (!in_qsearch && (tt_entry.key != tt_key || depth >= tt_entry.depth || tt_flag == 0) && now() < stop_time) {
+    // Save to TT
+    if (!in_qsearch && (tt_entry.key != tt_key || depth >= tt_entry.depth || tt_flag == 0)) {
         tt_entry = TT_Entry{tt_key, best_move, best_score, depth, tt_flag};
     }
 
     return alpha;
 }
 
-Move iteratively_deepen(Position &pos, vector<uint64_t> &hash_history, const int64_t stop_time) {
-    Move best_move;
+Move iteratively_deepen(Position &pos,
+                        vector<uint64_t> &hash_history,
+                        // minify delete on
+                        int thread_id,
+                        // minify delete off
+                        const int64_t stop_time) {
     Stack stack[128] = {};
     uint64_t hh_table[64][64] = {};
+
     for (int i = 1; i < 128; ++i) {
-        alphabeta(pos, -INF, INF, i, 0, stop_time, stack, hh_table, hash_history);
+        // minify delete on
+        const int score =
+            // minify delete off
+            alphabeta(pos, -INF, INF, i, 0, stop_time, stack, hh_table, hash_history);
+
         if (now() >= stop_time) {
             break;
         }
-        best_move = stack[0].move;
+
+        // minify delete on
+        if (thread_id == 0) {
+            cout << "info";
+            cout << " depth " << i;
+            cout << " score cp " << score;
+            cout << " pv " << move_str(stack[0].move, pos.flipped);
+            cout << endl;
+        }
+        // minify delete off
     }
-    return best_move;
+    return stack[0].move;
 }
 
 int main() {
@@ -688,9 +711,21 @@ int main() {
             // Lazy SMP
             vector<thread> threads;
             for (int i = 1; i < thread_count; ++i) {
-                threads.emplace_back([=]() mutable { iteratively_deepen(pos, hash_history, stop_time); });
+                threads.emplace_back([=]() mutable {
+                    iteratively_deepen(pos,
+                                       hash_history,
+                                       // minify delete on
+                                       i,
+                                       // minify delete off
+                                       stop_time);
+                });
             }
-            const auto best_move = iteratively_deepen(pos, hash_history, stop_time);
+            const auto best_move = iteratively_deepen(pos,
+                                                      hash_history,
+                                                      // minify delete on
+                                                      0,
+                                                      // minify delete off
+                                                      stop_time);
             for (int i = 1; i < thread_count; ++i) {
                 threads[i - 1].join();
             }
