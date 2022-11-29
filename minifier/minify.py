@@ -357,7 +357,7 @@ def rename(tokens):
         "phases":"ch",
         "do_null":"ci",
         "full_window":"cj",
-        "raised_alpha":"ck",
+        "moves_evaluated":"ck",
         "keys":"cl",
         "transposition_table":"cm",
         "tt_key":"cn",
@@ -381,7 +381,6 @@ def rename(tokens):
         "shield": "dg",
         "king_shield": "dh",
         "key":"di",
-        "moves_evaluated": "dj",
         # Labels
         "do_search":"bk",
         "full_search":"bl",
