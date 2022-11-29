@@ -402,7 +402,7 @@ def main():
     args = get_args()
 
     if not os.path.isfile(args.src):
-        raise exception("File not found")
+        raise Exception("File not found")
 
     src = get_source(args.src)
 
