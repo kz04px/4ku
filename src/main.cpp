@@ -599,7 +599,7 @@ int alphabeta(Position &pos,
             }
         }
 
-        // Stop move loop if out of time
+        // Exit early if out of time
         if (now() >= stop_time) {
             return 0;
         }
@@ -634,13 +634,13 @@ int alphabeta(Position &pos,
 
     // Save to TT
     if (!in_qsearch && (tt_entry.key != tt_key || depth >= tt_entry.depth || tt_flag == 0)) {
-        tt_entry = TT_Entry{tt_key, best_move, best_score, depth, tt_flag};
+        tt_entry = TT_Entry{ tt_key, best_move, best_score, depth, tt_flag };
     }
 
     return alpha;
 }
 
-Move iteratively_deepen(Position &pos, vector<uint64_t> &hash_history, const int64_t stop_time) {
+Move iteratively_deepen(Position& pos, vector<uint64_t>& hash_history, const int64_t stop_time) {
     Stack stack[128] = {};
     uint64_t hh_table[64][64] = {};
     for (int i = 1; i < 128; ++i) {
