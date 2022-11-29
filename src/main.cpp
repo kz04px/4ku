@@ -592,9 +592,17 @@ int alphabeta(Position &pos,
         if (in_qsearch || !moves_evaluated) {
         full_window:
             score = -alphabeta(npos, -beta, -alpha, depth - 1, ply + 1, stop_time, stack, hh_table, hash_history);
-        }
-        else {
-            score = -alphabeta(npos, -alpha - 1, -alpha, depth - (depth > 3 && moves_evaluated > 3) - 1, ply + 1, stop_time, stack, hh_table, hash_history);
+        } else {
+            // Zero window search with late move reduction
+            score = -alphabeta(npos,
+                               -alpha - 1,
+                               -alpha,
+                               depth - (depth > 3 && moves_evaluated > 3) - 1,
+                               ply + 1,
+                               stop_time,
+                               stack,
+                               hh_table,
+                               hash_history);
             if (score > alpha && score < beta) {
                 goto full_window;
             }
