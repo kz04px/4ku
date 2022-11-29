@@ -463,7 +463,6 @@ int alphabeta(Position &pos,
               const int do_null = true) {
     const auto in_check = attacked(pos, lsb(pos.colour[0] & pos.pieces[King]));
     const int static_eval = eval(pos);
-    int raised_alpha = false;
 
     // Check extensions
     depth += in_check;
@@ -556,6 +555,7 @@ int alphabeta(Position &pos,
         move_scores[j] = move_score;
     }
 
+    int moves_evaluated = 0;
     int best_score = -INF;
     Move best_move{};
     uint16_t tt_flag = 1;  // Alpha flag
@@ -589,15 +589,25 @@ int alphabeta(Position &pos,
         }
 
         int score;
-        if (in_qsearch || !raised_alpha) {
+        if (in_qsearch || !moves_evaluated) {
         full_window:
             score = -alphabeta(npos, -beta, -alpha, depth - 1, ply + 1, stop_time, stack, hh_table, hash_history);
         } else {
-            score = -alphabeta(npos, -alpha - 1, -alpha, depth - 1, ply + 1, stop_time, stack, hh_table, hash_history);
-            if (score > alpha) {
+            // Zero window search with late move reduction
+            score = -alphabeta(npos,
+                               -alpha - 1,
+                               -alpha,
+                               depth - (depth > 3 && moves_evaluated > 3) - 1,
+                               ply + 1,
+                               stop_time,
+                               stack,
+                               hh_table,
+                               hash_history);
+            if (score > alpha && score < beta) {
                 goto full_window;
             }
         }
+        moves_evaluated++;
 
         // Exit early if out of time
         if (now() >= stop_time) {
@@ -609,7 +619,6 @@ int alphabeta(Position &pos,
             best_move = move;
             if (score > alpha) {
                 tt_flag = 0;  // Exact flag
-                raised_alpha = true;
                 alpha = score;
                 stack[ply].move = move;
             }

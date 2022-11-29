@@ -357,7 +357,7 @@ def rename(tokens):
         "phases":"ch",
         "do_null":"ci",
         "full_window":"cj",
-        "raised_alpha":"ck",
+        "moves_evaluated":"ck",
         "keys":"cl",
         "transposition_table":"cm",
         "tt_key":"cn",
