@@ -687,7 +687,7 @@ int main() {
     vector<uint64_t> hash_history;
     Move moves[256];
     getchar();
-    puts("id name 4ku2\nid author kz04px\nuciok");
+    puts("id name 4ku\nid author kz04px\nuciok");
     transposition_table.resize(MAX_TT_SIZE);
     memset(transposition_table.data(), 0, sizeof(TT_Entry) * transposition_table.size());
     while (true) {

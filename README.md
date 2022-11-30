@@ -1,12 +1,12 @@
-# 4ku2
-A variation of the chess engine [4ku](https://github.com/kz04px/4ku/), but this time it works by compiling source on startup to further minimise file size.
+# 4ku
+4ku is an a C++ chess engine designed to fit into 4,096 bytes. Source code is minified, compressed, and then appended to a script. The script decompresses the source, compiles it, and then runs the executable. The script and source combination fits into the size limits, while the resulting executable does not.
 
 ---
 
 ## Build Instructions
 ```
-git clone https://github.com/kz04px/4ku2
-cd 4ku2
+git clone https://github.com/kz04px/4ku
+cd 4ku
 sh build.sh
 ```
 

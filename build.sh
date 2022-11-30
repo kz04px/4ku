@@ -4,10 +4,10 @@ cd build
 
 rm ./4ku-executable
 rm ./4ku-executable-mini
-rm ./4ku2-normal
-rm ./4ku2-compressed
-rm ./4ku2-normal-mini
-rm ./4ku2-compressed-mini
+rm ./4ku-normal
+rm ./4ku-compressed
+rm ./4ku-normal-mini
+rm ./4ku-compressed-mini
 
 
 ######################## Minify Code ########################
@@ -24,10 +24,10 @@ c++ ../src/main-mini.cpp -O3 -Wall -Wextra -Wconversion -Wno-misleading-indentat
 ######################## Normal Version ########################
 
 # Create build script
-cat ../src/launcher.sh ../src/main.cpp > ./4ku2-normal
+cat ../src/launcher.sh ../src/main.cpp > ./4ku-normal
 
 # Make script executable
-chmod +x ./4ku2-normal
+chmod +x ./4ku-normal
 
 ######################## Normal Version ########################
 
@@ -36,10 +36,10 @@ chmod +x ./4ku2-normal
 ######################## Normal Mini Version ########################
 
 # Create build script
-cat ../src/launcher.sh ../src/main-mini.cpp > ./4ku2-normal-mini
+cat ../src/launcher.sh ../src/main-mini.cpp > ./4ku-normal-mini
 
 # Make script executable
-chmod +x ./4ku2-normal-mini
+chmod +x ./4ku-normal-mini
 
 ######################## Normal Mini Version ########################
 
@@ -54,13 +54,13 @@ cp ../src/main.cpp ../src/copy.cpp
 lzma ../src/copy.cpp
 
 # Create build script
-cat ../src/launcher-compressed.sh ../src/copy.cpp.lzma > ./4ku2-compressed
+cat ../src/launcher-compressed.sh ../src/copy.cpp.lzma > ./4ku-compressed
 
 # Delete the source copy
 rm ../src/copy.cpp.lzma
 
 # Make script executable
-chmod +x ./4ku2-compressed
+chmod +x ./4ku-compressed
 
 ######################## Compressed Version ########################
 
@@ -75,12 +75,12 @@ cp ../src/main-mini.cpp ../src/copy.cpp
 lzma ../src/copy.cpp
 
 # Create build script
-cat ../src/launcher-compressed.sh ../src/copy.cpp.lzma > ./4ku2-compressed-mini
+cat ../src/launcher-compressed.sh ../src/copy.cpp.lzma > ./4ku-compressed-mini
 
 # Delete the source copy
 rm ../src/copy.cpp.lzma
 
 # Make script executable
-chmod +x ./4ku2-compressed-mini
+chmod +x ./4ku-compressed-mini
 
 ######################## Compressed Mini Version ########################
