@@ -611,6 +611,7 @@ int alphabeta(Position &pos,
 
         // Exit early if out of time
         if (now() >= stop_time) {
+            hash_history.pop_back();
             return 0;
         }
 
