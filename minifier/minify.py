@@ -381,6 +381,10 @@ def rename(tokens):
         "shield": "dg",
         "king_shield": "dh",
         "key":"di",
+        "start_time":"dj",
+        "allocated_time":"dk",
+        "stops":"dl",
+        "stop":"dm",
         # Labels
         "do_search":"bk",
         "full_search":"bl",
