@@ -677,7 +677,7 @@ Move iteratively_deepen(Position &pos,
             // minify delete off
             alphabeta(pos, -INF, INF, i, 0, start_time + allocated_time, stop, stack, hh_table, hash_history);
 
-        if (stop || now() >= start_time + allocated_time / 2) {
+        if (stop || now() >= start_time + allocated_time / 10) {
             break;
         }
 
@@ -720,7 +720,7 @@ int main() {
             cin >> word;
             cin >> btime;
             const auto start = now();
-            const auto allocated_time = (pos.flipped ? btime : wtime) / 20;
+            const auto allocated_time = (pos.flipped ? btime : wtime) / 4;
 
             // Lazy SMP
             vector<thread> threads;
