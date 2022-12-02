@@ -724,7 +724,7 @@ int main() {
 
             // Lazy SMP
             vector<thread> threads;
-            vector<int> stops = {0};
+            vector<int> stops = {false};
             for (int i = 1; i < thread_count; ++i) {
                 stops.emplace_back(0);
                 threads.emplace_back([=, &stops]() mutable {
@@ -747,7 +747,7 @@ int main() {
                                                       allocated_time,
                                                       stops[0]);
             for (int i = 1; i < thread_count; ++i) {
-                stops[i] = 1;
+                stops[i] = true;
             }
             for (int i = 1; i < thread_count; ++i) {
                 threads[i - 1].join();
