@@ -456,7 +456,8 @@ int alphabeta(Position &pos,
               const int beta,
               int depth,
               const int ply,
-              const long long int stop_time,
+              const int64_t stop_time,
+              int &stop,
               Stack *const stack,
               uint64_t (&hh_table)[64][64],
               vector<uint64_t> &hash_history,
@@ -501,16 +502,24 @@ int alphabeta(Position &pos,
             auto npos = pos;
             flip(npos);
             npos.ep = 0;
-            if (-alphabeta(
-                    npos, -beta, -beta + 1, depth - 3, ply + 1, stop_time, stack, hh_table, hash_history, false) >=
-                beta) {
+            if (-alphabeta(npos,
+                           -beta,
+                           -beta + 1,
+                           depth - 3,
+                           ply + 1,
+                           stop_time,
+                           stop,
+                           stack,
+                           hh_table,
+                           hash_history,
+                           false) >= beta) {
                 return beta;
             }
         }
 
         // Razoring
         if (depth == 1 && !in_check && static_eval + 300 < alpha) {
-            return alphabeta(pos, alpha, beta, 0, ply, stop_time, stack, hh_table, hash_history, do_null);
+            return alphabeta(pos, alpha, beta, 0, ply, stop_time, stop, stack, hh_table, hash_history, do_null);
         }
     }
 
@@ -531,7 +540,7 @@ int alphabeta(Position &pos,
     }
 
     // Exit early if out of time
-    if (now() >= stop_time) {
+    if (stop || now() >= stop_time) {
         return 0;
     }
 
@@ -591,7 +600,7 @@ int alphabeta(Position &pos,
         int score;
         if (in_qsearch || !moves_evaluated) {
         full_window:
-            score = -alphabeta(npos, -beta, -alpha, depth - 1, ply + 1, stop_time, stack, hh_table, hash_history);
+            score = -alphabeta(npos, -beta, -alpha, depth - 1, ply + 1, stop_time, stop, stack, hh_table, hash_history);
         } else {
             // Zero window search with late move reduction
             score = -alphabeta(npos,
@@ -600,6 +609,7 @@ int alphabeta(Position &pos,
                                depth - (depth > 3 && moves_evaluated > 3) - 1,
                                ply + 1,
                                stop_time,
+                               stop,
                                stack,
                                hh_table,
                                hash_history);
@@ -610,7 +620,7 @@ int alphabeta(Position &pos,
         moves_evaluated++;
 
         // Exit early if out of time
-        if (now() >= stop_time) {
+        if (stop || now() >= stop_time) {
             hash_history.pop_back();
             return 0;
         }
@@ -655,7 +665,9 @@ Move iteratively_deepen(Position &pos,
                         // minify delete on
                         int thread_id,
                         // minify delete off
-                        const int64_t stop_time) {
+                        const int64_t start_time,
+                        const int allocated_time,
+                        int &stop) {
     Stack stack[128] = {};
     uint64_t hh_table[64][64] = {};
 
@@ -663,9 +675,9 @@ Move iteratively_deepen(Position &pos,
         // minify delete on
         const int score =
             // minify delete off
-            alphabeta(pos, -INF, INF, i, 0, stop_time, stack, hh_table, hash_history);
+            alphabeta(pos, -INF, INF, i, 0, start_time + allocated_time, stop, stack, hh_table, hash_history);
 
-        if (now() >= stop_time) {
+        if (stop || now() >= start_time + allocated_time / 10) {
             break;
         }
 
@@ -707,18 +719,23 @@ int main() {
             cin >> wtime;
             cin >> word;
             cin >> btime;
-            const auto stop_time = now() + (pos.flipped ? btime : wtime) / 30;
+            const auto start = now();
+            const auto allocated_time = (pos.flipped ? btime : wtime) / 4;
 
             // Lazy SMP
             vector<thread> threads;
+            vector<int> stops = {false};
             for (int i = 1; i < thread_count; ++i) {
-                threads.emplace_back([=]() mutable {
+                stops.emplace_back(false);
+                threads.emplace_back([=, &stops]() mutable {
                     iteratively_deepen(pos,
                                        hash_history,
                                        // minify delete on
                                        i,
                                        // minify delete off
-                                       stop_time);
+                                       start,
+                                       1 << 30,
+                                       stops[i]);
                 });
             }
             const auto best_move = iteratively_deepen(pos,
@@ -726,7 +743,12 @@ int main() {
                                                       // minify delete on
                                                       0,
                                                       // minify delete off
-                                                      stop_time);
+                                                      start,
+                                                      allocated_time,
+                                                      stops[0]);
+            for (int i = 1; i < thread_count; ++i) {
+                stops[i] = true;
+            }
             for (int i = 1; i < thread_count; ++i) {
                 threads[i - 1].join();
             }
