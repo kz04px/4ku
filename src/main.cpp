@@ -289,12 +289,13 @@ void generate_piece_moves(Move *const movelist,
                           int &num_moves,
                           const Position &pos,
                           const int piece,
+                          const BB to_mask,
                           BB (*func)(int, BB)) {
     BB copy = pos.colour[0] & pos.pieces[piece];
     while (copy) {
         const int fr = lsb(copy);
         copy &= copy - 1;
-        BB moves = func(fr, pos.colour[0] | pos.colour[1]) & ~pos.colour[0];
+        BB moves = func(fr, pos.colour[0] | pos.colour[1]) & to_mask;
         while (moves) {
             const int to = lsb(moves);
             moves &= moves - 1;
@@ -303,24 +304,27 @@ void generate_piece_moves(Move *const movelist,
     }
 }
 
-[[nodiscard]] int movegen(const Position &pos, Move *const movelist) {
+[[nodiscard]] int movegen(const Position &pos, Move *const movelist, bool only_captures = false) {
     int num_moves = 0;
     const BB all = pos.colour[0] | pos.colour[1];
+    const BB to_mask = only_captures ? pos.colour[1] : ~pos.colour[0];
     const BB pawns = pos.colour[0] & pos.pieces[Pawn];
-    generate_pawn_moves(movelist, num_moves, north(pawns) & ~all, -8);
-    generate_pawn_moves(movelist, num_moves, north(north(pawns & 0xFF00ULL) & ~all) & ~all, -16);
+    if (!only_captures) {
+        generate_pawn_moves(movelist, num_moves, north(pawns) & ~all, -8);
+        generate_pawn_moves(movelist, num_moves, north(north(pawns & 0xFF00ULL) & ~all) & ~all, -16);
+    }
     generate_pawn_moves(movelist, num_moves, nw(pawns) & (pos.colour[1] | pos.ep), -7);
     generate_pawn_moves(movelist, num_moves, ne(pawns) & (pos.colour[1] | pos.ep), -9);
-    generate_piece_moves(movelist, num_moves, pos, Knight, knight);
-    generate_piece_moves(movelist, num_moves, pos, Bishop, bishop);
-    generate_piece_moves(movelist, num_moves, pos, Queen, bishop);
-    generate_piece_moves(movelist, num_moves, pos, Rook, rook);
-    generate_piece_moves(movelist, num_moves, pos, Queen, rook);
-    generate_piece_moves(movelist, num_moves, pos, King, king);
-    if (pos.castling[0] && !(all & 0x60ULL) && !attacked(pos, 4) && !attacked(pos, 5)) {
+    generate_piece_moves(movelist, num_moves, pos, Knight, to_mask, knight);
+    generate_piece_moves(movelist, num_moves, pos, Bishop, to_mask, bishop);
+    generate_piece_moves(movelist, num_moves, pos, Queen, to_mask, bishop);
+    generate_piece_moves(movelist, num_moves, pos, Rook, to_mask, rook);
+    generate_piece_moves(movelist, num_moves, pos, Queen, to_mask, rook);
+    generate_piece_moves(movelist, num_moves, pos, King, to_mask, king);
+    if (!only_captures && pos.castling[0] && !(all & 0x60ULL) && !attacked(pos, 4) && !attacked(pos, 5)) {
         add_move(movelist, num_moves, 4, 6);
     }
-    if (pos.castling[1] && !(all & 0xEULL) && !attacked(pos, 4) && !attacked(pos, 3)) {
+    if (!only_captures && pos.castling[1] && !(all & 0xEULL) && !attacked(pos, 4) && !attacked(pos, 3)) {
         add_move(movelist, num_moves, 4, 2);
     }
     return num_moves;
@@ -545,14 +549,14 @@ int alphabeta(Position &pos,
     }
 
     Move moves[256];
-    const int num_moves = movegen(pos, moves);
+    const int num_moves = movegen(pos, moves, in_qsearch);
 
     // Score moves
     int move_scores[256];
     for (int j = 0; j < num_moves; ++j) {
         int move_score = 0;
         const int capture = piece_on(pos, moves[j].to);
-        if (!in_qsearch && moves[j] == tt_move) {
+        if (moves[j] == tt_move) {
             move_score = 1 << 16;
         } else {
             if (capture != None) {
@@ -586,11 +590,6 @@ int alphabeta(Position &pos,
         const auto move = moves[best_move_index];
         moves[best_move_index] = moves[i];
         move_scores[best_move_index] = move_scores[i];
-
-        // qsearch needs captures only
-        if (in_qsearch && piece_on(pos, move.to) == None) {
-            break;
-        }
 
         auto npos = pos;
         if (!makemove(npos, move)) {
