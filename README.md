@@ -4,11 +4,19 @@
 ---
 
 ## Build Instructions
+4ku can be built normally, but it won't fit into the size restriction:
 ```
 git clone https://github.com/kz04px/4ku
-cd 4ku
-sh build.sh
+mkdir 4ku/build
+cd 4ku/build
+cmake ..
+cmake --build .
 ```
+To build the small version of 4ku on Linux, run `build-mini.sh` located in the root directory:
+```
+sh build-mini.sh
+```
+No small version of 4ku is currently available on Windows.
 
 ---
 
