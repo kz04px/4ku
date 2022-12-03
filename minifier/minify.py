@@ -385,6 +385,7 @@ def rename(tokens):
         "allocated_time":"dk",
         "stops":"dl",
         "stop":"dm",
+        "only_captures":"dn",
         # Labels
         "do_search":"bk",
         "full_search":"bl",
