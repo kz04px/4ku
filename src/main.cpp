@@ -723,9 +723,8 @@ int main() {
 
             // Lazy SMP
             vector<thread> threads;
-            vector<int> stops = {false};
+            vector<int> stops(thread_count, false);
             for (int i = 1; i < thread_count; ++i) {
-                stops.emplace_back(false);
                 threads.emplace_back([=, &stops]() mutable {
                     iteratively_deepen(pos,
                                        hash_history,
