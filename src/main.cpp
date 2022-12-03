@@ -304,7 +304,7 @@ void generate_piece_moves(Move *const movelist,
     }
 }
 
-[[nodiscard]] int movegen(const Position &pos, Move *const movelist, bool only_captures = false) {
+[[nodiscard]] int movegen(const Position &pos, Move *const movelist, const bool only_captures) {
     int num_moves = 0;
     const BB all = pos.colour[0] | pos.colour[1];
     const BB to_mask = only_captures ? pos.colour[1] : ~pos.colour[0];
@@ -757,7 +757,7 @@ int main() {
             pos = Position();
             hash_history.clear();
         } else {
-            const int num_moves = movegen(pos, moves);
+            const int num_moves = movegen(pos, moves, false);
             for (int i = 0; i < num_moves; ++i) {
                 if (word == move_str(moves[i], pos.flipped)) {
                     if (piece_on(pos, moves[i].to) != None || piece_on(pos, moves[i].from) == Pawn) {
