@@ -65,6 +65,32 @@ def filter_delete(tokens):
 
     return new
 
+def filter_functions(tokens):
+    new = []
+    in_function = False
+    bracket_depth = 0
+
+    for i in range(len(tokens)):
+        prev = tokens[i-1] if i > 0 else None
+        curr = tokens[i]
+        next = tokens[i+1] if i+1 < len(tokens) else None
+
+        if prev in [None, "{", "}", ";"] and curr in ["assert", "static_assert"] and next == "(":
+            in_function = True
+            bracket_depth = 1
+        elif curr == "(":
+            bracket_depth += 1
+        elif curr == ")":
+            bracket_depth -= 1
+        elif curr == ";" and in_function:
+            in_function = False
+            continue
+
+        if not in_function:
+            new.append(curr)
+
+    return new
+
 def filter_comments(tokens):
     new = []
     in_comment = False
@@ -454,6 +480,7 @@ def main():
     src = collect_scope(src)
     src = filter_whitespace(src, keywords)
     src = filter_tags(src)
+    src = filter_functions(src)
     src = rename(src)
 
     for word in src:
