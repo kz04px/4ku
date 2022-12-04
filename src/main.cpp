@@ -472,7 +472,7 @@ int alphabeta(Position &pos,
               const int64_t stop_time,
               int &stop,
               Stack *const stack,
-              uint64_t (&hh_table)[64][64],
+              int64_t (&hh_table)[64][64],
               vector<uint64_t> &hash_history,
               const int do_null = true) {
     const auto in_check = attacked(pos, lsb(pos.colour[0] & pos.pieces[King]));
@@ -577,18 +577,18 @@ int alphabeta(Position &pos,
     const int num_moves = movegen(pos, moves, in_qsearch);
 
     // Score moves
-    int move_scores[256];
+    int64_t move_scores[256];
     for (int j = 0; j < num_moves; ++j) {
-        int move_score = 0;
+        int64_t move_score;
         const int capture = piece_on(pos, moves[j].to);
         if (moves[j] == tt_move) {
-            move_score = 1 << 16;
+            move_score = 1LL << 62;
+        } else if (capture != None) {
+            move_score = ((capture + 1) * (1LL << 54)) - piece_on(pos, moves[j].from);
+        } else if (moves[j] == stack[ply].killer) {
+            move_score = 1LL << 50;
         } else {
-            if (capture != None) {
-                move_score = ((capture + 1) * (1 << 10)) - piece_on(pos, moves[j].from);
-            } else if (moves[j] == stack[ply].killer) {
-                move_score = 1 << 8;
-            }
+            move_score = hh_table[moves[j].from][moves[j].to];
         }
         move_scores[j] = move_score;
     }
@@ -604,11 +604,6 @@ int alphabeta(Position &pos,
         for (int j = i; j < num_moves; ++j) {
             if (move_scores[j] > move_scores[best_move_index]) {
                 best_move_index = j;
-            } else if (move_scores[j] == move_scores[best_move_index]) {
-                if (hh_table[moves[j].from][moves[j].to] >
-                    hh_table[moves[best_move_index].from][moves[best_move_index].to]) {
-                    best_move_index = j;
-                }
             }
         }
 
@@ -712,7 +707,7 @@ Move iteratively_deepen(Position &pos,
                         const int allocated_time,
                         int &stop) {
     Stack stack[128] = {};
-    uint64_t hh_table[64][64] = {};
+    int64_t hh_table[64][64] = {};
     // minify delete on
     int64_t nodes = 0;
     // minify delete off
