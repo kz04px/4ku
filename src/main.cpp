@@ -441,15 +441,21 @@ const int king_shield[] = {S(23, -10), S(10, -15)};
 
 [[nodiscard]] auto get_hash(const Position &pos) {
     uint64_t hash = 0;
+
+    // Pieces
     BB copy = pos.colour[0] | pos.colour[1];
     while (copy) {
         const int sq = lsb(copy);
         copy &= copy - 1;
         hash ^= keys[(piece_on(pos, sq) + 6 * ((pos.colour[pos.flipped] >> sq) & 1)) * 64 + sq];
     }
+
+    // En passant square
     if (pos.ep) {
         hash ^= keys[768 + lsb(pos.ep)];
     }
+
+    // Castling permissions
     hash ^= keys[832 + (pos.castling[0] | pos.castling[1] << 1 | pos.castling[2] << 2 | pos.castling[3] << 3)];
 
     return hash;
@@ -758,7 +764,11 @@ int main() {
     Position pos;
     vector<uint64_t> hash_history;
     Move moves[256];
+
+    // Wait for "uci"
     getchar();
+
+    // Send UCI info
     puts("id name 4ku");
     puts("id author kz04px");
     // minify delete on
@@ -766,8 +776,11 @@ int main() {
     cout << "option name Hash type spin default " << (num_tt_entries >> 15) << " min 1 max 1024\n";
     // minify delete off
     puts("uciok");
+
+    // Initialise the TT
     transposition_table.resize(num_tt_entries);
     memset(transposition_table.data(), 0, sizeof(TT_Entry) * transposition_table.size());
+
     while (true) {
         string word;
         cin >> word;
