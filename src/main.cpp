@@ -77,8 +77,8 @@ const auto keys = []() {
 }();
 
 // Engine options
-const int MAX_TT_SIZE = 2000000;
-const int thread_count = 1;
+int num_tt_entries = 64 << 15;  // The first value is the size in megabytes
+int thread_count = 1;
 
 vector<TT_Entry> transposition_table;
 
@@ -476,7 +476,7 @@ int alphabeta(Position &pos,
 
     // TT probing
     const uint64_t tt_key = in_qsearch ? 0 : get_hash(pos);
-    TT_Entry &tt_entry = transposition_table[tt_key % MAX_TT_SIZE];
+    TT_Entry &tt_entry = transposition_table[tt_key % num_tt_entries];
     Move tt_move{};
 
     if (in_qsearch) {
@@ -699,8 +699,14 @@ int main() {
     vector<uint64_t> hash_history;
     Move moves[256];
     getchar();
-    puts("id name 4ku\nid author kz04px\nuciok");
-    transposition_table.resize(MAX_TT_SIZE);
+    puts("id name 4ku");
+    puts("id author kz04px");
+    // minify delete on
+    cout << "option name Threads type spin default " << thread_count << " min 1 max 256\n";
+    cout << "option name Hash type spin default " << (num_tt_entries >> 15) << " min 1 max 1024\n";
+    // minify delete off
+    puts("uciok");
+    transposition_table.resize(num_tt_entries);
     memset(transposition_table.data(), 0, sizeof(TT_Entry) * transposition_table.size());
     while (true) {
         string word;
@@ -711,7 +717,25 @@ int main() {
             memset(transposition_table.data(), 0, sizeof(TT_Entry) * transposition_table.size());
         } else if (word == "isready") {
             puts("readyok");
-        } else if (word == "go") {
+        }
+        // minify delete on
+        else if (word == "setoption") {
+            cin >> word;
+            cin >> word;
+            if (word == "Threads") {
+                cin >> word;
+                cin >> thread_count;
+                thread_count = max(1, min(256, thread_count));
+            } else if (word == "Hash") {
+                cin >> word;
+                cin >> num_tt_entries;
+                num_tt_entries = min(max(num_tt_entries, 1), 1024) * 1024 * 1024 / sizeof(TT_Entry);
+                transposition_table.resize(num_tt_entries);
+                memset(transposition_table.data(), 0, sizeof(TT_Entry) * transposition_table.size());
+            }
+        }
+        // minify delete off
+        else if (word == "go") {
             int wtime;
             int btime;
             cin >> word;

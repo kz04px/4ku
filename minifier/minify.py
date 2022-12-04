@@ -366,7 +366,7 @@ def rename(tokens):
         "flag":"cq",
         "tt_flag":"cr",
         "TT_Entry":"cs",
-        "MAX_TT_SIZE":"ct",
+        "num_tt_entries":"ct",
         "best_move":"cu",
         "bishop_pair":"cv",
         "pawn_doubled":"cw",
