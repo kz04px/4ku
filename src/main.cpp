@@ -78,7 +78,7 @@ const auto keys = []() {
 
 // Engine options
 const int MAX_TT_SIZE = 2000000;
-const int thread_count = 12;
+const int thread_count = 1;
 
 vector<TT_Entry> transposition_table;
 
