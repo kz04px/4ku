@@ -78,7 +78,7 @@ const auto keys = []() {
 
 // Engine options
 const int MAX_TT_SIZE = 2000000;
-const int thread_count = 1;
+const int thread_count = 12;
 
 vector<TT_Entry> transposition_table;
 
@@ -460,6 +460,9 @@ int alphabeta(Position &pos,
               const int beta,
               int depth,
               const int ply,
+              // minify delete on
+              int64_t &nodes,
+              // minify delete off
               const int64_t stop_time,
               int &stop,
               Stack *const stack,
@@ -511,6 +514,9 @@ int alphabeta(Position &pos,
                            -beta + 1,
                            depth - 3,
                            ply + 1,
+                           // minify delete on
+                           nodes,
+                           // minify delete off
                            stop_time,
                            stop,
                            stack,
@@ -523,7 +529,20 @@ int alphabeta(Position &pos,
 
         // Razoring
         if (depth == 1 && !in_check && static_eval + 300 < alpha) {
-            return alphabeta(pos, alpha, beta, 0, ply, stop_time, stop, stack, hh_table, hash_history, do_null);
+            return alphabeta(pos,
+                             alpha,
+                             beta,
+                             0,
+                             ply,
+                             // minify delete on
+                             nodes,
+                             // minify delete off
+                             stop_time,
+                             stop,
+                             stack,
+                             hh_table,
+                             hash_history,
+                             do_null);
         }
     }
 
@@ -596,10 +615,26 @@ int alphabeta(Position &pos,
             continue;
         }
 
+        // minify delete on
+        nodes++;
+        // minify delete off
+
         int score;
         if (in_qsearch || !moves_evaluated) {
         full_window:
-            score = -alphabeta(npos, -beta, -alpha, depth - 1, ply + 1, stop_time, stop, stack, hh_table, hash_history);
+            score = -alphabeta(npos,
+                               -beta,
+                               -alpha,
+                               depth - 1,
+                               ply + 1,
+                               // minify delete on
+                               nodes,
+                               // minify delete off
+                               stop_time,
+                               stop,
+                               stack,
+                               hh_table,
+                               hash_history);
         } else {
             // Zero window search with late move reduction
             score = -alphabeta(npos,
@@ -607,6 +642,9 @@ int alphabeta(Position &pos,
                                -alpha,
                                depth - (depth > 3 && moves_evaluated > 3) - 1,
                                ply + 1,
+                               // minify delete on
+                               nodes,
+                               // minify delete off
                                stop_time,
                                stop,
                                stack,
@@ -669,12 +707,27 @@ Move iteratively_deepen(Position &pos,
                         int &stop) {
     Stack stack[128] = {};
     uint64_t hh_table[64][64] = {};
+    // minify delete on
+    int64_t nodes = 0;
+    // minify delete off
 
     for (int i = 1; i < 128; ++i) {
         // minify delete on
         const int score =
             // minify delete off
-            alphabeta(pos, -INF, INF, i, 0, start_time + allocated_time, stop, stack, hh_table, hash_history);
+            alphabeta(pos,
+                      -INF,
+                      INF,
+                      i,
+                      0,
+                      // minify delete on
+                      nodes,
+                      // minify delete off
+                      start_time + allocated_time,
+                      stop,
+                      stack,
+                      hh_table,
+                      hash_history);
 
         if (stop || now() >= start_time + allocated_time / 10) {
             break;
@@ -682,9 +735,17 @@ Move iteratively_deepen(Position &pos,
 
         // minify delete on
         if (thread_id == 0) {
+            auto elapsed = now() - start_time;
+            if (elapsed == 0) {
+                elapsed = 1;
+            }
+
             cout << "info";
             cout << " depth " << i;
             cout << " score cp " << score;
+            cout << " time " << elapsed;
+            cout << " nodes " << nodes;
+            cout << " nps " << nodes * 1000 / elapsed;
             cout << " pv " << move_str(stack[0].move, pos.flipped);
             cout << endl;
         }
