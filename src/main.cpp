@@ -735,17 +735,16 @@ Move iteratively_deepen(Position &pos,
 
         // minify delete on
         if (thread_id == 0) {
-            auto elapsed = now() - start_time;
-            if (elapsed == 0) {
-                elapsed = 1;
-            }
+            const auto elapsed = now() - start_time;
 
             cout << "info";
             cout << " depth " << i;
             cout << " score cp " << score;
             cout << " time " << elapsed;
             cout << " nodes " << nodes;
-            cout << " nps " << nodes * 1000 / elapsed;
+            if (elapsed > 0) {
+                cout << " nps " << nodes * 1000 / elapsed;
+            }
             cout << " pv " << move_str(stack[0].move, pos.flipped);
             cout << endl;
         }
