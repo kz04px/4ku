@@ -22,7 +22,7 @@ No small version of 4ku is currently available on Windows.
 
 ## Size
 ```
-3,582 bytes
+3,575 bytes
 ```
 
 ---
