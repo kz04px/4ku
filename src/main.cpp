@@ -335,18 +335,46 @@ void generate_piece_moves(Move *const movelist,
 }
 
 const int phases[] = {0, 1, 1, 2, 4, 0};
-const int material[] = {S(65, 127), S(392, 297), S(400, 328), S(534, 602), S(1246, 1061)};
-const int centralities[] = {S(18, -13), S(23, 15), S(22, 7), S(-4, -0), S(-2, 27), S(-32, 24)};
-const int outside_files[] = {S(7, -6), S(4, -5), S(7, -3), S(-2, -3), S(-3, 6), S(5, -1)};
-const int pawn_protection[] = {S(9, 14), S(5, 22), S(-7, 17), S(-4, 14), S(-7, 14), S(0, 0)};
-const int passers[] = {S(13, 7), S(3, 11), S(-12, 27), S(3, 49), S(30, 120), S(115, 212)};
-const int pawn_doubled = S(-23, -28);
-const int pawn_passed_blocked = S(6, -48);
-const int bishop_pair = S(34, 57);
-const int rook_open = S(73, 2);
-const int rook_semi_open = S(33, 10);
-const int rook_rank78 = S(47, 10);
-const int king_shield[] = {S(23, -10), S(10, -15)};
+const int material[] = {S(35, 133), S(422, 292), S(410, 330), S(552, 601), S(1274, 1075)};
+// clang-format off
+const int psts[][16] = {
+    {
+        S(-15, 8), S(0, -3), S(21, -5), S(7, -5), S(-13, 1), S(-24, -14), S(-25, -7), S(2, -10),
+        S(14, 16), S(-0, -5), S(-8, -7), S(6, 9), S(49, 27), S(30, -24), S(51, -30), S(-95, 48)
+    },
+    {
+        S(-19, -20), S(-13, 1), S(-0, 5), S(-2, -18), S(-16, 12), S(-14, 1), S(-0, 2), S(3, 13),
+        S(17, 9), S(20, 6), S(19, 9), S(35, 12), S(-100, 10), S(50, -12), S(38, -11), S(-17, -20)
+    },
+    {
+        S(12, -14), S(6, -12), S(6, -1), S(16, -7), S(12, -0), S(-12, 2), S(-19, 5), S(9, 2),
+        S(4, 8), S(-4, -2), S(-1, 2), S(3, 14), S(-2, -1), S(-43, 0), S(29, -5), S(-17, 8)
+    },
+    {
+        S(-21, -1), S(-10, -6), S(1, -10), S(-10, -17), S(-48, 5), S(-26, -2), S(-5, -10), S(-11, -11),
+        S(-33, 15), S(-2, 7), S(14, 1), S(6, 2), S(16, 14), S(42, 4), S(70, -6), S(17, 15)
+    },
+    {
+        S(-17, -27), S(12, -59), S(6, -41), S(-6, -47), S(-0, -28), S(-13, -13), S(-3, -7), S(10, 21),
+        S(-29, 8), S(-24, 6), S(9, 31), S(19, 52), S(-44, 22), S(-16, 39), S(39, 25), S(58, 17)
+    },
+    {
+        S(2, -21), S(-93, 22), S(-48, 12), S(23, -14), S(2, -11), S(-60, -2), S(-42, -3), S(-12, 1),
+        S(30, 8), S(16, -13), S(31, -11), S(15, 19), S(121, -27), S(49, -4), S(-16, 25), S(-17, 18)
+    }
+};
+// clang-format on
+
+const int centralities[] = {S(35, -12), S(14, 14), S(27, 4), S(-3, -2), S(5, 13), S(-30, 28)};
+const int outside_files[] = {S(13, -8), S(-3, -5), S(3, -5), S(1, -4), S(-0, -6), S(-21, 6)};
+const int pawn_protection[] = {S(16, 13), S(13, 18), S(1, 14), S(3, 10), S(-4, 4), S(-49, 20)};
+const int passers[] = {S(17, 1), S(8, 12), S(-3, 26), S(-10, 38), S(25, 107), S(122, 195)};
+const int pawn_doubled = S(-16, -29);
+const int pawn_passed_blocked = S(3, -47);
+const int bishop_pair = S(33, 56);
+const int rook_open = S(74, 0);
+const int rook_semi_open = S(30, 12);
+const int king_shield[] = {S(15, -9), S(5, -8)};
 
 [[nodiscard]] int eval(Position &pos) {
     // Include side to move bonus
@@ -377,6 +405,9 @@ const int king_shield[] = {S(23, -10), S(10, -15)};
 
                 // Material
                 score += material[p];
+
+                // PSTs compressed into 2x2 blocks
+                score += psts[p][(rank / 2) * 4 + file / 2];
 
                 // Centrality
                 score += centrality * centralities[p];
@@ -416,11 +447,6 @@ const int king_shield[] = {S(23, -10), S(10, -15)};
                         } else {
                             score += rook_semi_open;
                         }
-                    }
-
-                    // Rook on 7th or 8th rank
-                    if (rank >= 6) {
-                        score += rook_rank78;
                     }
                 } else if (p == King && piece_bb & 0xE7) {
                     const BB shield = file < 3 ? 0x700 : 0xE000;
