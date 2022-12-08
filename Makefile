@@ -10,4 +10,4 @@ EXE := $(NAME)$(SUFFIX)
 
 all:
 	g++ ./src/main.cpp -O3 -pthread -o $(EXE)
-	strip -s ./build/4ku
+	strip -s $(EXE)
