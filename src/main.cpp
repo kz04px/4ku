@@ -4,6 +4,9 @@
 #include <cstring>
 #include <ctime>
 #include <iostream>
+// minify delete on
+#include <random>
+// minify delete off
 #include <string>
 #include <thread>
 #include <vector>
@@ -66,6 +69,9 @@ struct [[nodiscard]] TT_Entry {
 
 const auto keys = []() {
     // pieces from 1-12 multiplied the square + ep squares + castling rights
+    // minify delete on
+    minstd_rand rand;
+    // minify delete off
     array<uint64_t, 12 * 64 + 64 + 16> values{};
     for (auto &val : values) {
         for (int i = 0; i < 64; ++i) {
