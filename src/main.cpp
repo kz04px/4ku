@@ -700,6 +700,7 @@ Move iteratively_deepen(Position &pos,
                         vector<uint64_t> &hash_history,
                         // minify delete on
                         int thread_id,
+                        bool is_bench,
                         // minify delete off
                         const int64_t start_time,
                         const int allocated_time,
@@ -746,17 +747,47 @@ Move iteratively_deepen(Position &pos,
             }
             cout << " pv " << move_str(stack[0].move, pos.flipped);
             cout << endl;
+
+            if (is_bench && i >= 13) {
+                cout << "Bench: ";
+                cout << elapsed;
+                cout << " ms ";
+                cout << nodes;
+                cout << " nodes ";
+                cout << nodes * 1000 / elapsed;
+                cout << " nps";
+                cout << endl;
+                break;
+            }
         }
         // minify delete off
     }
     return stack[0].move;
 }
 
-int main() {
+int main(
+// minify delete on
+int argc, char *argv[]
+// minify delete off
+) {
     setbuf(stdout, NULL);
     Position pos;
     vector<uint64_t> hash_history;
     Move moves[256];
+
+    // minify delete on
+    if(argc > 1 && argv[1] == string("bench")) {
+        pos = Position();
+
+        // Initialise the TT
+        transposition_table.resize(num_tt_entries);
+        memset(transposition_table.data(), 0, sizeof(TT_Entry) * transposition_table.size());
+
+        int stop = false;
+        iteratively_deepen(pos, hash_history, 0, true, now(), 1 << 30, stop);
+        return 0;
+    }
+    // minify delete off
 
     // Wait for "uci"
     getchar();
@@ -820,6 +851,7 @@ int main() {
                                        hash_history,
                                        // minify delete on
                                        i,
+                                       false,
                                        // minify delete off
                                        start,
                                        1 << 30,
@@ -830,6 +862,7 @@ int main() {
                                                       hash_history,
                                                       // minify delete on
                                                       0,
+                                                      false,
                                                       // minify delete off
                                                       start,
                                                       allocated_time,
