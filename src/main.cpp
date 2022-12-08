@@ -748,14 +748,12 @@ Move iteratively_deepen(Position &pos,
             cout << " pv " << move_str(stack[0].move, pos.flipped);
             cout << endl;
 
+            // OpenBench compliance
             if (is_bench && i >= 13) {
                 cout << "Bench: ";
-                cout << elapsed;
-                cout << " ms ";
-                cout << nodes;
-                cout << " nodes ";
-                cout << nodes * 1000 / elapsed;
-                cout << " nps";
+                cout << elapsed << " ms ";
+                cout << nodes << " nodes ";
+                cout << nodes * 1000 / max(elapsed, 1LL) << " nps";
                 cout << endl;
                 break;
             }
@@ -766,9 +764,10 @@ Move iteratively_deepen(Position &pos,
 }
 
 int main(
-// minify delete on
-int argc, char *argv[]
-// minify delete off
+    // minify delete on
+    const int argc,
+    const char **argv
+    // minify delete off
 ) {
     setbuf(stdout, NULL);
     Position pos;
@@ -776,9 +775,8 @@ int argc, char *argv[]
     Move moves[256];
 
     // minify delete on
-    if(argc > 1 && argv[1] == string("bench")) {
-        pos = Position();
-
+    // OpenBench compliance
+    if (argc > 1 && argv[1] == string("bench")) {
         // Initialise the TT
         transposition_table.resize(num_tt_entries);
         memset(transposition_table.data(), 0, sizeof(TT_Entry) * transposition_table.size());
