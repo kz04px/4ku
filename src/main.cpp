@@ -807,16 +807,13 @@ int main(
     memset(transposition_table.data(), 0, sizeof(TT_Entry) * transposition_table.size());
 
     while (true) {
-        // minify delete on
-        // Protection against broken pipes
-        if (!cin.good()) {
-            return 0;
-        }
-        // minify delete off
-
         string word;
         cin >> word;
-        if (word == "quit") {
+        if (word == "quit"
+            // minify delete on
+            || !cin.good()
+            // minify delete off
+        ) {
             break;
         } else if (word == "ucinewgame") {
             memset(transposition_table.data(), 0, sizeof(TT_Entry) * transposition_table.size());
