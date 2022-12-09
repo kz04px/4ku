@@ -703,7 +703,7 @@ Move iteratively_deepen(Position &pos,
                         vector<uint64_t> &hash_history,
                         // minify delete on
                         int thread_id,
-                        bool is_bench,
+                        const bool is_bench,
                         // minify delete off
                         const int64_t start_time,
                         const int allocated_time,
@@ -786,6 +786,7 @@ int main(
 
         int stop = false;
         iteratively_deepen(pos, hash_history, 0, true, now(), 1 << 30, stop);
+
         return 0;
     }
     // minify delete off
