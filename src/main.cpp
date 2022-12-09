@@ -809,7 +809,7 @@ int main(
     while (true) {
         // minify delete on
         // Protection against broken pipes
-        if(!cin.good()) {
+        if (!cin.good()) {
             return 0;
         }
         // minify delete off
