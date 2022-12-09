@@ -67,6 +67,7 @@ struct [[nodiscard]] TT_Entry {
 
 const auto keys = []() {
     // pieces from 1-12 multiplied the square + ep squares + castling rights
+
     minstd_rand r;
     array<uint64_t, 12 * 64 + 64 + 16> values;
     for (auto &val : values) {
