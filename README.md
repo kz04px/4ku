@@ -66,12 +66,13 @@ Removed:
 4ku-mini has limited UCI support to save space:
 - The first line of input after startup will be interpreted as `uci` even if it isn't.
 - `stop` is unsupported.
-- `position fen` is not supported. `position startpos moves [moves]` must be used instead.
+- `position fen [fen] moves [moves]` is not supported. `position startpos moves [moves]` must be used instead.
 - `go` only supports `wtime` and `btime`.
 - `setoption` is not supported. Relevant variables are hard coded.
 
 4ku has additional support for:
 - `setoption`
+- `position fen [fen] moves [moves]`
 - `info` strings
 
 ---

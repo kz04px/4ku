@@ -8,6 +8,9 @@
 #include <string>
 #include <thread>
 #include <vector>
+// minify delete on
+#include <sstream>
+// minify delete off
 
 #define MATE_SCORE (1 << 15)
 #define INF (1 << 16)
@@ -766,6 +769,69 @@ Move iteratively_deepen(Position &pos,
     return stack[0].move;
 }
 
+// minify delete on
+void set_fen(Position &pos, const string &fen) {
+    if (fen == "startpos") {
+        set_fen(pos, "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+        return;
+    }
+
+    // Clear
+    pos.colour = {};
+    pos.pieces = {};
+    pos.castling = {};
+
+    stringstream ss{fen};
+    string word;
+
+    ss >> word;
+    int i = 56;
+    for (const auto c : word) {
+        if (c >= '1' && c <= '8') {
+            i += c - '1' + 1;
+        } else if (c == '/') {
+            i -= 16;
+        } else {
+            const int side = c == 'p' || c == 'n' || c == 'b' || c == 'r' || c == 'q' || c == 'k';
+            const int piece = (c == 'p' || c == 'P')   ? Pawn
+                              : (c == 'n' || c == 'N') ? Knight
+                              : (c == 'b' || c == 'B') ? Bishop
+                              : (c == 'r' || c == 'R') ? Rook
+                              : (c == 'q' || c == 'Q') ? Queen
+                                                       : King;
+            pos.colour.at(side) ^= 1ULL << i;
+            pos.pieces.at(piece) ^= 1ULL << i;
+            i++;
+        }
+    }
+
+    // Side to move
+    ss >> word;
+    const bool black_move = word == "b";
+
+    // Castling permissions
+    ss >> word;
+    for (const auto c : word) {
+        pos.castling[0] |= c == 'K';
+        pos.castling[1] |= c == 'Q';
+        pos.castling[2] |= c == 'k';
+        pos.castling[3] |= c == 'q';
+    }
+
+    // En passant
+    ss >> word;
+    if (word != "-") {
+        const int sq = word[0] - 'a' + 8 * (word[1] - '1');
+        pos.ep = 1ULL << sq;
+    }
+
+    // Flip the board if necessary
+    if (black_move) {
+        flip(pos);
+    }
+}
+// minify delete off
+
 int main(
     // minify delete on
     const int argc,
@@ -882,8 +948,32 @@ int main(
 
             cout << "bestmove " << move_str(best_move, pos.flipped) << "\n";
         } else if (word == "position") {
+            // Set to startpos
             pos = Position();
             hash_history.clear();
+
+            // minify delete on
+            string fen;
+            int fen_size = 0;
+
+            // Try collect FEN string
+            while (fen_size < 6 && cin >> word) {
+                if (word == "moves" || word == "startpos") {
+                    break;
+                } else if (word != "fen") {
+                    if (fen.empty()) {
+                        fen = word;
+                    } else {
+                        fen += " " + word;
+                    }
+                    fen_size++;
+                }
+            }
+
+            if (!fen.empty()) {
+                set_fen(pos, fen);
+            }
+            // minify delete off
         } else {
             const int num_moves = movegen(pos, moves, false);
             for (int i = 0; i < num_moves; ++i) {
