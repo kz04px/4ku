@@ -485,7 +485,7 @@ int alphabeta(Position &pos,
     const int static_eval = eval(pos);
 
     // Check extensions
-    depth += in_check;
+    depth = in_check ? max(1, depth + 1) : depth;
 
     const int in_qsearch = depth <= 0;
 
