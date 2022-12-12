@@ -793,12 +793,13 @@ void set_fen(Position &pos, const string &fen) {
             i -= 16;
         } else {
             const int side = c == 'p' || c == 'n' || c == 'b' || c == 'r' || c == 'q' || c == 'k';
-            const int piece = (c == 'p' || c == 'P')   ? Pawn
-                              : (c == 'n' || c == 'N') ? Knight
-                              : (c == 'b' || c == 'B') ? Bishop
-                              : (c == 'r' || c == 'R') ? Rook
-                              : (c == 'q' || c == 'Q') ? Queen
-                                                       : King;
+            const int piece = (c == 'p' || c == 'P')
+                                  ? Pawn
+                                  : (c == 'n' || c == 'N')
+                                        ? Knight
+                                        : (c == 'b' || c == 'B')
+                                              ? Bishop
+                                              : (c == 'r' || c == 'R') ? Rook : (c == 'q' || c == 'Q') ? Queen : King;
             pos.colour.at(side) ^= 1ULL << i;
             pos.pieces.at(piece) ^= 1ULL << i;
             i++;
