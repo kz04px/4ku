@@ -509,52 +509,54 @@ int alphabeta(Position &pos,
             }
         }
 
-        // Reverse futility pruning
-        if (depth < 3) {
-            const int margin = 120;
-            if (static_eval - margin * depth >= beta) {
-                return beta;
+        if (!in_check) {
+            // Reverse futility pruning
+            if (depth < 3) {
+                const int margin = 120;
+                if (static_eval - margin * depth >= beta) {
+                    return beta;
+                }
             }
-        }
-        // Null move pruning
-        else if (!in_check && static_eval >= beta && do_null) {
-            auto npos = pos;
-            flip(npos);
-            npos.ep = 0;
-            if (-alphabeta(npos,
-                           -beta,
-                           -beta + 1,
-                           depth - 3,
-                           ply + 1,
-                           // minify delete on
-                           nodes,
-                           // minify delete off
-                           stop_time,
-                           stop,
-                           stack,
-                           hh_table,
-                           hash_history,
-                           false) >= beta) {
-                return beta;
+            // Null move pruning
+            else if (static_eval >= beta && do_null) {
+                auto npos = pos;
+                flip(npos);
+                npos.ep = 0;
+                if (-alphabeta(npos,
+                               -beta,
+                               -beta + 1,
+                               depth - 3,
+                               ply + 1,
+                               // minify delete on
+                               nodes,
+                               // minify delete off
+                               stop_time,
+                               stop,
+                               stack,
+                               hh_table,
+                               hash_history,
+                               false) >= beta) {
+                    return beta;
+                }
             }
-        }
 
-        // Razoring
-        if (depth == 1 && !in_check && static_eval + 300 < alpha) {
-            return alphabeta(pos,
-                             alpha,
-                             beta,
-                             0,
-                             ply,
-                             // minify delete on
-                             nodes,
-                             // minify delete off
-                             stop_time,
-                             stop,
-                             stack,
-                             hh_table,
-                             hash_history,
-                             do_null);
+            // Razoring
+            if (depth == 1 && static_eval + 300 < alpha) {
+                return alphabeta(pos,
+                                 alpha,
+                                 beta,
+                                 0,
+                                 ply,
+                                 // minify delete on
+                                 nodes,
+                                 // minify delete off
+                                 stop_time,
+                                 stop,
+                                 stack,
+                                 hh_table,
+                                 hash_history,
+                                 do_null);
+            }
         }
     }
 
