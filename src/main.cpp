@@ -757,7 +757,7 @@ Move iteratively_deepen(Position &pos,
             cout << endl;
 
             // OpenBench compliance
-            if (is_bench && i >= 13) {
+            if (is_bench && i >= 10) {
                 cout << "Bench: ";
                 cout << elapsed << " ms ";
                 cout << nodes << " nodes ";
