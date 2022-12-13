@@ -517,8 +517,9 @@ int alphabeta(Position &pos,
                     return beta;
                 }
             }
+
             // Null move pruning
-            else if (static_eval >= beta && do_null) {
+            if (depth > 2 && static_eval >= beta && do_null) {
                 auto npos = pos;
                 flip(npos);
                 npos.ep = 0;
