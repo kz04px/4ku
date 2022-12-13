@@ -509,7 +509,7 @@ int alphabeta(Position &pos,
             }
         }
 
-        if (!in_check) {
+        if (!in_check && alpha == beta - 1) {
             // Reverse futility pruning
             if (depth < 3) {
                 const int margin = 120;
