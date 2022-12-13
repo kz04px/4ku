@@ -541,7 +541,7 @@ int alphabeta(Position &pos,
             }
 
             // Razoring
-            if (depth == 1 && static_eval + 300 < alpha) {
+            if (depth == 1 && static_eval + 200 < alpha) {
                 return alphabeta(pos,
                                  alpha,
                                  beta,
