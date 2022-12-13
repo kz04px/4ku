@@ -511,14 +511,15 @@ int alphabeta(Position &pos,
 
         if (!in_check && alpha == beta - 1) {
             // Reverse futility pruning
-            if (depth < 3) {
-                const int margin = 120;
-                if (static_eval - margin * depth >= beta) {
+            if (depth < 5) {
+                const int margins[] = {0, 100, 200, 400, 800};
+                if (static_eval - margins[depth] >= beta) {
                     return beta;
                 }
             }
+
             // Null move pruning
-            else if (static_eval >= beta && do_null) {
+            if (depth > 2 && static_eval >= beta && do_null) {
                 auto npos = pos;
                 flip(npos);
                 npos.ep = 0;

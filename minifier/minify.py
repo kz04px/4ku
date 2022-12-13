@@ -412,6 +412,7 @@ def rename(tokens):
         "stops":"dl",
         "stop":"dm",
         "only_captures":"dn",
+        "margins":"dp",
         # Labels
         "do_search":"bk",
         "full_search":"bl",
