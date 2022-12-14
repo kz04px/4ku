@@ -17,13 +17,8 @@
 
 using namespace std;
 
-[[nodiscard]] long long int now() {
-    timespec t;
-    clock_gettime(CLOCK_MONOTONIC, &t);
-    return t.tv_sec * 1000 + t.tv_nsec / 1000000;
-}
-
-enum {
+enum
+{
     Pawn,
     Knight,
     Bishop,
@@ -33,11 +28,11 @@ enum {
     None
 };
 
-struct Move {
-    int from = 0;
-    int to = 0;
-    int promo = 0;
-};
+[[nodiscard]] long long int now() {
+    timespec t;
+    clock_gettime(CLOCK_MONOTONIC, &t);
+    return t.tv_sec * 1000 + t.tv_nsec / 1000000;
+}
 
 using BB = uint64_t;
 
@@ -52,6 +47,12 @@ struct [[nodiscard]] Position {
                            0x1000000000000010ULL};
     BB ep = 0x0ULL;
     int flipped = false;
+};
+
+struct Move {
+    int from = 0;
+    int to = 0;
+    int promo = 0;
 };
 
 struct [[nodiscard]] Stack {
@@ -100,14 +101,6 @@ vector<TT_Entry> transposition_table;
     return __builtin_popcountll(bb);
 }
 
-[[nodiscard]] auto north(const BB bb) {
-    return bb << 8;
-}
-
-[[nodiscard]] auto south(const BB bb) {
-    return bb >> 8;
-}
-
 [[nodiscard]] auto east(const BB bb) {
     return (bb << 1) & ~0x0101010101010101ULL;
 }
@@ -116,24 +109,32 @@ vector<TT_Entry> transposition_table;
     return (bb >> 1) & ~0x8080808080808080ULL;
 }
 
-[[nodiscard]] auto nw(const BB bb) {
+[[nodiscard]] BB north(const BB bb) {
+    return bb << 8;
+}
+
+[[nodiscard]] BB south(const BB bb) {
+    return bb >> 8;
+}
+
+[[nodiscard]] BB nw(const BB bb) {
     return north(west(bb));
 }
 
-[[nodiscard]] auto ne(const BB bb) {
+[[nodiscard]] BB ne(const BB bb) {
     return north(east(bb));
 }
 
-[[nodiscard]] auto sw(const BB bb) {
+[[nodiscard]] BB sw(const BB bb) {
     return south(west(bb));
 }
 
-[[nodiscard]] auto se(const BB bb) {
+[[nodiscard]] BB se(const BB bb) {
     return south(east(bb));
 }
 
 [[nodiscard]] auto operator==(const Move &lhs, const Move &rhs) {
-    return lhs.from == rhs.from && lhs.to == rhs.to && lhs.promo == rhs.promo;
+    return !memcmp(&rhs, &lhs, sizeof(Move));
 }
 
 [[nodiscard]] auto move_str(const Move &move, const int flip) {
@@ -272,8 +273,7 @@ auto makemove(Position &pos, const Move &move) {
 }
 
 void add_move(Move *const movelist, int &num_moves, const int from, const int to, const int promo = None) {
-    movelist[num_moves] = Move{from, to, promo};
-    num_moves++;
+    movelist[num_moves++] = Move{from, to, promo};
 }
 
 void generate_pawn_moves(Move *const movelist, int &num_moves, BB to_mask, const int offset) {
@@ -861,8 +861,6 @@ int main(
     // OpenBench compliance
     if (argc > 1 && argv[1] == string("bench")) {
         // Initialise the TT
-        // redundant
-        // transposition_table.clear();
         transposition_table.resize(num_tt_entries);
 
         int stop = false;
@@ -885,8 +883,6 @@ int main(
     puts("uciok");
 
     // Initialise the TT
-    // redundant
-    // transposition_table.clear();
     transposition_table.resize(num_tt_entries);
 
     while (true) {
