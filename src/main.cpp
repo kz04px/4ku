@@ -17,12 +17,6 @@
 
 using namespace std;
 
-[[nodiscard]] long long int now() {
-    timespec t;
-    clock_gettime(CLOCK_MONOTONIC, &t);
-    return t.tv_sec * 1000 + t.tv_nsec / 1000000;
-}
-
 enum
 {
     Pawn,
@@ -34,15 +28,16 @@ enum
     None
 };
 
-struct Move {
-    int from = 0;
-    int to = 0;
-    int promo = 0;
-};
+[[nodiscard]] long long int now() {
+    timespec t;
+    clock_gettime(CLOCK_MONOTONIC, &t);
+    return t.tv_sec * 1000 + t.tv_nsec / 1000000;
+}
 
 using BB = uint64_t;
 
 struct [[nodiscard]] Position {
+    array<int, 4> castling = {true, true, true, true};
     array<BB, 2> colour = {0xFFFFULL, 0xFFFF000000000000ULL};
     array<BB, 6> pieces = {0xFF00000000FF00ULL,
                            0x4200000000000042ULL,
@@ -51,8 +46,13 @@ struct [[nodiscard]] Position {
                            0x800000000000008ULL,
                            0x1000000000000010ULL};
     BB ep = 0x0ULL;
-    array<int, 4> castling = {true, true, true, true};
     int flipped = false;
+};
+
+struct Move {
+    int from = 0;
+    int to = 0;
+    int promo = 0;
 };
 
 struct [[nodiscard]] Stack {
@@ -61,7 +61,7 @@ struct [[nodiscard]] Stack {
 };
 
 struct [[nodiscard]] TT_Entry {
-    uint64_t key;
+    BB key;
     Move move;
     int score;
     int depth;
@@ -69,10 +69,11 @@ struct [[nodiscard]] TT_Entry {
 };
 
 const auto keys = []() {
-    // pieces from 1-12 multiplied the square + ep squares + castling rights
-
     minstd_rand r;
-    array<uint64_t, 12 * 64 + 64 + 16> values;
+
+    // pieces from 1-12 multiplied the square + ep squares + castling rights
+    // 12 * 64 + 64 + 16 = 848
+    array<BB, 848> values;
     for (auto &val : values) {
         val = r();
         val <<= 32;
@@ -83,8 +84,8 @@ const auto keys = []() {
 }();
 
 // Engine options
-int num_tt_entries = 64 << 15;  // The first value is the size in megabytes
-int thread_count = 1;
+auto num_tt_entries = 64 << 15;  // The first value is the size in megabytes
+auto thread_count = 1;
 
 vector<TT_Entry> transposition_table;
 
@@ -92,12 +93,20 @@ vector<TT_Entry> transposition_table;
     return __builtin_bswap64(bb);
 }
 
-[[nodiscard]] int lsb(const BB bb) {
+[[nodiscard]] auto lsb(const BB bb) {
     return __builtin_ctzll(bb);
 }
 
-[[nodiscard]] int count(const BB bb) {
+[[nodiscard]] auto count(const BB bb) {
     return __builtin_popcountll(bb);
+}
+
+[[nodiscard]] auto east(const BB bb) {
+    return (bb << 1) & ~0x0101010101010101ULL;
+}
+
+[[nodiscard]] auto west(const BB bb) {
+    return (bb >> 1) & ~0x8080808080808080ULL;
 }
 
 [[nodiscard]] BB north(const BB bb) {
@@ -106,14 +115,6 @@ vector<TT_Entry> transposition_table;
 
 [[nodiscard]] BB south(const BB bb) {
     return bb >> 8;
-}
-
-[[nodiscard]] BB east(const BB bb) {
-    return (bb << 1) & ~0x0101010101010101ULL;
-}
-
-[[nodiscard]] BB west(const BB bb) {
-    return (bb >> 1) & ~0x8080808080808080ULL;
 }
 
 [[nodiscard]] BB nw(const BB bb) {
@@ -132,11 +133,11 @@ vector<TT_Entry> transposition_table;
     return south(east(bb));
 }
 
-[[nodiscard]] bool operator==(const Move &lhs, const Move &rhs) {
-    return lhs.from == rhs.from && lhs.to == rhs.to && lhs.promo == rhs.promo;
+[[nodiscard]] auto operator==(const Move &lhs, const Move &rhs) {
+    return !memcmp(&rhs, &lhs, sizeof(Move));
 }
 
-[[nodiscard]] string move_str(const Move &move, const int flip) {
+[[nodiscard]] auto move_str(const Move &move, const int flip) {
     string str;
     str += 'a' + (move.from % 8);
     str += '1' + (flip ? (7 - move.from / 8) : (move.from / 8));
@@ -172,7 +173,7 @@ void flip(Position &pos) {
 }
 
 template <typename F>
-[[nodiscard]] BB ray(const int sq, const BB blockers, F f) {
+[[nodiscard]] auto ray(const int sq, const BB blockers, F f) {
     BB mask = f(1ULL << sq);
     mask |= f(mask & ~blockers);
     mask |= f(mask & ~blockers);
@@ -190,11 +191,11 @@ template <typename F>
            (((bb << 10) | (bb >> 6)) & 0xFCFCFCFCFCFCFCFCULL) | (((bb << 6) | (bb >> 10)) & 0x3F3F3F3F3F3F3F3FULL);
 }
 
-[[nodiscard]] BB bishop(const int sq, const BB blockers) {
+[[nodiscard]] auto bishop(const int sq, const BB blockers) {
     return ray(sq, blockers, nw) | ray(sq, blockers, ne) | ray(sq, blockers, sw) | ray(sq, blockers, se);
 }
 
-[[nodiscard]] BB rook(const int sq, const BB blockers) {
+[[nodiscard]] auto rook(const int sq, const BB blockers) {
     return ray(sq, blockers, north) | ray(sq, blockers, east) | ray(sq, blockers, south) | ray(sq, blockers, west);
 }
 
@@ -204,7 +205,7 @@ template <typename F>
            (((bb << 1) | (bb << 9) | (bb >> 7)) & 0xFEFEFEFEFEFEFEFEULL);
 }
 
-[[nodiscard]] bool attacked(const Position &pos, const int sq, const int them = true) {
+[[nodiscard]] auto attacked(const Position &pos, const int sq, const int them = true) {
     const BB bb = 1ULL << sq;
     const BB kt = pos.colour[them] & pos.pieces[Knight];
     const BB BQ = pos.pieces[Bishop] | pos.pieces[Queen];
@@ -217,7 +218,7 @@ template <typename F>
            (king(sq, 0) & pos.colour[them] & pos.pieces[King]);
 }
 
-int makemove(Position &pos, const Move &move) {
+auto makemove(Position &pos, const Move &move) {
     const int piece = piece_on(pos, move.from);
     const int captured = piece_on(pos, move.to);
     const BB to = 1ULL << move.to;
@@ -272,8 +273,7 @@ int makemove(Position &pos, const Move &move) {
 }
 
 void add_move(Move *const movelist, int &num_moves, const int from, const int to, const int promo = None) {
-    movelist[num_moves] = Move{from, to, promo};
-    num_moves++;
+    movelist[num_moves++] = Move{from, to, promo};
 }
 
 void generate_pawn_moves(Move *const movelist, int &num_moves, BB to_mask, const int offset) {
@@ -310,7 +310,7 @@ void generate_piece_moves(Move *const movelist,
     }
 }
 
-[[nodiscard]] int movegen(const Position &pos, Move *const movelist, const bool only_captures) {
+[[nodiscard]] auto movegen(const Position &pos, Move *const movelist, const bool only_captures) {
     int num_moves = 0;
     const BB all = pos.colour[0] | pos.colour[1];
     const BB to_mask = only_captures ? pos.colour[1] : ~pos.colour[0];
@@ -379,7 +379,7 @@ const int king_shield[] = {S(24, -11), S(12, -16)};
 
         // For each piece type
         for (int p = 0; p < 6; ++p) {
-            BB copy = pos.colour[0] & pos.pieces[p];
+            auto copy = pos.colour[0] & pos.pieces[p];
             while (copy) {
                 phase += phases[p];
 
@@ -457,7 +457,7 @@ const int king_shield[] = {S(24, -11), S(12, -16)};
 }
 
 [[nodiscard]] auto get_hash(const Position &pos) {
-    uint64_t hash = 0;
+    BB hash = 0;
 
     // Pieces
     BB copy = pos.colour[0] | pos.colour[1];
@@ -490,7 +490,7 @@ int alphabeta(Position &pos,
               int &stop,
               Stack *const stack,
               int64_t (&hh_table)[64][64],
-              vector<uint64_t> &hash_history,
+              vector<BB> &hash_history,
               const int do_null = true) {
     const auto in_check = attacked(pos, lsb(pos.colour[0] & pos.pieces[King]));
     const int static_eval = eval(pos);
@@ -501,7 +501,7 @@ int alphabeta(Position &pos,
     const int in_qsearch = depth <= 0;
 
     // TT probing
-    const uint64_t tt_key = in_qsearch ? 0 : get_hash(pos);
+    const BB tt_key = in_qsearch ? 0 : get_hash(pos);
     TT_Entry &tt_entry = transposition_table[tt_key % num_tt_entries];
     Move tt_move{};
 
@@ -716,8 +716,8 @@ int alphabeta(Position &pos,
     return alpha;
 }
 
-Move iteratively_deepen(Position &pos,
-                        vector<uint64_t> &hash_history,
+auto iteratively_deepen(Position &pos,
+                        vector<BB> &hash_history,
                         // minify delete on
                         int thread_id,
                         const bool is_bench,
@@ -854,7 +854,7 @@ int main(
 ) {
     setbuf(stdout, NULL);
     Position pos;
-    vector<uint64_t> hash_history;
+    vector<BB> hash_history;
     Move moves[256];
 
     // minify delete on
@@ -862,7 +862,6 @@ int main(
     if (argc > 1 && argv[1] == string("bench")) {
         // Initialise the TT
         transposition_table.resize(num_tt_entries);
-        memset(transposition_table.data(), 0, sizeof(TT_Entry) * transposition_table.size());
 
         int stop = false;
         iteratively_deepen(pos, hash_history, 0, true, now(), 1 << 30, stop);
@@ -885,7 +884,6 @@ int main(
 
     // Initialise the TT
     transposition_table.resize(num_tt_entries);
-    memset(transposition_table.data(), 0, sizeof(TT_Entry) * transposition_table.size());
 
     while (true) {
         string word;
@@ -913,8 +911,8 @@ int main(
                 cin >> word;
                 cin >> num_tt_entries;
                 num_tt_entries = min(max(num_tt_entries, 1), 1024) * 1024 * 1024 / sizeof(TT_Entry);
+                transposition_table.clear();
                 transposition_table.resize(num_tt_entries);
-                memset(transposition_table.data(), 0, sizeof(TT_Entry) * transposition_table.size());
             }
         }
         // minify delete off
