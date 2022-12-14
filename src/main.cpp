@@ -23,8 +23,7 @@ using namespace std;
     return t.tv_sec * 1000 + t.tv_nsec / 1000000;
 }
 
-enum
-{
+enum {
     Pawn,
     Knight,
     Bishop,
@@ -43,6 +42,7 @@ struct Move {
 using BB = uint64_t;
 
 struct [[nodiscard]] Position {
+    array<int, 4> castling = {true, true, true, true};
     array<BB, 2> colour = {0xFFFFULL, 0xFFFF000000000000ULL};
     array<BB, 6> pieces = {0xFF00000000FF00ULL,
                            0x4200000000000042ULL,
@@ -51,7 +51,6 @@ struct [[nodiscard]] Position {
                            0x800000000000008ULL,
                            0x1000000000000010ULL};
     BB ep = 0x0ULL;
-    array<int, 4> castling = {true, true, true, true};
     int flipped = false;
 };
 
@@ -61,7 +60,7 @@ struct [[nodiscard]] Stack {
 };
 
 struct [[nodiscard]] TT_Entry {
-    uint64_t key;
+    BB key;
     Move move;
     int score;
     int depth;
@@ -69,10 +68,11 @@ struct [[nodiscard]] TT_Entry {
 };
 
 const auto keys = []() {
-    // pieces from 1-12 multiplied the square + ep squares + castling rights
-
     minstd_rand r;
-    array<uint64_t, 12 * 64 + 64 + 16> values;
+
+    // pieces from 1-12 multiplied the square + ep squares + castling rights
+    // 12 * 64 + 64 + 16 = 848
+    array<BB, 848> values;
     for (auto &val : values) {
         val = r();
         val <<= 32;
@@ -457,7 +457,7 @@ const int king_shield[] = {S(24, -11), S(12, -16)};
 }
 
 [[nodiscard]] auto get_hash(const Position &pos) {
-    uint64_t hash = 0;
+    BB hash = 0;
 
     // Pieces
     BB copy = pos.colour[0] | pos.colour[1];
@@ -490,7 +490,7 @@ int alphabeta(Position &pos,
               int &stop,
               Stack *const stack,
               int64_t (&hh_table)[64][64],
-              vector<uint64_t> &hash_history,
+              vector<BB> &hash_history,
               const int do_null = true) {
     const auto in_check = attacked(pos, lsb(pos.colour[0] & pos.pieces[King]));
     const int static_eval = eval(pos);
@@ -501,7 +501,7 @@ int alphabeta(Position &pos,
     const int in_qsearch = depth <= 0;
 
     // TT probing
-    const uint64_t tt_key = in_qsearch ? 0 : get_hash(pos);
+    const BB tt_key = in_qsearch ? 0 : get_hash(pos);
     TT_Entry &tt_entry = transposition_table[tt_key % num_tt_entries];
     Move tt_move{};
 
@@ -717,7 +717,7 @@ int alphabeta(Position &pos,
 }
 
 Move iteratively_deepen(Position &pos,
-                        vector<uint64_t> &hash_history,
+                        vector<BB> &hash_history,
                         // minify delete on
                         int thread_id,
                         const bool is_bench,
@@ -854,7 +854,7 @@ int main(
 ) {
     setbuf(stdout, NULL);
     Position pos;
-    vector<uint64_t> hash_history;
+    vector<BB> hash_history;
     Move moves[256];
 
     // minify delete on
