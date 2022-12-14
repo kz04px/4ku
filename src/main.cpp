@@ -184,7 +184,7 @@ template <typename F>
     return mask;
 }
 
-[[nodiscard]] auto knight(const int sq, const BB) {
+[[nodiscard]] BB knight(const int sq, const BB) {
     const BB bb = 1ULL << sq;
     return (((bb << 15) | (bb >> 17)) & 0x7F7F7F7F7F7F7F7FULL) | (((bb << 17) | (bb >> 15)) & 0xFEFEFEFEFEFEFEFEULL) |
            (((bb << 10) | (bb >> 6)) & 0xFCFCFCFCFCFCFCFCULL) | (((bb << 6) | (bb >> 10)) & 0x3F3F3F3F3F3F3F3FULL);
@@ -198,7 +198,7 @@ template <typename F>
     return ray(sq, blockers, north) | ray(sq, blockers, east) | ray(sq, blockers, south) | ray(sq, blockers, west);
 }
 
-[[nodiscard]] auto king(const int sq, const BB) {
+[[nodiscard]] BB king(const int sq, const BB) {
     const BB bb = 1ULL << sq;
     return (bb << 8) | (bb >> 8) | (((bb >> 1) | (bb >> 9) | (bb << 7)) & 0x7F7F7F7F7F7F7F7FULL) |
            (((bb << 1) | (bb << 9) | (bb >> 7)) & 0xFEFEFEFEFEFEFEFEULL);
@@ -861,8 +861,9 @@ int main(
     // OpenBench compliance
     if (argc > 1 && argv[1] == string("bench")) {
         // Initialise the TT
+        // redundant
+        // transposition_table.clear();
         transposition_table.resize(num_tt_entries);
-        memset(transposition_table.data(), 0, sizeof(TT_Entry) * transposition_table.size());
 
         int stop = false;
         iteratively_deepen(pos, hash_history, 0, true, now(), 1 << 30, stop);
@@ -884,8 +885,9 @@ int main(
     puts("uciok");
 
     // Initialise the TT
+    // redundant
+    // transposition_table.clear();
     transposition_table.resize(num_tt_entries);
-    memset(transposition_table.data(), 0, sizeof(TT_Entry) * transposition_table.size());
 
     while (true) {
         string word;
@@ -913,8 +915,8 @@ int main(
                 cin >> word;
                 cin >> num_tt_entries;
                 num_tt_entries = min(max(num_tt_entries, 1), 1024) * 1024 * 1024 / sizeof(TT_Entry);
+                transposition_table.clear();
                 transposition_table.resize(num_tt_entries);
-                memset(transposition_table.data(), 0, sizeof(TT_Entry) * transposition_table.size());
             }
         }
         // minify delete off
