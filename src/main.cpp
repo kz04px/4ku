@@ -28,7 +28,7 @@ enum
     None
 };
 
-[[nodiscard]] long long int now() {
+[[nodiscard]] int64_t now() {
     timespec t;
     clock_gettime(CLOCK_MONOTONIC, &t);
     return t.tv_sec * 1000 + t.tv_nsec / 1000000;
@@ -773,7 +773,7 @@ auto iteratively_deepen(Position &pos,
                 cout << "Bench: ";
                 cout << elapsed << " ms ";
                 cout << nodes << " nodes ";
-                cout << nodes * 1000 / max(elapsed, 1LL) << " nps";
+                cout << nodes * 1000 / max(elapsed, 1L) << " nps";
                 cout << endl;
                 break;
             }
