@@ -626,6 +626,8 @@ int alphabeta(Position &pos,
         }
 
         const auto move = moves[best_move_index];
+        const auto best_move_score = move_scores[best_move_index];
+
         moves[best_move_index] = moves[i];
         move_scores[best_move_index] = move_scores[i];
 
@@ -689,6 +691,15 @@ int alphabeta(Position &pos,
                 alpha = score;
                 stack[ply].move = move;
             }
+        } else if (!in_qsearch
+                   && !in_check
+                   && alpha == beta - 1
+                   && depth <= 3
+                   && moves_evaluated >= (depth * 3) + 2
+                   && static_eval < alpha - (50 * depth)
+                   && best_move_score < (1LL << 50)) {
+            best_score = alpha;
+            break;
         }
 
         if (alpha >= beta) {
