@@ -372,6 +372,9 @@ const int king_shield[] = {S(24, -11), S(12, -16)};
         const BB pawns[] = {pos.colour[0] & pos.pieces[Pawn], pos.colour[1] & pos.pieces[Pawn]};
         const BB protected_by_pawns = nw(pawns[0]) | ne(pawns[0]);
 
+        const auto my_k_pos = lsb(pos.colour[0] & pos.pieces[King]);
+        const auto their_k_pos = lsb(pos.colour[1] & pos.pieces[King]);
+
         // Bishop pair
         if (count(pos.colour[0] & pos.pieces[Bishop]) == 2) {
             score += bishop_pair;
@@ -418,6 +421,17 @@ const int king_shield[] = {S(24, -11), S(12, -16)};
                         if (north(piece_bb) & pos.colour[1]) {
                             score += pawn_passed_blocked;
                         }
+
+                        // King defense/attack
+                        // king distance to square in front of passer
+                        score -=
+                            S(0, 1) * (rank - 1)
+                            * max(abs((my_k_pos / 8) - (rank + 1)),
+                                  abs((my_k_pos % 8) - file));
+                        score +=
+                            S(0, 3) * (rank - 1)
+                            * max(abs((their_k_pos / 8) - (rank + 1)),
+                                  abs((their_k_pos % 8) - file));
                     }
 
                     // Doubled pawns
