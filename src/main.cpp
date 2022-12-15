@@ -784,7 +784,7 @@ auto iteratively_deepen(Position &pos,
                 cout << "Bench: ";
                 cout << elapsed << " ms ";
                 cout << nodes << " nodes ";
-                cout << nodes * 1000 / max(elapsed, 1L) << " nps";
+                cout << nodes * 1000 / max(elapsed, static_cast<int64_t>(1)) << " nps";
                 cout << endl;
                 break;
             }
