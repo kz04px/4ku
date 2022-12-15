@@ -362,10 +362,27 @@ const int rook_semi_open = S(30, 12);
 const int rook_rank78 = S(40, 2);
 const int king_shield[] = {S(24, -11), S(12, -16)};
 
-[[nodiscard]] int eval(Position &pos) {
+[[nodiscard]] int eval(Position &pos, const int alpha, const int beta) {
     // Include side to move bonus
     int score = S(10, 10);
     int phase = 0;
+
+    // Determine material balance
+    for (int p = 0; p < 6; ++p) {
+        auto c = count(pos.colour[0] & pos.pieces[p]);
+        phase += c * phases[p];
+        score += c * material[p];
+        c = count(pos.colour[1] & pos.pieces[p]);
+        phase += c * phases[p];
+        score -= c * material[p];
+    }
+
+    const auto ss = ((short)score * phase + ((score + 0x8000) >> 16) * (24 - phase)) / 24;
+
+    // Lazy eval
+    if (ss + 350 < alpha || ss - 350 > beta) {
+        return ss;
+    }
 
     for (int c = 0; c < 2; ++c) {
         // our pawns, their pawns
@@ -381,16 +398,11 @@ const int king_shield[] = {S(24, -11), S(12, -16)};
         for (int p = 0; p < 6; ++p) {
             auto copy = pos.colour[0] & pos.pieces[p];
             while (copy) {
-                phase += phases[p];
-
                 const int sq = lsb(copy);
                 copy &= copy - 1;
                 const int rank = sq / 8;
                 const int file = sq % 8;
                 const int centrality = (7 - abs(7 - rank - file) - abs(rank - file)) / 2;
-
-                // Material
-                score += material[p];
 
                 // Centrality
                 score += centrality * centralities[p];
@@ -493,7 +505,7 @@ int alphabeta(Position &pos,
               vector<BB> &hash_history,
               const int do_null = true) {
     const auto in_check = attacked(pos, lsb(pos.colour[0] & pos.pieces[King]));
-    const int static_eval = eval(pos);
+    const int static_eval = eval(pos, alpha, beta);
 
     // Check extensions
     depth = in_check ? max(1, depth + 1) : depth;
