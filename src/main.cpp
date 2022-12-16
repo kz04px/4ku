@@ -382,6 +382,7 @@ const int rook_semi_open = S(35, 11);
 const int rook_rank78 = S(34, 1);
 const int king_shield[] = {S(36, -13), S(16, -15), S(-89, 30)};
 const int pawn_attacked[] = {S(-64, -14), S(-55, -42)};
+const int bad_bishop = S(-4, -4);
 
 [[nodiscard]] int eval(Position &pos) {
     // Include side to move bonus
@@ -458,6 +459,15 @@ const int pawn_attacked[] = {S(-64, -14), S(-55, -42)};
                     // Doubled pawns
                     if ((north(piece_bb) | north(north(piece_bb))) & pawns[0]) {
                         score += pawn_doubled;
+                    }
+
+                    // Bad bishop (considering which color we sit on)
+                    auto colour_mask = 0xAA55AA55AA55AA55ULL;
+                    if ((file + rank) & 1) {
+                        colour_mask = ~colour_mask;
+                    }
+                    if (pos.colour[0] & pos.pieces[Bishop] & colour_mask) {
+                        score += bad_bishop;
                     }
                 } else if (p == Rook) {
                     // Rook on open or semi-open files
