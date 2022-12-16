@@ -767,7 +767,7 @@ auto iteratively_deepen(Position &pos,
                                         hh_table,
                                         hash_history);
 
-        if (stop || now() >= start_time + allocated_time / 10) {
+        if (stop || now() >= start_time + allocated_time / 6) {
             break;
         }
 
@@ -947,7 +947,7 @@ int main(
             int btime;
             cin >> word >> wtime >> word >> btime;
             const auto start = now();
-            const auto allocated_time = (pos.flipped ? btime : wtime) / 4;
+            const auto allocated_time = (pos.flipped ? btime : wtime) / 5;
 
             // Lazy SMP
             vector<thread> threads;
