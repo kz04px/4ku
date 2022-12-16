@@ -413,6 +413,8 @@ def rename(tokens):
         "stop":"dm",
         "only_captures":"dn",
         "margins":"dp",
+        "my_k_pos":"dq",
+        "their_k_pos":"dr",
         # Labels
         "do_search":"bk",
         "full_search":"bl",
