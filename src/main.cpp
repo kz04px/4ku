@@ -425,13 +425,9 @@ const int king_shield[] = {S(24, -11), S(12, -16)};
                         // King defense/attack
                         // king distance to square in front of passer
                         score -=
-                            S(0, 1) * (rank - 1)
-                            * max(abs((my_k_pos / 8) - (rank + 1)),
-                                  abs((my_k_pos % 8) - file));
-                        score +=
-                            S(0, 3) * (rank - 1)
-                            * max(abs((their_k_pos / 8) - (rank + 1)),
-                                  abs((their_k_pos % 8) - file));
+                            S(0, 1) * (rank - 1) * max(abs((my_k_pos / 8) - (rank + 1)), abs((my_k_pos % 8) - file));
+                        score += S(0, 3) * (rank - 1) *
+                                 max(abs((their_k_pos / 8) - (rank + 1)), abs((their_k_pos % 8) - file));
                     }
 
                     // Doubled pawns
