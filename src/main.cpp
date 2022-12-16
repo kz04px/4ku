@@ -625,7 +625,7 @@ int alphabeta(Position &pos,
     int best_score = -INF;
     Move best_move{};
     uint16_t tt_flag = 1;  // Alpha flag
-    hash_history.push_back(tt_key);
+    hash_history.emplace_back(tt_key);
     for (int i = 0; i < num_moves; ++i) {
         // Find best move remaining
         int best_move_index = i;
@@ -877,7 +877,7 @@ int main(
     const char **argv
     // minify delete off
 ) {
-    setbuf(stdout, NULL);
+    setbuf(stdout, 0);
     Position pos;
     vector<BB> hash_history;
     Move moves[256];
@@ -944,10 +944,7 @@ int main(
         else if (word == "go") {
             int wtime;
             int btime;
-            cin >> word;
-            cin >> wtime;
-            cin >> word;
-            cin >> btime;
+            cin >> word >> wtime >> word >> btime;
             const auto start = now();
             const auto allocated_time = (pos.flipped ? btime : wtime) / 4;
 
@@ -983,7 +980,7 @@ int main(
                 threads[i - 1].join();
             }
 
-            cout << "bestmove " << move_str(best_move, pos.flipped) << "\n";
+            cout << "bestmove " << move_str(best_move, pos.flipped) << endl;
         } else if (word == "position") {
             // Set to startpos
             pos = Position();
@@ -1018,7 +1015,7 @@ int main(
                     if (piece_on(pos, moves[i].to) != None || piece_on(pos, moves[i].from) == Pawn) {
                         hash_history.clear();
                     } else {
-                        hash_history.push_back(get_hash(pos));
+                        hash_history.emplace_back(get_hash(pos));
                     }
 
                     makemove(pos, moves[i]);
