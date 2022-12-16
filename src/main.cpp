@@ -747,27 +747,36 @@ auto iteratively_deepen(Position &pos,
     int64_t nodes = 0;
     // minify delete off
 
+    int score = 0;
     for (int i = 1; i < 128; ++i) {
-        // minify delete on
-        const int score =
-            // minify delete off
-            alphabeta(pos,
-                      -INF,
-                      INF,
-                      i,
-                      0,
-                      // minify delete on
-                      nodes,
-                      // minify delete off
-                      start_time + allocated_time,
-                      stop,
-                      stack,
-                      hh_table,
-                      hash_history);
+        auto window = 40;
+        auto research = 0;
+    research:
+        const auto newscore = alphabeta(pos,
+                                        score - window,
+                                        score + window,
+                                        i,
+                                        0,
+                                        // minify delete on
+                                        nodes,
+                                        // minify delete off
+                                        start_time + allocated_time,
+                                        stop,
+                                        stack,
+                                        hh_table,
+                                        hash_history);
 
         if (stop || now() >= start_time + allocated_time / 10) {
             break;
         }
+
+        if (newscore >= score + window || newscore <= score - window) {
+            window <<= ++research;
+            score = newscore;
+            goto research;
+        }
+
+        score = newscore;
 
         // minify delete on
         if (thread_id == 0) {

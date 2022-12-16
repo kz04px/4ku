@@ -415,6 +415,9 @@ def rename(tokens):
         "margins":"dp",
         "my_k_pos":"dq",
         "their_k_pos":"dr",
+        "window":"ds",
+        "research":"dt",
+        "newscore":"du",
         # Labels
         "do_search":"bk",
         "full_search":"bl",
