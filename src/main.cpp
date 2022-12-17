@@ -511,7 +511,7 @@ int alphabeta(Position &pos,
     const int in_qsearch = depth <= 0;
 
     // TT probing
-    const BB tt_key = in_qsearch ? 0 : get_hash(pos);
+    const BB tt_key = get_hash(pos);
     TT_Entry &tt_entry = transposition_table[tt_key % num_tt_entries];
     Move tt_move{};
 
@@ -585,7 +585,7 @@ int alphabeta(Position &pos,
     // TT Probing
     if (tt_entry.key == tt_key) {
         tt_move = tt_entry.move;
-        if (!in_qsearch && ply > 0 && tt_entry.depth >= depth) {
+        if (ply > 0 && tt_entry.depth >= depth) {
             if (tt_entry.flag == 0) {
                 return tt_entry.score;
             }
@@ -610,7 +610,7 @@ int alphabeta(Position &pos,
     int64_t move_scores[256];
     for (int j = 0; j < num_moves; ++j) {
         const int capture = piece_on(pos, moves[j].to);
-        if (moves[j] == tt_move) {
+        if (moves[j] == tt_move && (!in_qsearch || capture != None)) {
             move_scores[j] = 1LL << 62;
         } else if (capture != None) {
             move_scores[j] = ((capture + 1) * (1LL << 54)) - piece_on(pos, moves[j].from);
@@ -720,12 +720,12 @@ int alphabeta(Position &pos,
     hash_history.pop_back();
 
     // Return mate or draw scores if no moves found and not in qsearch
-    if (!in_qsearch && best_score == -INF) {
-        return in_check ? ply - MATE_SCORE : 0;
+    if (best_score == -INF) {
+        return in_qsearch ? alpha : in_check ? ply - MATE_SCORE : 0;
     }
 
     // Save to TT
-    if (!in_qsearch && (tt_entry.key != tt_key || depth >= tt_entry.depth || tt_flag == 0)) {
+    if (tt_entry.key != tt_key || depth >= tt_entry.depth || tt_flag == 0) {
         tt_entry = TT_Entry{tt_key, best_move, best_score, depth, tt_flag};
     }
 
