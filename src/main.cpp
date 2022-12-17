@@ -953,7 +953,7 @@ int main(
             int btime;
             cin >> word >> wtime >> word >> btime;
             const auto start = now();
-            const auto allocated_time = (pos.flipped ? btime : wtime) / 5;
+            const auto allocated_time = (pos.flipped ? btime : wtime) / 8;
 
             // Lazy SMP
             vector<thread> threads;
