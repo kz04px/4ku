@@ -726,7 +726,7 @@ int alphabeta(Position &pos,
 
     // Save to TT
     if (tt_entry.key != tt_key || depth >= tt_entry.depth || tt_flag == 0) {
-        tt_entry = TT_Entry{tt_key, best_move, best_score, depth, tt_flag};
+        tt_entry = TT_Entry{tt_key, best_move, best_score, in_qsearch ? 0 : depth, tt_flag};
     }
 
     return alpha;
