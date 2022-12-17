@@ -767,7 +767,8 @@ auto iteratively_deepen(Position &pos,
                                         hh_table,
                                         hash_history);
 
-        if (stop || now() >= start_time + allocated_time / 6) {
+        // Hard time limit exceeded
+        if (now() >= start_time + allocated_time || stop) {
             break;
         }
 
@@ -805,6 +806,11 @@ auto iteratively_deepen(Position &pos,
             }
         }
         // minify delete off
+
+        // Early exit after completed ply
+        if (now() >= start_time + allocated_time / 6) {
+            break;
+        }
     }
     return stack[0].move;
 }
