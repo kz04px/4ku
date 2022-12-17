@@ -56,6 +56,7 @@ struct Move {
 };
 
 struct [[nodiscard]] Stack {
+    Move moves[218];
     Move move;
     Move killer;
 };
@@ -603,7 +604,7 @@ int alphabeta(Position &pos,
         return 0;
     }
 
-    Move moves[256];
+    auto &moves = stack[ply].moves;
     const int num_moves = movegen(pos, moves, in_qsearch);
 
     // Score moves
