@@ -719,7 +719,7 @@ int alphabeta(Position &pos,
     }
     hash_history.pop_back();
 
-    // Return mate or draw scores if no moves found and not in qsearch
+    // Return mate or draw scores if no moves found
     if (best_score == -INF) {
         return in_qsearch ? alpha : in_check ? ply - MATE_SCORE : 0;
     }
