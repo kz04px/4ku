@@ -811,7 +811,7 @@ auto iteratively_deepen(Position &pos,
 // minify delete on
 void set_fen(Position &pos, const string &fen) {
     if (fen == "startpos") {
-        set_fen(pos, "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+        pos = Position();
         return;
     }
 
