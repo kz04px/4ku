@@ -11,7 +11,7 @@ endif()
 # Flags
 set(CMAKE_CXX_FLAGS "-Wall -Wextra -Wshadow -Wconversion")
 set(CMAKE_CXX_FLAGS_DEBUG "-g")
-set(CMAKE_CXX_FLAGS_RELEASE "-O3 -pthread")
+set(CMAKE_CXX_FLAGS_RELEASE "-O3 -pthread -march=native")
 
 # Add the executable
 add_executable(
