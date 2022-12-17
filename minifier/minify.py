@@ -418,6 +418,7 @@ def rename(tokens):
         "window":"ds",
         "research":"dt",
         "newscore":"du",
+        "max_material":"m",
         # Labels
         "do_search":"bk",
         "full_search":"bl",
