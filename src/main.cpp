@@ -548,7 +548,7 @@ int alphabeta(Position &pos,
                 if (-alphabeta(npos,
                                -beta,
                                -beta + 1,
-                               depth - 4,
+                               depth - 4 - depth / 6,
                                ply + 1,
                                // minify delete on
                                nodes,
