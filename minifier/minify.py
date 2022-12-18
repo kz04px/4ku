@@ -469,12 +469,12 @@ def rename(tokens):
             "stop": "dm",
             "only_captures": "dn",
             "margins": "dp",
-            "improving": "dv",
             "my_k_pos": "dq",
             "their_k_pos": "dr",
             "window": "ds",
             "research": "dt",
             "newscore": "du",
+            "improving": "dv",
             # Labels
             "do_search": "bk",
             "full_search": "bl",
