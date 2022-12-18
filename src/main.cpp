@@ -85,7 +85,7 @@ const auto keys = []() {
 }();
 
 // Engine options
-auto num_tt_entries = 64 << 15;  // The first value is the size in megabytes
+auto num_tt_entries = 64ULL << 15;  // The first value is the size in megabytes
 auto thread_count = 1;
 
 vector<TT_Entry> transposition_table;
@@ -917,7 +917,7 @@ int main(
     puts("id author kz04px");
     // minify delete on
     cout << "option name Threads type spin default " << thread_count << " min 1 max 256\n";
-    cout << "option name Hash type spin default " << (num_tt_entries >> 15) << " min 1 max 1024\n";
+    cout << "option name Hash type spin default " << (num_tt_entries >> 15) << " min 1 max 65536\n";
     // minify delete off
     puts("uciok");
 
@@ -949,7 +949,7 @@ int main(
             } else if (word == "Hash") {
                 cin >> word;
                 cin >> num_tt_entries;
-                num_tt_entries = min(max(num_tt_entries, 1), 1024) * 1024 * 1024 / sizeof(TT_Entry);
+                num_tt_entries = min(max(num_tt_entries, 1ULL), 65536ULL) * 1024 * 1024 / sizeof(TT_Entry);
                 transposition_table.clear();
                 transposition_table.resize(num_tt_entries);
             }
