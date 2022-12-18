@@ -22,3 +22,6 @@ rm ../src/copy.cpp.lzma
 
 # Make script executable
 chmod +x ./4ku-mini
+
+# Print 4ku-mini file size
+ls -l ./4ku-mini
