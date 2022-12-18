@@ -500,7 +500,7 @@ int alphabeta(Position &pos,
               const int64_t stop_time,
               int &stop,
               Stack *const stack,
-              int64_t (&hh_table)[64][64],
+              int64_t (&hh_table)[2][64][64],
               vector<BB> &hash_history,
               const int do_null = true) {
     const auto in_check = attacked(pos, lsb(pos.colour[0] & pos.pieces[King]));
@@ -618,7 +618,7 @@ int alphabeta(Position &pos,
         } else if (moves[j] == stack[ply].killer) {
             move_scores[j] = 1LL << 50;
         } else {
-            move_scores[j] = hh_table[moves[j].from][moves[j].to];
+            move_scores[j] = hh_table[pos.flipped][moves[j].from][moves[j].to];
         }
     }
 
@@ -712,7 +712,7 @@ int alphabeta(Position &pos,
             tt_flag = 2;  // Beta flag
             const int capture = piece_on(pos, move.to);
             if (capture == None) {
-                hh_table[move.from][move.to] += depth * depth;
+                hh_table[pos.flipped][move.from][move.to] += depth * depth;
                 stack[ply].killer = move;
             }
             break;
@@ -743,7 +743,7 @@ auto iteratively_deepen(Position &pos,
                         const int allocated_time,
                         int &stop) {
     Stack stack[128] = {};
-    int64_t hh_table[64][64] = {};
+    int64_t hh_table[2][64][64] = {};
     // minify delete on
     int64_t nodes = 0;
     // minify delete off
