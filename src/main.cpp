@@ -808,7 +808,7 @@ auto iteratively_deepen(Position &pos,
         // minify delete off
 
         // Early exit after completed ply
-        if (now() >= start_time + allocated_time / 6) {
+        if (now() >= start_time + allocated_time / 13) {
             break;
         }
     }
@@ -953,7 +953,7 @@ int main(
             int btime;
             cin >> word >> wtime >> word >> btime;
             const auto start = now();
-            const auto allocated_time = (pos.flipped ? btime : wtime) / 5;
+            const auto allocated_time = (pos.flipped ? btime : wtime) / 3;
 
             // Lazy SMP
             vector<thread> threads;
