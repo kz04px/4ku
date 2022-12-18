@@ -56,6 +56,7 @@ struct Move {
 };
 
 struct [[nodiscard]] Stack {
+    Move moves[218];
     Move move;
     Move killer;
     int score;
@@ -373,6 +374,9 @@ const int king_shield[] = {S(24, -11), S(12, -16)};
         const BB pawns[] = {pos.colour[0] & pos.pieces[Pawn], pos.colour[1] & pos.pieces[Pawn]};
         const BB protected_by_pawns = nw(pawns[0]) | ne(pawns[0]);
 
+        const auto my_k_pos = lsb(pos.colour[0] & pos.pieces[King]);
+        const auto their_k_pos = lsb(pos.colour[1] & pos.pieces[King]);
+
         // Bishop pair
         if (count(pos.colour[0] & pos.pieces[Bishop]) == 2) {
             score += bishop_pair;
@@ -419,6 +423,13 @@ const int king_shield[] = {S(24, -11), S(12, -16)};
                         if (north(piece_bb) & pos.colour[1]) {
                             score += pawn_passed_blocked;
                         }
+
+                        // King defense/attack
+                        // king distance to square in front of passer
+                        score -=
+                            S(0, 1) * (rank - 1) * max(abs((my_k_pos / 8) - (rank + 1)), abs((my_k_pos % 8) - file));
+                        score += S(0, 3) * (rank - 1) *
+                                 max(abs((their_k_pos / 8) - (rank + 1)), abs((their_k_pos % 8) - file));
                     }
 
                     // Doubled pawns
@@ -502,7 +513,7 @@ int alphabeta(Position &pos,
     const int in_qsearch = depth <= 0;
 
     // TT probing
-    const BB tt_key = in_qsearch ? 0 : get_hash(pos);
+    const BB tt_key = get_hash(pos);
     TT_Entry &tt_entry = transposition_table[tt_key % num_tt_entries];
     Move tt_move{};
 
@@ -576,7 +587,7 @@ int alphabeta(Position &pos,
     // TT Probing
     if (tt_entry.key == tt_key) {
         tt_move = tt_entry.move;
-        if (!in_qsearch && ply > 0 && tt_entry.depth >= depth) {
+        if (ply > 0 && tt_entry.depth >= depth) {
             if (tt_entry.flag == 0) {
                 return tt_entry.score;
             }
@@ -594,14 +605,14 @@ int alphabeta(Position &pos,
         return 0;
     }
 
-    Move moves[256];
+    auto &moves = stack[ply].moves;
     const int num_moves = movegen(pos, moves, in_qsearch);
 
     // Score moves
     int64_t move_scores[256];
     for (int j = 0; j < num_moves; ++j) {
         const int capture = piece_on(pos, moves[j].to);
-        if (moves[j] == tt_move) {
+        if (moves[j] == tt_move && (!in_qsearch || capture != None)) {
             move_scores[j] = 1LL << 62;
         } else if (capture != None) {
             move_scores[j] = ((capture + 1) * (1LL << 54)) - piece_on(pos, moves[j].from);
@@ -616,7 +627,7 @@ int alphabeta(Position &pos,
     int best_score = -INF;
     Move best_move{};
     uint16_t tt_flag = 1;  // Alpha flag
-    hash_history.push_back(tt_key);
+    hash_history.emplace_back(tt_key);
     for (int i = 0; i < num_moves; ++i) {
         // Find best move remaining
         int best_move_index = i;
@@ -710,14 +721,14 @@ int alphabeta(Position &pos,
     }
     hash_history.pop_back();
 
-    // Return mate or draw scores if no moves found and not in qsearch
-    if (!in_qsearch && best_score == -INF) {
-        return in_check ? ply - MATE_SCORE : 0;
+    // Return mate or draw scores if no moves found
+    if (best_score == -INF) {
+        return in_qsearch ? alpha : in_check ? ply - MATE_SCORE : 0;
     }
 
     // Save to TT
-    if (!in_qsearch && (tt_entry.key != tt_key || depth >= tt_entry.depth || tt_flag == 0)) {
-        tt_entry = TT_Entry{tt_key, best_move, best_score, depth, tt_flag};
+    if (tt_entry.key != tt_key || depth >= tt_entry.depth || tt_flag == 0) {
+        tt_entry = TT_Entry{tt_key, best_move, best_score, in_qsearch ? 0 : depth, tt_flag};
     }
 
     return alpha;
@@ -738,27 +749,37 @@ auto iteratively_deepen(Position &pos,
     int64_t nodes = 0;
     // minify delete off
 
+    int score = 0;
     for (int i = 1; i < 128; ++i) {
-        // minify delete on
-        const int score =
-            // minify delete off
-            alphabeta(pos,
-                      -INF,
-                      INF,
-                      i,
-                      0,
-                      // minify delete on
-                      nodes,
-                      // minify delete off
-                      start_time + allocated_time,
-                      stop,
-                      stack,
-                      hh_table,
-                      hash_history);
+        auto window = 40;
+        auto research = 0;
+    research:
+        const auto newscore = alphabeta(pos,
+                                        score - window,
+                                        score + window,
+                                        i,
+                                        0,
+                                        // minify delete on
+                                        nodes,
+                                        // minify delete off
+                                        start_time + allocated_time,
+                                        stop,
+                                        stack,
+                                        hh_table,
+                                        hash_history);
 
-        if (stop || now() >= start_time + allocated_time / 10) {
+        // Hard time limit exceeded
+        if (now() >= start_time + allocated_time || stop) {
             break;
         }
+
+        if (newscore >= score + window || newscore <= score - window) {
+            window <<= ++research;
+            score = newscore;
+            goto research;
+        }
+
+        score = newscore;
 
         // minify delete on
         if (thread_id == 0) {
@@ -786,6 +807,11 @@ auto iteratively_deepen(Position &pos,
             }
         }
         // minify delete off
+
+        // Early exit after completed ply
+        if (now() >= start_time + allocated_time / 13) {
+            break;
+        }
     }
     return stack[0].move;
 }
@@ -793,7 +819,7 @@ auto iteratively_deepen(Position &pos,
 // minify delete on
 void set_fen(Position &pos, const string &fen) {
     if (fen == "startpos") {
-        set_fen(pos, "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+        pos = Position();
         return;
     }
 
@@ -859,7 +885,7 @@ int main(
     const char **argv
     // minify delete off
 ) {
-    setbuf(stdout, NULL);
+    setbuf(stdout, 0);
     Position pos;
     vector<BB> hash_history;
     Move moves[256];
@@ -926,12 +952,9 @@ int main(
         else if (word == "go") {
             int wtime;
             int btime;
-            cin >> word;
-            cin >> wtime;
-            cin >> word;
-            cin >> btime;
+            cin >> word >> wtime >> word >> btime;
             const auto start = now();
-            const auto allocated_time = (pos.flipped ? btime : wtime) / 4;
+            const auto allocated_time = (pos.flipped ? btime : wtime) / 3;
 
             // Lazy SMP
             vector<thread> threads;
@@ -965,7 +988,7 @@ int main(
                 threads[i - 1].join();
             }
 
-            cout << "bestmove " << move_str(best_move, pos.flipped) << "\n";
+            cout << "bestmove " << move_str(best_move, pos.flipped) << endl;
         } else if (word == "position") {
             // Set to startpos
             pos = Position();
@@ -1000,7 +1023,7 @@ int main(
                     if (piece_on(pos, moves[i].to) != None || piece_on(pos, moves[i].from) == Pawn) {
                         hash_history.clear();
                     } else {
-                        hash_history.push_back(get_hash(pos));
+                        hash_history.emplace_back(get_hash(pos));
                     }
 
                     makemove(pos, moves[i]);

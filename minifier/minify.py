@@ -2,15 +2,48 @@ import argparse
 import os.path
 import re
 
+
 def get_args():
-    parser = argparse.ArgumentParser(description='C++ minifier')
-    parser.add_argument('src', help='Path to source file')
+    parser = argparse.ArgumentParser(description="C++ minifier")
+    parser.add_argument("src", help="Path to source file")
     return parser.parse_args()
 
+
 def get_keywords(src):
-    keywords = set({"int", "short", "char", "auto", "bool", "void", "using", "namespace", "define", "else",
-                    "long", "unsigned", "timespec", "struct", "class", "return", "operator", "typename", "const", "string", "goto",
-                    "uint64_t", "int64_t", "uint32_t", "int32_t", "uint16_t", "int16_t", "uint8_t", "int8_t", "minstd_rand"})
+    keywords = set(
+        {
+            "int",
+            "short",
+            "char",
+            "auto",
+            "bool",
+            "void",
+            "using",
+            "namespace",
+            "define",
+            "else",
+            "long",
+            "unsigned",
+            "timespec",
+            "struct",
+            "class",
+            "return",
+            "operator",
+            "typename",
+            "const",
+            "string",
+            "goto",
+            "uint64_t",
+            "int64_t",
+            "uint32_t",
+            "int32_t",
+            "uint16_t",
+            "int16_t",
+            "uint8_t",
+            "int8_t",
+            "minstd_rand",
+        }
+    )
 
     get_next = False
 
@@ -28,14 +61,18 @@ def get_keywords(src):
 
     return keywords
 
+
 def get_source(path):
     return open(path, "r").read()
+
 
 def get_tokens(src):
     return re.split("([^a-zA-Z0-9])", src)
 
+
 def filter_empty(tokens):
     return [n for n in tokens if n]
+
 
 def filter_delete(tokens):
     new = []
@@ -44,17 +81,17 @@ def filter_delete(tokens):
     skip = False
 
     for i in range(len(tokens)):
-        prev = tokens[i-1] if i > 0 else None
+        prev = tokens[i - 1] if i > 0 else None
         curr = tokens[i]
-        next = tokens[i+1] if i+1 < len(tokens) else None
+        next = tokens[i + 1] if i + 1 < len(tokens) else None
 
         if curr == "/" and next == "/":
             in_comment = True
         elif curr == "\n":
             in_comment = False
-            if chunk == ['/', '/', ' ', 'minify', ' ', 'delete', ' ', 'on']:
+            if chunk == ["/", "/", " ", "minify", " ", "delete", " ", "on"]:
                 skip = True
-            elif chunk == ['/', '/', ' ', 'minify', ' ', 'delete', ' ', 'off']:
+            elif chunk == ["/", "/", " ", "minify", " ", "delete", " ", "off"]:
                 skip = False
             chunk = []
 
@@ -65,17 +102,22 @@ def filter_delete(tokens):
 
     return new
 
+
 def filter_functions(tokens):
     new = []
     in_function = False
     bracket_depth = 0
 
     for i in range(len(tokens)):
-        prev = tokens[i-1] if i > 0 else None
+        prev = tokens[i - 1] if i > 0 else None
         curr = tokens[i]
-        next = tokens[i+1] if i+1 < len(tokens) else None
+        next = tokens[i + 1] if i + 1 < len(tokens) else None
 
-        if prev in [None, "{", "}", ";"] and curr in ["assert", "static_assert"] and next == "(":
+        if (
+            prev in [None, "{", "}", ";"]
+            and curr in ["assert", "static_assert"]
+            and next == "("
+        ):
             in_function = True
             bracket_depth = 1
         elif curr == "(":
@@ -91,14 +133,15 @@ def filter_functions(tokens):
 
     return new
 
+
 def filter_comments(tokens):
     new = []
     in_comment = False
 
     for i in range(len(tokens)):
-        prev = tokens[i-1] if i > 0 else None
+        prev = tokens[i - 1] if i > 0 else None
         curr = tokens[i]
-        next = tokens[i+1] if i+1 < len(tokens) else None
+        next = tokens[i + 1] if i + 1 < len(tokens) else None
 
         if curr == "/" and next == "/":
             in_comment = True
@@ -110,14 +153,15 @@ def filter_comments(tokens):
 
     return new
 
+
 def filter_block_comments(tokens):
     new = []
     in_block_comment = False
 
     for i in range(len(tokens)):
-        prev = tokens[i-1] if i > 0 else None
+        prev = tokens[i - 1] if i > 0 else None
         curr = tokens[i]
-        next = tokens[i+1] if i+1 < len(tokens) else None
+        next = tokens[i + 1] if i + 1 < len(tokens) else None
 
         if curr == "/" and next == "*":
             in_block_comment = True
@@ -130,14 +174,15 @@ def filter_block_comments(tokens):
 
     return new
 
+
 def filter_newlines(tokens):
     new = []
     in_preprocessor = False
 
     for i in range(len(tokens)):
-        prev = tokens[i-1] if i > 0 else None
+        prev = tokens[i - 1] if i > 0 else None
         curr = tokens[i]
-        next = tokens[i+1] if i+1 < len(tokens) else None
+        next = tokens[i + 1] if i + 1 < len(tokens) else None
 
         is_first = prev == None or prev == "\n"
         in_preprocessor = in_preprocessor or (is_first and curr == "#")
@@ -152,27 +197,29 @@ def filter_newlines(tokens):
 
     return new
 
+
 def collect_strings(tokens):
     new = []
     chunk = []
     in_string = False
 
     for token in tokens:
-        string_start = not in_string and token == "\""
-        string_end = in_string and token == "\""
+        string_start = not in_string and token == '"'
+        string_end = in_string and token == '"'
 
         if string_start:
             in_string = True
             chunk = []
         elif string_end:
             in_string = False
-            new.append("\"" + "".join(chunk) + "\"")
+            new.append('"' + "".join(chunk) + '"')
         elif in_string:
             chunk.append(token)
         else:
             new.append(token)
 
     return new
+
 
 def collect_underscores(tokens):
     new = []
@@ -182,17 +229,20 @@ def collect_underscores(tokens):
     for token in tokens:
         if token == "_":
             attach = True
-        elif not token.isalnum():# or token in [" ", ";", "\n", "(", ")", "{", "}", "[", "]"]:
+        elif (
+            not token.isalnum()
+        ):  # or token in [" ", ";", "\n", "(", ")", "{", "}", "[", "]"]:
             attach = False
 
         if attach and new and prev != " ":
-            new[len(new)-1] += token
+            new[len(new) - 1] += token
         else:
             new.append(token)
 
         prev = token
 
     return new
+
 
 def collect_tags(tokens):
     new = []
@@ -201,9 +251,9 @@ def collect_tags(tokens):
 
     i = 0
     while i < len(tokens):
-        prev = tokens[i-1] if i > 0 else None
+        prev = tokens[i - 1] if i > 0 else None
         curr = tokens[i]
-        next = tokens[i+1] if i+1 < len(tokens) else None
+        next = tokens[i + 1] if i + 1 < len(tokens) else None
 
         tag_start = curr == "[" and next == "["
         tag_end = curr == "]" and next == "]"
@@ -225,15 +275,16 @@ def collect_tags(tokens):
 
     return new
 
+
 def collect_scope(tokens):
     new = []
     attach = False
 
     i = 0
     while i < len(tokens):
-        prev = tokens[i-1] if i > 0 else None
+        prev = tokens[i - 1] if i > 0 else None
         curr = tokens[i]
-        next = tokens[i+1] if i+1 < len(tokens) else None
+        next = tokens[i + 1] if i + 1 < len(tokens) else None
 
         if curr == ":" and next == ":":
             attach = True
@@ -241,13 +292,14 @@ def collect_scope(tokens):
             attach = False
 
         if attach and new and prev != " ":
-            new[len(new)-1] += curr
+            new[len(new) - 1] += curr
         else:
             new.append(curr)
 
         i += 1
 
     return new
+
 
 def filter_whitespace(tokens, keywords):
     new = []
@@ -271,6 +323,7 @@ def filter_whitespace(tokens, keywords):
 
     return new
 
+
 def filter_const(tokens):
     new = []
 
@@ -281,6 +334,7 @@ def filter_const(tokens):
             new.append(token)
 
     return new
+
 
 def filter_tags(tokens):
     tags = ["[[nodiscard]]", "[[maybe_unused]]", "noexcept"]
@@ -294,161 +348,169 @@ def filter_tags(tokens):
 
     return new
 
+
 def rename(tokens):
-    replacements = dict({
-        # Types
-        "Position":"a",
-        "Move":"b",
-        "Stack":"cc",
-        # Variable names
-        "pos":"ac",
-        "move":"d",
-        "moves":"e",
-        "colour":"f",
-        "piece":"g",
-        "pieces":"h",
-        "halfmoves":"j",
-        "castling":"k",
-        "flipped":"l",
-        "values":"m",
-        "from":"n",
-        "to":"o",
-        "str":"p",
-        "mask":"q",
-        "promo":"r",
-        "promos":"s",
-        "blockers":"t",
-        "Pawn":"u",
-        "Knight":"v",
-        "Bishop":"w",
-        "Rook":"x",
-        "Queen":"y",
-        "King":"z",
-        "None":"A",
-        "flip":"B",
-        "material":"C",
-        "centralities":"D",
-        "passers":"E",
-        "rook_semi_open":"F",
-        "rook_open":"G",
-        "rook_rank78":"H",
-        "lhs":"J",
-        "rhs":"K",
-        "copy":"L",
-        "movelist":"M",
-        "empty":"N",
-        "attack":"ab",
-        "score":"ae",
-        "them":"ah",
-        "pawns":"ai",
-        "pawn_attacks":"aj",
-        "captured":"ak",
-        "num_moves":"al",
-        "to_mask":"am",
-        "offset":"an",
-        "centrality":"ar",
-        "rank":"as",
-        "file":"at",
-        "file_bb":"au",
-        "alpha":"av",
-        "beta":"aw",
-        "depth":"ax",
-        "ply":"ay",
-        "stop_time":"az",
-        "in_check":"ba",
-        "static_eval":"bb",
-        "margin":"bc",
-        "npos":"bd",
-        "movestr":"be",
-        "word":"bf",
-        "bestmove_str":"bg",
-        "stack":"bh",
-        "new_alpha":"bi",
-        "new_beta":"bj",
-        "move_scores":"bm",
-        "move_score":"bn",
-        "in_qsearch":"bo",
-        "capture":"bp",
-        "best_score":"bq",
-        "best_move_score":"br",
-        "best_move_score_index":"bs",
-        "wtime":"bt",
-        "btime":"bu",
-        "func":"bv",
-        "best_move_index":"cb",
-        "killer":"cd",
-        "hash_history":"ce",
-        "old_hash":"cf",
-        "phase":"cg",
-        "phases":"ch",
-        "do_null":"ci",
-        "full_window":"cj",
-        "moves_evaluated":"ck",
-        "keys":"cl",
-        "transposition_table":"cm",
-        "tt_key":"cn",
-        "tt_entry":"co",
-        "tt_move":"cp",
-        "flag":"cq",
-        "tt_flag":"cr",
-        "TT_Entry":"cs",
-        "num_tt_entries":"ct",
-        "best_move":"cu",
-        "bishop_pair":"cv",
-        "pawn_doubled":"cw",
-        "pawn_passed_blocked":"cx",
-        "outside_files":"cy",
-        "pawn_protection":"cz",
-        "protected_by_pawns":"da",
-        "piece_bb":"db",
-        "hh_table":"dc",
-        "thread_count": "de",
-        "threads": "df",
-        "shield": "dg",
-        "king_shield": "dh",
-        "key":"di",
-        "start_time":"dj",
-        "allocated_time":"dk",
-        "stops":"dl",
-        "stop":"dm",
-        "only_captures":"dn",
-        "margins":"dp",
-        "improving":"dq",
-        # Labels
-        "do_search":"bk",
-        "full_search":"bl",
-        # Function names
-        "knight":"O",
-        "bishop":"P",
-        "rook":"Q",
-        "king":"R",
-        "makemove":"S",
-        "attacked":"T",
-        "add_move":"U",
-        "generate_pawn_moves":"V",
-        "generate_piece_moves":"W",
-        "movegen":"X",
-        "get_hash":"Y",
-        "piece_on":"Z",
-        "move_str":"aa",
-        "alphabeta":"ad",
-        "north":"ao",
-        "south":"ap",
-        "eval":"aq",
-        "count":"bw",
-        "lsb":"bx",
-        "east":"by",
-        "west":"bz",
-        "now":"ca",
-        "iteratively_deepen": "dd",
-        "ray":"dj",
-        # Macros
-        "MATE_SCORE":"af",
-        "INF":"ag",
-        # Constants
-        "true":"1",
-        "false":"0",
-    })
+    replacements = dict(
+        {
+            # Types
+            "Position": "a",
+            "Move": "b",
+            "Stack": "cc",
+            # Variable names
+            "pos": "ac",
+            "move": "d",
+            "moves": "e",
+            "colour": "f",
+            "piece": "g",
+            "pieces": "h",
+            "halfmoves": "j",
+            "castling": "k",
+            "flipped": "l",
+            "values": "m",
+            "from": "n",
+            "to": "o",
+            "str": "p",
+            "mask": "q",
+            "promo": "r",
+            "promos": "s",
+            "blockers": "t",
+            "Pawn": "u",
+            "Knight": "v",
+            "Bishop": "w",
+            "Rook": "x",
+            "Queen": "y",
+            "King": "z",
+            "None": "A",
+            "flip": "B",
+            "material": "C",
+            "centralities": "D",
+            "passers": "E",
+            "rook_semi_open": "F",
+            "rook_open": "G",
+            "rook_rank78": "H",
+            "lhs": "J",
+            "rhs": "K",
+            "copy": "L",
+            "movelist": "M",
+            "empty": "N",
+            "attack": "ab",
+            "score": "ae",
+            "them": "ah",
+            "pawns": "ai",
+            "pawn_attacks": "aj",
+            "captured": "ak",
+            "num_moves": "al",
+            "to_mask": "am",
+            "offset": "an",
+            "centrality": "ar",
+            "rank": "as",
+            "file": "at",
+            "file_bb": "au",
+            "alpha": "av",
+            "beta": "aw",
+            "depth": "ax",
+            "ply": "ay",
+            "stop_time": "az",
+            "in_check": "ba",
+            "static_eval": "bb",
+            "margin": "bc",
+            "npos": "bd",
+            "movestr": "be",
+            "word": "bf",
+            "bestmove_str": "bg",
+            "stack": "bh",
+            "new_alpha": "bi",
+            "new_beta": "bj",
+            "move_scores": "bm",
+            "move_score": "bn",
+            "in_qsearch": "bo",
+            "capture": "bp",
+            "best_score": "bq",
+            "best_move_score": "br",
+            "best_move_score_index": "bs",
+            "wtime": "bt",
+            "btime": "bu",
+            "func": "bv",
+            "best_move_index": "cb",
+            "killer": "cd",
+            "hash_history": "ce",
+            "old_hash": "cf",
+            "phase": "cg",
+            "phases": "ch",
+            "do_null": "ci",
+            "full_window": "cj",
+            "moves_evaluated": "ck",
+            "keys": "cl",
+            "transposition_table": "cm",
+            "tt_key": "cn",
+            "tt_entry": "co",
+            "tt_move": "cp",
+            "flag": "cq",
+            "tt_flag": "cr",
+            "TT_Entry": "cs",
+            "num_tt_entries": "ct",
+            "best_move": "cu",
+            "bishop_pair": "cv",
+            "pawn_doubled": "cw",
+            "pawn_passed_blocked": "cx",
+            "outside_files": "cy",
+            "pawn_protection": "cz",
+            "protected_by_pawns": "da",
+            "piece_bb": "db",
+            "hh_table": "dc",
+            "thread_count": "de",
+            "threads": "df",
+            "shield": "dg",
+            "king_shield": "dh",
+            "key": "di",
+            "start_time": "dj",
+            "allocated_time": "dk",
+            "stops": "dl",
+            "stop": "dm",
+            "only_captures": "dn",
+            "margins": "dp",
+            "improving": "dv",
+            "my_k_pos": "dq",
+            "their_k_pos": "dr",
+            "window": "ds",
+            "research": "dt",
+            "newscore": "du",
+            # Labels
+            "do_search": "bk",
+            "full_search": "bl",
+            # Function names
+            "knight": "O",
+            "bishop": "P",
+            "rook": "Q",
+            "king": "R",
+            "makemove": "S",
+            "attacked": "T",
+            "add_move": "U",
+            "generate_pawn_moves": "V",
+            "generate_piece_moves": "W",
+            "movegen": "X",
+            "get_hash": "Y",
+            "piece_on": "Z",
+            "move_str": "aa",
+            "alphabeta": "ad",
+            "north": "ao",
+            "south": "ap",
+            "eval": "aq",
+            "count": "bw",
+            "lsb": "bx",
+            "east": "by",
+            "west": "bz",
+            "now": "ca",
+            "iteratively_deepen": "dd",
+            "ray": "dj",
+            # Macros
+            "MATE_SCORE": "af",
+            "INF": "ag",
+            # Constants
+            "true": "1",
+            "false": "0",
+        }
+    )
     new = []
 
     for token in tokens:
@@ -458,6 +520,7 @@ def rename(tokens):
             new.append(token)
 
     return new
+
 
 def main():
     args = get_args()
@@ -487,6 +550,7 @@ def main():
 
     for word in src:
         print(word, end="")
+
 
 if __name__ == "__main__":
     main()
