@@ -815,7 +815,7 @@ auto iteratively_deepen(Position &pos,
         // minify delete off
 
         // Early exit after completed ply
-        if (now() >= start_time + allocated_time / 13) {
+        if (!research && now() >= start_time + allocated_time / 10) {
             break;
         }
     }
