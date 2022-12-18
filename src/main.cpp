@@ -509,7 +509,7 @@ int alphabeta(Position &pos,
     stack[ply].score = static_eval;
     // Check extensions
     depth = in_check ? max(1, depth + 1) : depth;
-    bool improving = ply > 1 ? static_eval > stack[ply - 2].score : false;
+    bool improving = ply > 1 && static_eval > stack[ply - 2].score : false;
     const int in_qsearch = depth <= 0;
 
     // TT probing
