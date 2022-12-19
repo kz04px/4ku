@@ -363,6 +363,7 @@ const int rook_open = S(72, 1);
 const int rook_semi_open = S(30, 12);
 const int rook_rank78 = S(40, 2);
 const int king_shield[] = {S(24, -11), S(12, -16)};
+const int pawn_attacked = S(25, 20);
 
 [[nodiscard]] int eval(Position &pos) {
     // Include side to move bonus
@@ -373,6 +374,7 @@ const int king_shield[] = {S(24, -11), S(12, -16)};
         // our pawns, their pawns
         const BB pawns[] = {pos.colour[0] & pos.pieces[Pawn], pos.colour[1] & pos.pieces[Pawn]};
         const BB protected_by_pawns = nw(pawns[0]) | ne(pawns[0]);
+        const BB attacked_by_pawns = se(pawns[1]) | sw(pawns[1]);
 
         const auto my_k_pos = lsb(pos.colour[0] & pos.pieces[King]);
         const auto their_k_pos = lsb(pos.colour[1] & pos.pieces[King]);
@@ -410,6 +412,11 @@ const int king_shield[] = {S(24, -11), S(12, -16)};
                 const BB piece_bb = 1ULL << sq;
                 if (piece_bb & protected_by_pawns) {
                     score += pawn_protection[p];
+                }
+                if (~pawns[0] & piece_bb & attacked_by_pawns) {
+                    // If we're to move, we'll just lose some options and our tempo.
+                    // If we're not to move, we lose a piece?
+                    score -= pawn_attacked * (c ? 5 : 1);
                 }
 
                 if (p == Pawn) {
