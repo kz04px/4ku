@@ -455,6 +455,9 @@ const int king_shield[] = {S(24, -11), S(12, -16)};
                     const BB shield = file < 3 ? 0x700 : 0xE000;
                     score += count(shield & pawns[0]) * king_shield[0];
                     score += count(north(shield) & pawns[0]) * king_shield[1];
+
+                    // C3D7 = Reasonable king squares
+                    score -= !(piece_bb & 0xC3D7) * king_shield[0];
                 }
             }
         }
