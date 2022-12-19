@@ -647,6 +647,10 @@ int alphabeta(Position &pos,
         if (in_qsearch && !in_check && static_eval + 50 + max_material[piece_on(pos, move.to)] < alpha) {
             best_score = alpha;
             break;
+        } else if (!in_qsearch && !in_check && !(move == tt_move) &&
+                   static_eval + 150 * depth + max_material[piece_on(pos, move.to)] < alpha) {
+            best_score = alpha;
+            break;
         }
 
         auto npos = pos;
