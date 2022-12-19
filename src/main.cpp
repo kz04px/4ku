@@ -612,7 +612,7 @@ int alphabeta(Position &pos,
     int64_t move_scores[256];
     for (int j = 0; j < num_moves; ++j) {
         const int capture = piece_on(pos, moves[j].to);
-        if (moves[j] == tt_move && (!in_qsearch || capture != None)) {
+        if (moves[j] == tt_move) {
             move_scores[j] = 1LL << 62;
         } else if (capture != None) {
             move_scores[j] = ((capture + 1) * (1LL << 54)) - piece_on(pos, moves[j].from);
