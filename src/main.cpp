@@ -623,6 +623,7 @@ int alphabeta(Position &pos,
         }
     }
 
+    int quiet_moves_evaluated = 0;
     int moves_evaluated = 0;
     int best_score = -INF;
     Move best_move{};
@@ -642,6 +643,10 @@ int alphabeta(Position &pos,
 
         moves[best_move_index] = moves[i];
         move_scores[best_move_index] = move_scores[i];
+
+        if (alpha == beta - 1 && !in_check && quiet_moves_evaluated > 3 + 2 * depth * depth) {
+            break;
+        }
 
         // Delta pruning
         if (in_qsearch && !in_check && static_eval + 50 + max_material[piece_on(pos, move.to)] < alpha) {
@@ -698,6 +703,9 @@ int alphabeta(Position &pos,
             }
         }
         moves_evaluated++;
+        if (piece_on(pos, move.to) == None) {
+            quiet_moves_evaluated++;
+        }
 
         // Exit early if out of time
         if (stop || now() >= stop_time) {
