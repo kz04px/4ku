@@ -419,7 +419,9 @@ def rename(tokens):
         "research":"dt",
         "newscore":"du",
         "max_material":"m",
-        "quiet_moves_evaluated":"dv",
+        "attacked_by_pawns":"dv",
+        "pawn_attacked":"dw",
+        "quiet_moves_evaluated":"dx",
         # Labels
         "do_search":"bk",
         "full_search":"bl",
