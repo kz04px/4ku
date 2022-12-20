@@ -753,6 +753,38 @@ int alphabeta(Position &pos,
     return alpha;
 }
 
+// minify delete on
+void print_pv(const Position &pos, const Move move, vector<BB> &hash_history) {
+    // Print current move
+    cout << " " << move_str(move, pos.flipped);
+
+    // Play the move, probe the TT in the resulting position
+    auto npos = pos;
+    if (!makemove(npos, move)) {
+        return;
+    }
+
+    const BB tt_key = get_hash(npos);
+    const TT_Entry &tt_entry = transposition_table[tt_key % num_tt_entries];
+
+    // Only continue if the move was valid and comes from a PV search
+    if (tt_entry.key != tt_key || tt_entry.move == Move{} || tt_entry.flag != 0) {
+        return;
+    }
+
+    // Avoid infinite recursion on a repetition
+    for (const auto old_hash : hash_history) {
+        if (old_hash == tt_key) {
+            return;
+        }
+    }
+
+    hash_history.emplace_back(tt_key);
+    print_pv(npos, tt_entry.move, hash_history);
+    hash_history.pop_back();
+}
+// minify delete off
+
 auto iteratively_deepen(Position &pos,
                         vector<BB> &hash_history,
                         // minify delete on
@@ -792,27 +824,28 @@ auto iteratively_deepen(Position &pos,
             break;
         }
 
-        if (newscore >= score + window || newscore <= score - window) {
-            window <<= ++research;
-            score = newscore;
-            goto research;
-        }
-
-        score = newscore;
-
         // minify delete on
         if (thread_id == 0) {
             const auto elapsed = now() - start_time;
 
             cout << "info";
             cout << " depth " << i;
-            cout << " score cp " << score;
+            cout << " score cp " << newscore;
+            if (newscore >= score + window) {
+                cout << " lowerbound";
+            } else if (newscore <= score - window) {
+                cout << " upperbound";
+            }
             cout << " time " << elapsed;
             cout << " nodes " << nodes;
             if (elapsed > 0) {
                 cout << " nps " << nodes * 1000 / elapsed;
             }
-            cout << " pv " << move_str(stack[0].move, pos.flipped);
+            // Not a lowerbound - a fail low won't have a meaningful PV.
+            if (newscore > score - window) {
+                cout << " pv";
+                print_pv(pos, stack[0].move, hash_history);
+            }
             cout << endl;
 
             // OpenBench compliance
@@ -826,6 +859,14 @@ auto iteratively_deepen(Position &pos,
             }
         }
         // minify delete off
+
+        if (newscore >= score + window || newscore <= score - window) {
+            window <<= ++research;
+            score = newscore;
+            goto research;
+        }
+
+        score = newscore;
 
         // Early exit after completed ply
         if (!research && now() >= start_time + allocated_time / 10) {
