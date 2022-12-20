@@ -524,7 +524,7 @@ int alphabeta(Position &pos,
 
     // Check extensions
     depth = in_check ? max(1, depth + 1) : depth;
-    int improving = ply > 1 && static_eval > stack[ply - 2].score;
+    const int improving = ply > 1 && static_eval > stack[ply - 2].score;
     const int in_qsearch = depth <= 0;
 
     // TT probing
