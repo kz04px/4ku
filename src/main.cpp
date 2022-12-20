@@ -825,28 +825,28 @@ auto iteratively_deepen(Position &pos,
             break;
         }
 
-        if (newscore >= score + window || newscore <= score - window) {
-            window <<= ++research;
-            score = newscore;
-            goto research;
-        }
-
-        score = newscore;
-
         // minify delete on
         if (thread_id == 0) {
             const auto elapsed = now() - start_time;
 
             cout << "info";
             cout << " depth " << i;
-            cout << " score cp " << score;
+            cout << " score cp " << newscore;
+            if (newscore >= score + window) {
+                cout << " lowerbound";
+            } else if (newscore <= score - window) {
+                cout << " upperbound";
+            }
             cout << " time " << elapsed;
             cout << " nodes " << nodes;
             if (elapsed > 0) {
                 cout << " nps " << nodes * 1000 / elapsed;
             }
-            cout << " pv";
-            print_pv(pos, stack[0].move, hash_history);
+            // Not a lowerbound - a fail low won't have a meaningful PV.
+            if (newscore > score - window) {
+                cout << " pv";
+                print_pv(pos, stack[0].move, hash_history);
+            }
             cout << endl;
 
             // OpenBench compliance
@@ -860,6 +860,14 @@ auto iteratively_deepen(Position &pos,
             }
         }
         // minify delete off
+
+        if (newscore >= score + window || newscore <= score - window) {
+            window <<= ++research;
+            score = newscore;
+            goto research;
+        }
+
+        score = newscore;
 
         // Early exit after completed ply
         if (!research && now() >= start_time + allocated_time / 10) {
