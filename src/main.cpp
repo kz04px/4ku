@@ -706,13 +706,14 @@ int alphabeta(Position &pos,
                 goto full_window;
             }
         }
-        moves_evaluated++;
 
         // Exit early if out of time
         if (stop || now() >= stop_time) {
             hash_history.pop_back();
             return 0;
         }
+
+        moves_evaluated++;
 
         if (score > best_score) {
             best_score = score;
