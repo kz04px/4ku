@@ -516,12 +516,11 @@ int alphabeta(Position &pos,
               const int do_null = true) {
     const auto in_check = attacked(pos, lsb(pos.colour[0] & pos.pieces[King]));
     const int static_eval = eval(pos);
-    stack[ply].score = static_eval;
     // Don't overflow the stack
     if (ply > 127) {
         return static_eval;
     }
-
+    stack[ply].score = static_eval;
     // Check extensions
     depth = in_check ? max(1, depth + 1) : depth;
     const int improving = ply > 1 && static_eval > stack[ply - 2].score;
