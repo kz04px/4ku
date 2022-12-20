@@ -654,10 +654,6 @@ int alphabeta(Position &pos,
         moves[best_move_index] = moves[i];
         move_scores[best_move_index] = move_scores[i];
 
-        if (alpha == beta - 1 && !in_check && quiet_moves_evaluated > 3 + 2 * depth * depth) {
-            break;
-        }
-
         // Delta pruning
         if (in_qsearch && !in_check && static_eval + 50 + max_material[piece_on(pos, move.to)] < alpha) {
             best_score = alpha;
@@ -744,6 +740,11 @@ int alphabeta(Position &pos,
                 hh_table[pos.flipped][move.from][move.to] += depth * depth;
                 stack[ply].killer = move;
             }
+            break;
+        }
+
+        // Late move pruning based on quiet move count
+        if (!in_check && alpha == beta - 1 && quiet_moves_evaluated > 3 + 2 * depth * depth) {
             break;
         }
     }
