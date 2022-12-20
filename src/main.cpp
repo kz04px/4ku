@@ -760,16 +760,35 @@ int alphabeta(Position &pos,
 }
 
 // minify delete on
-void print_pv(const Position &pos, const Move move, vector<BB> &hash_history) {
-    // Print current move
-    cout << " " << move_str(move, pos.flipped);
+[[nodiscard]] bool is_pseudolegal_move(const Position &pos, const Move &move) {
+    Move moves[256];
+    const int num_moves = movegen(pos, moves, false);
+    for (int i = 0; i < num_moves; ++i) {
+        if (moves[i] == move) {
+            return true;
+        }
+    }
+    return false;
+}
+// minify delete off
 
-    // Play the move, probe the TT in the resulting position
+// minify delete on
+void print_pv(const Position &pos, const Move move, vector<BB> &hash_history) {
+    // Check move pseudolegality
+    if (!is_pseudolegal_move(pos, move)) {
+        return;
+    }
+
+    // Check move legality
     auto npos = pos;
     if (!makemove(npos, move)) {
         return;
     }
 
+    // Print current move
+    cout << " " << move_str(move, pos.flipped);
+
+    // Probe the TT in the resulting position
     const BB tt_key = get_hash(npos);
     const TT_Entry &tt_entry = transposition_table[tt_key % num_tt_entries];
 
