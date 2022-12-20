@@ -748,23 +748,34 @@ int alphabeta(Position &pos,
 }
 
 // minify delete on
-void dump_pv(Position &pos, const Move move, const int depth = 64) {
+void print_pv(const Position &pos, const Move move, vector<BB> &hash_history) {
+    // Print current move
     cout << " " << move_str(move, pos.flipped);
-    // Avoid infinite recursion on a repetition
-    if (!depth) {
-        return;
-    }
+
     // Play the move, probe the TT in the resulting position
     auto npos = pos;
     if (!makemove(npos, move)) {
         return;
     }
+
     const BB tt_key = get_hash(npos);
     const TT_Entry &tt_entry = transposition_table[tt_key % num_tt_entries];
+
     // Only continue if the move was valid and comes from a PV search
-    if (tt_entry.key == tt_key && !(tt_entry.move == Move{}) && tt_entry.flag == 0) {
-        dump_pv(npos, tt_entry.move, depth - 1);
+    if (tt_entry.key != tt_key || tt_entry.move == Move{} || tt_entry.flag != 0) {
+        return;
     }
+
+    // Avoid infinite recursion on a repetition
+    for (const auto old_hash : hash_history) {
+        if (old_hash == tt_key) {
+            return;
+        }
+    }
+
+    hash_history.emplace_back(tt_key);
+    print_pv(npos, tt_entry.move, hash_history);
+    hash_history.pop_back();
 }
 // minify delete off
 
@@ -828,7 +839,7 @@ auto iteratively_deepen(Position &pos,
                 cout << " nps " << nodes * 1000 / elapsed;
             }
             cout << " pv";
-            dump_pv(pos, stack[0].move);
+            print_pv(pos, stack[0].move, hash_history);
             cout << endl;
 
             // OpenBench compliance
