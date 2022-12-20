@@ -59,6 +59,7 @@ struct [[nodiscard]] Stack {
     Move moves[218];
     Move move;
     Move killer;
+    int score;
 };
 
 struct [[nodiscard]] TT_Entry {
@@ -515,7 +516,7 @@ int alphabeta(Position &pos,
               const int do_null = true) {
     const auto in_check = attacked(pos, lsb(pos.colour[0] & pos.pieces[King]));
     const int static_eval = eval(pos);
-
+    stack[ply].score = static_eval;
     // Don't overflow the stack
     if (ply > 127) {
         return static_eval;
@@ -523,7 +524,7 @@ int alphabeta(Position &pos,
 
     // Check extensions
     depth = in_check ? max(1, depth + 1) : depth;
-
+    int improving = ply > 1 && static_eval > stack[ply - 2].score;
     const int in_qsearch = depth <= 0;
 
     // TT probing
@@ -549,8 +550,8 @@ int alphabeta(Position &pos,
         if (!in_check && alpha == beta - 1) {
             // Reverse futility pruning
             if (depth < 5) {
-                const int margins[] = {0, 50, 100, 200, 300};
-                if (static_eval - margins[depth] >= beta) {
+                const int margins[] = {50, 50, 100, 200, 300};
+                if (static_eval - margins[depth-improving] >= beta) {
                     return beta;
                 }
             }
