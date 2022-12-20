@@ -70,15 +70,13 @@ struct [[nodiscard]] TT_Entry {
 };
 
 const auto keys = []() {
-    minstd_rand r;
+    mt19937_64 r;
 
     // pieces from 1-12 multiplied the square + ep squares + castling rights
     // 12 * 64 + 64 + 16 = 848
     array<BB, 848> values;
     for (auto &val : values) {
         val = r();
-        val <<= 32;
-        val |= r();
     }
 
     return values;
