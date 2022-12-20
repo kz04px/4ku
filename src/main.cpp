@@ -516,6 +516,11 @@ int alphabeta(Position &pos,
     const auto in_check = attacked(pos, lsb(pos.colour[0] & pos.pieces[King]));
     const int static_eval = eval(pos);
 
+    // Protection against exceeding ply
+    if (ply > 127) {
+        return static_eval;
+    }
+
     // Check extensions
     depth = in_check ? max(1, depth + 1) : depth;
 
