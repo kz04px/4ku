@@ -697,7 +697,7 @@ int alphabeta(Position &pos,
             score = -alphabeta(npos,
                                -alpha - 1,
                                -alpha,
-                               depth - (depth > 3 && moves_evaluated > 3) - 1,
+                               depth - (depth > 3 && moves_evaluated > 3 ? 2 + moves_evaluated / 16 : 1),
                                ply + 1,
                                // minify delete on
                                nodes,
