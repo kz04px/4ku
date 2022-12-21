@@ -10,7 +10,7 @@ def get_args():
 def get_keywords(src):
     keywords = set({"int", "short", "char", "auto", "bool", "void", "using", "namespace", "define", "else",
                     "long", "unsigned", "timespec", "struct", "class", "return", "operator", "typename", "const", "string", "goto",
-                    "uint64_t", "int64_t", "uint32_t", "int32_t", "uint16_t", "int16_t", "uint8_t", "int8_t", "minstd_rand"})
+                    "uint64_t", "int64_t", "uint32_t", "int32_t", "uint16_t", "int16_t", "uint8_t", "int8_t", "mt19937_64"})
 
     get_next = False
 
@@ -421,6 +421,7 @@ def rename(tokens):
         "max_material":"m",
         "attacked_by_pawns":"dv",
         "pawn_attacked":"dw",
+        "no_move":"dx",
         # Labels
         "do_search":"bk",
         "full_search":"bl",

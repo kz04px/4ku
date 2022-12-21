@@ -55,6 +55,8 @@ struct Move {
     int promo = 0;
 };
 
+const Move no_move{};
+
 struct [[nodiscard]] Stack {
     Move moves[218];
     Move move;
@@ -70,15 +72,13 @@ struct [[nodiscard]] TT_Entry {
 };
 
 const auto keys = []() {
-    minstd_rand r;
+    mt19937_64 r;
 
     // pieces from 1-12 multiplied the square + ep squares + castling rights
     // 12 * 64 + 64 + 16 = 848
     array<BB, 848> values;
     for (auto &val : values) {
         val = r();
-        val <<= 32;
-        val |= r();
     }
 
     return values;
@@ -478,7 +478,7 @@ const int pawn_attacked[] = {S(-61, -18), S(-53, -42)};
 }
 
 [[nodiscard]] auto get_hash(const Position &pos) {
-    BB hash = 0;
+    BB hash = pos.flipped;
 
     // Pieces
     BB copy = pos.colour[0] | pos.colour[1];
@@ -753,7 +753,8 @@ int alphabeta(Position &pos,
 
     // Save to TT
     if (tt_entry.key != tt_key || depth >= tt_entry.depth || tt_flag == 0) {
-        tt_entry = TT_Entry{tt_key, best_move, best_score, in_qsearch ? 0 : depth, tt_flag};
+        tt_entry =
+            TT_Entry{tt_key, best_move == no_move ? tt_move : best_move, best_score, in_qsearch ? 0 : depth, tt_flag};
     }
 
     return alpha;
