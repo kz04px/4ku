@@ -513,7 +513,6 @@ int alphabeta(Position &pos,
               int64_t (&hh_table)[2][64][64],
               vector<BB> &hash_history,
               const int do_null = true) {
-    const auto in_check = attacked(pos, lsb(pos.colour[0] & pos.pieces[King]));
     const int static_eval = eval(pos);
 
     // Don't overflow the stack
@@ -522,23 +521,20 @@ int alphabeta(Position &pos,
     }
 
     // Check extensions
+    const auto in_check = attacked(pos, lsb(pos.colour[0] & pos.pieces[King]));
     depth = in_check ? max(1, depth + 1) : depth;
 
     const int in_qsearch = depth <= 0;
-
-    // TT probing
-    const BB tt_key = get_hash(pos);
-    TT_Entry &tt_entry = transposition_table[tt_key % num_tt_entries];
-    Move tt_move{};
-
-    if (in_qsearch) {
+    if (in_qsearch && static_eval > alpha) {
         if (static_eval >= beta) {
             return beta;
         }
-        if (alpha < static_eval) {
-            alpha = static_eval;
-        }
-    } else if (ply > 0) {
+        alpha = static_eval;
+    }
+
+    const BB tt_key = get_hash(pos);
+
+    if (ply > 0 && !in_qsearch) {
         // Repetition detection
         for (const auto old_hash : hash_history) {
             if (old_hash == tt_key) {
@@ -599,6 +595,8 @@ int alphabeta(Position &pos,
     }
 
     // TT Probing
+    TT_Entry &tt_entry = transposition_table[tt_key % num_tt_entries];
+    Move tt_move{};
     if (tt_entry.key == tt_key) {
         tt_move = tt_entry.move;
         if (ply > 0 && tt_entry.depth >= depth) {
