@@ -1,6 +1,7 @@
 import argparse
 import os.path
 import re
+import time
 
 def get_args():
     parser = argparse.ArgumentParser(description='C++ minifier')
@@ -296,6 +297,8 @@ def filter_tags(tokens):
 
 def rename(tokens):
     replacements = dict({
+        # Constants
+        "CLOCK_MONOTONIC":str(time.CLOCK_MONOTONIC),
         # Types
         "Position":"a",
         "Move":"b",
