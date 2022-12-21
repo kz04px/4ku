@@ -297,8 +297,6 @@ def filter_tags(tokens):
 
 def rename(tokens):
     replacements = dict({
-        # Constants
-        "CLOCK_MONOTONIC":str(time.CLOCK_MONOTONIC),
         # Types
         "Position":"a",
         "Move":"b",
@@ -459,6 +457,7 @@ def rename(tokens):
         # Constants
         "true":"1",
         "false":"0",
+        "CLOCK_MONOTONIC":str(time.CLOCK_MONOTONIC),
     })
     new = []
 
