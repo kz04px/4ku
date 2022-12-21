@@ -421,6 +421,7 @@ def rename(tokens):
         "max_material":"m",
         "attacked_by_pawns":"dv",
         "pawn_attacked":"dw",
+        "empty":"dx",
         # Labels
         "do_search":"bk",
         "full_search":"bl",
