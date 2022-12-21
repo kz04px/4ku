@@ -55,7 +55,7 @@ struct Move {
     int promo = 0;
 };
 
-const Move empty{};
+const Move no_move{};
 
 struct [[nodiscard]] Stack {
     Move moves[218];
@@ -754,7 +754,7 @@ int alphabeta(Position &pos,
     // Save to TT
     if (tt_entry.key != tt_key || depth >= tt_entry.depth || tt_flag == 0) {
         tt_entry =
-            TT_Entry{tt_key, best_move == empty ? tt_move : best_move, best_score, in_qsearch ? 0 : depth, tt_flag};
+            TT_Entry{tt_key, best_move == no_move ? tt_move : best_move, best_score, in_qsearch ? 0 : depth, tt_flag};
     }
 
     return alpha;
