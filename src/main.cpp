@@ -317,7 +317,7 @@ void generate_piece_moves(Move *const movelist,
     const BB to_mask = only_captures ? pos.colour[1] : ~pos.colour[0];
     const BB pawns = pos.colour[0] & pos.pieces[Pawn];
     generate_pawn_moves(
-        movelist, num_moves, north(pawns) & ~all & (only_captures ? 0xFF000000000000FFULL : 0xFFFFFFFFFFFFFFFF), -8);
+        movelist, num_moves, north(pawns) & ~all & (only_captures ? 0xFF00000000000000ULL : 0xFFFFFFFFFFFFFFFF), -8);
     if (!only_captures) {
         generate_pawn_moves(movelist, num_moves, north(north(pawns & 0xFF00ULL) & ~all) & ~all, -16);
     }
