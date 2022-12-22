@@ -550,7 +550,7 @@ int alphabeta(Position &pos,
             // Reverse futility pruning
             if (depth < 5) {
                 const int margins[] = {50, 50, 100, 200, 300};
-                if (static_eval - margins[depth-improving] >= beta) {
+                if (static_eval - margins[depth - improving] >= beta) {
                     return beta;
                 }
             }
