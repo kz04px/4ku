@@ -51,18 +51,18 @@ enum
     return t.tv_sec * 1000 + t.tv_nsec / 1000000;
 }
 
-using BB = uint64_t;
+using u64 = uint64_t;
 
 struct [[nodiscard]] Position {
     array<int, 4> castling = {true, true, true, true};
-    array<BB, 2> colour = {0xFFFFULL, 0xFFFF000000000000ULL};
-    array<BB, 6> pieces = {0xFF00000000FF00ULL,
-                           0x4200000000000042ULL,
-                           0x2400000000000024ULL,
-                           0x8100000000000081ULL,
-                           0x800000000000008ULL,
-                           0x1000000000000010ULL};
-    BB ep = 0x0ULL;
+    array<u64, 2> colour = {0xFFFFULL, 0xFFFF000000000000ULL};
+    array<u64, 6> pieces = {0xFF00000000FF00ULL,
+                            0x4200000000000042ULL,
+                            0x2400000000000024ULL,
+                            0x8100000000000081ULL,
+                            0x800000000000008ULL,
+                            0x1000000000000010ULL};
+    u64 ep = 0x0ULL;
     int flipped = false;
 };
 
@@ -81,7 +81,7 @@ struct [[nodiscard]] Stack {
 };
 
 struct [[nodiscard]] TT_Entry {
-    BB key;
+    u64 key;
     Move move;
     int score;
     int depth;
@@ -93,7 +93,7 @@ const auto keys = []() {
 
     // pieces from 1-12 multiplied the square + ep squares + castling rights
     // 12 * 64 + 64 + 16 = 848
-    array<BB, 848> values;
+    array<u64, 848> values;
     for (auto &val : values) {
         val = r();
     }
@@ -107,47 +107,47 @@ auto thread_count = 1;
 
 vector<TT_Entry> transposition_table;
 
-[[nodiscard]] BB flip(const BB bb) {
+[[nodiscard]] u64 flip(const u64 bb) {
     return __builtin_bswap64(bb);
 }
 
-[[nodiscard]] auto lsb(const BB bb) {
+[[nodiscard]] auto lsb(const u64 bb) {
     return __builtin_ctzll(bb);
 }
 
-[[nodiscard]] auto count(const BB bb) {
+[[nodiscard]] auto count(const u64 bb) {
     return __builtin_popcountll(bb);
 }
 
-[[nodiscard]] auto east(const BB bb) {
+[[nodiscard]] auto east(const u64 bb) {
     return (bb << 1) & ~0x0101010101010101ULL;
 }
 
-[[nodiscard]] auto west(const BB bb) {
+[[nodiscard]] auto west(const u64 bb) {
     return (bb >> 1) & ~0x8080808080808080ULL;
 }
 
-[[nodiscard]] BB north(const BB bb) {
+[[nodiscard]] u64 north(const u64 bb) {
     return bb << 8;
 }
 
-[[nodiscard]] BB south(const BB bb) {
+[[nodiscard]] u64 south(const u64 bb) {
     return bb >> 8;
 }
 
-[[nodiscard]] BB nw(const BB bb) {
+[[nodiscard]] u64 nw(const u64 bb) {
     return north(west(bb));
 }
 
-[[nodiscard]] BB ne(const BB bb) {
+[[nodiscard]] u64 ne(const u64 bb) {
     return north(east(bb));
 }
 
-[[nodiscard]] BB sw(const BB bb) {
+[[nodiscard]] u64 sw(const u64 bb) {
     return south(west(bb));
 }
 
-[[nodiscard]] BB se(const BB bb) {
+[[nodiscard]] u64 se(const u64 bb) {
     return south(east(bb));
 }
 
@@ -168,7 +168,7 @@ vector<TT_Entry> transposition_table;
 }
 
 [[nodiscard]] int piece_on(const Position &pos, const int sq) {
-    const BB bb = 1ULL << sq;
+    const u64 bb = 1ULL << sq;
     for (int i = 0; i < 6; ++i) {
         if (pos.pieces[i] & bb) {
             return i;
@@ -191,8 +191,8 @@ void flip(Position &pos) {
 }
 
 template <typename F>
-[[nodiscard]] auto ray(const int sq, const BB blockers, F f) {
-    BB mask = f(1ULL << sq);
+[[nodiscard]] auto ray(const int sq, const u64 blockers, F f) {
+    u64 mask = f(1ULL << sq);
     mask |= f(mask & ~blockers);
     mask |= f(mask & ~blockers);
     mask |= f(mask & ~blockers);
@@ -203,33 +203,33 @@ template <typename F>
     return mask;
 }
 
-[[nodiscard]] BB knight(const int sq, const BB) {
-    const BB bb = 1ULL << sq;
+[[nodiscard]] u64 knight(const int sq, const u64) {
+    const u64 bb = 1ULL << sq;
     return (((bb << 15) | (bb >> 17)) & 0x7F7F7F7F7F7F7F7FULL) | (((bb << 17) | (bb >> 15)) & 0xFEFEFEFEFEFEFEFEULL) |
            (((bb << 10) | (bb >> 6)) & 0xFCFCFCFCFCFCFCFCULL) | (((bb << 6) | (bb >> 10)) & 0x3F3F3F3F3F3F3F3FULL);
 }
 
-[[nodiscard]] auto bishop(const int sq, const BB blockers) {
+[[nodiscard]] auto bishop(const int sq, const u64 blockers) {
     return ray(sq, blockers, nw) | ray(sq, blockers, ne) | ray(sq, blockers, sw) | ray(sq, blockers, se);
 }
 
-[[nodiscard]] auto rook(const int sq, const BB blockers) {
+[[nodiscard]] auto rook(const int sq, const u64 blockers) {
     return ray(sq, blockers, north) | ray(sq, blockers, east) | ray(sq, blockers, south) | ray(sq, blockers, west);
 }
 
-[[nodiscard]] BB king(const int sq, const BB) {
-    const BB bb = 1ULL << sq;
+[[nodiscard]] u64 king(const int sq, const u64) {
+    const u64 bb = 1ULL << sq;
     return (bb << 8) | (bb >> 8) | (((bb >> 1) | (bb >> 9) | (bb << 7)) & 0x7F7F7F7F7F7F7F7FULL) |
            (((bb << 1) | (bb << 9) | (bb >> 7)) & 0xFEFEFEFEFEFEFEFEULL);
 }
 
 [[nodiscard]] auto attacked(const Position &pos, const int sq, const int them = true) {
-    const BB bb = 1ULL << sq;
-    const BB kt = pos.colour[them] & pos.pieces[Knight];
-    const BB BQ = pos.pieces[Bishop] | pos.pieces[Queen];
-    const BB RQ = pos.pieces[Rook] | pos.pieces[Queen];
-    const BB pawns = pos.colour[them] & pos.pieces[Pawn];
-    const BB pawn_attacks = them ? sw(pawns) | se(pawns) : nw(pawns) | ne(pawns);
+    const u64 bb = 1ULL << sq;
+    const u64 kt = pos.colour[them] & pos.pieces[Knight];
+    const u64 BQ = pos.pieces[Bishop] | pos.pieces[Queen];
+    const u64 RQ = pos.pieces[Rook] | pos.pieces[Queen];
+    const u64 pawns = pos.colour[them] & pos.pieces[Pawn];
+    const u64 pawn_attacks = them ? sw(pawns) | se(pawns) : nw(pawns) | ne(pawns);
     return (pawn_attacks & bb) | (kt & knight(sq, 0)) |
            (bishop(sq, pos.colour[0] | pos.colour[1]) & pos.colour[them] & BQ) |
            (rook(sq, pos.colour[0] | pos.colour[1]) & pos.colour[them] & RQ) |
@@ -239,8 +239,8 @@ template <typename F>
 auto makemove(Position &pos, const Move &move) {
     const int piece = piece_on(pos, move.from);
     const int captured = piece_on(pos, move.to);
-    const BB to = 1ULL << move.to;
-    const BB from = 1ULL << move.from;
+    const u64 to = 1ULL << move.to;
+    const u64 from = 1ULL << move.from;
 
     // Move the piece
     pos.colour[0] ^= from | to;
@@ -267,7 +267,7 @@ auto makemove(Position &pos, const Move &move) {
 
     // Castling
     if (piece == King) {
-        const BB bb = move.to - move.from == 2 ? 0xa0ULL : move.to - move.from == -2 ? 0x9ULL : 0x0ULL;
+        const u64 bb = move.to - move.from == 2 ? 0xa0ULL : move.to - move.from == -2 ? 0x9ULL : 0x0ULL;
         pos.colour[0] ^= bb;
         pos.pieces[Rook] ^= bb;
     }
@@ -294,7 +294,7 @@ void add_move(Move *const movelist, int &num_moves, const int from, const int to
     movelist[num_moves++] = Move{from, to, promo};
 }
 
-void generate_pawn_moves(Move *const movelist, int &num_moves, BB to_mask, const int offset) {
+void generate_pawn_moves(Move *const movelist, int &num_moves, u64 to_mask, const int offset) {
     while (to_mask) {
         const int to = lsb(to_mask);
         to_mask &= to_mask - 1;
@@ -313,13 +313,13 @@ void generate_piece_moves(Move *const movelist,
                           int &num_moves,
                           const Position &pos,
                           const int piece,
-                          const BB to_mask,
-                          BB (*func)(int, BB)) {
-    BB copy = pos.colour[0] & pos.pieces[piece];
+                          const u64 to_mask,
+                          u64 (*func)(int, u64)) {
+    u64 copy = pos.colour[0] & pos.pieces[piece];
     while (copy) {
         const int fr = lsb(copy);
         copy &= copy - 1;
-        BB moves = func(fr, pos.colour[0] | pos.colour[1]) & to_mask;
+        u64 moves = func(fr, pos.colour[0] | pos.colour[1]) & to_mask;
         while (moves) {
             const int to = lsb(moves);
             moves &= moves - 1;
@@ -330,9 +330,9 @@ void generate_piece_moves(Move *const movelist,
 
 [[nodiscard]] auto movegen(const Position &pos, Move *const movelist, const bool only_captures) {
     int num_moves = 0;
-    const BB all = pos.colour[0] | pos.colour[1];
-    const BB to_mask = only_captures ? pos.colour[1] : ~pos.colour[0];
-    const BB pawns = pos.colour[0] & pos.pieces[Pawn];
+    const u64 all = pos.colour[0] | pos.colour[1];
+    const u64 to_mask = only_captures ? pos.colour[1] : ~pos.colour[0];
+    const u64 pawns = pos.colour[0] & pos.pieces[Pawn];
     if (!only_captures) {
         generate_pawn_moves(movelist, num_moves, north(pawns) & ~all, -8);
         generate_pawn_moves(movelist, num_moves, north(north(pawns & 0xFF00ULL) & ~all) & ~all, -16);
@@ -390,9 +390,9 @@ const int pawn_attacked[] = {S(-61, -18), S(-53, -42)};
 
     for (int c = 0; c < 2; ++c) {
         // our pawns, their pawns
-        const BB pawns[] = {pos.colour[0] & pos.pieces[Pawn], pos.colour[1] & pos.pieces[Pawn]};
-        const BB protected_by_pawns = nw(pawns[0]) | ne(pawns[0]);
-        const BB attacked_by_pawns = se(pawns[1]) | sw(pawns[1]);
+        const u64 pawns[] = {pos.colour[0] & pos.pieces[Pawn], pos.colour[1] & pos.pieces[Pawn]};
+        const u64 protected_by_pawns = nw(pawns[0]) | ne(pawns[0]);
+        const u64 attacked_by_pawns = se(pawns[1]) | sw(pawns[1]);
         const int kings[] = {lsb(pos.colour[0] & pos.pieces[King]), lsb(pos.colour[1] & pos.pieces[King])};
 
         // Bishop pair
@@ -425,7 +425,7 @@ const int pawn_attacked[] = {S(-61, -18), S(-53, -42)};
                 score += psts[p][(rank / 4) * 2 + file / 4];
 
                 // Pawn protection
-                const BB piece_bb = 1ULL << sq;
+                const u64 piece_bb = 1ULL << sq;
                 if (piece_bb & protected_by_pawns) {
                     score += pawn_protection[p];
                 }
@@ -437,7 +437,7 @@ const int pawn_attacked[] = {S(-61, -18), S(-53, -42)};
 
                 if (p == Pawn) {
                     // Passed pawns
-                    BB blockers = 0x101010101010101ULL << sq;
+                    u64 blockers = 0x101010101010101ULL << sq;
                     blockers = nw(blockers) | ne(blockers);
                     if (!(blockers & pawns[1])) {
                         score += passers[rank - 1];
@@ -461,7 +461,7 @@ const int pawn_attacked[] = {S(-61, -18), S(-53, -42)};
                     }
                 } else if (p == Rook) {
                     // Rook on open or semi-open files
-                    const BB file_bb = 0x101010101010101ULL << file;
+                    const u64 file_bb = 0x101010101010101ULL << file;
                     if (!(file_bb & pawns[0])) {
                         if (!(file_bb & pawns[1])) {
                             score += rook_open;
@@ -475,7 +475,7 @@ const int pawn_attacked[] = {S(-61, -18), S(-53, -42)};
                         score += rook_rank78;
                     }
                 } else if (p == King && piece_bb & 0xE7) {
-                    const BB shield = file < 3 ? 0x700 : 0xE000;
+                    const u64 shield = file < 3 ? 0x700 : 0xE000;
                     score += count(shield & pawns[0]) * king_shield[0];
                     score += count(north(shield) & pawns[0]) * king_shield[1];
 
@@ -495,10 +495,10 @@ const int pawn_attacked[] = {S(-61, -18), S(-53, -42)};
 }
 
 [[nodiscard]] auto get_hash(const Position &pos) {
-    BB hash = pos.flipped;
+    u64 hash = pos.flipped;
 
     // Pieces
-    BB copy = pos.colour[0] | pos.colour[1];
+    u64 copy = pos.colour[0] | pos.colour[1];
     while (copy) {
         const int sq = lsb(copy);
         copy &= copy - 1;
@@ -528,7 +528,7 @@ int alphabeta(Position &pos,
               int &stop,
               Stack *const stack,
               int64_t (&hh_table)[2][64][64],
-              vector<BB> &hash_history,
+              vector<u64> &hash_history,
               const int do_null = true) {
     const int static_eval = eval(pos);
 
@@ -549,7 +549,7 @@ int alphabeta(Position &pos,
         alpha = static_eval;
     }
 
-    const BB tt_key = get_hash(pos);
+    const u64 tt_key = get_hash(pos);
 
     if (ply > 0 && !in_qsearch) {
         // Repetition detection
@@ -802,7 +802,7 @@ int alphabeta(Position &pos,
 // minify disable filter delete
 
 // minify enable filter delete
-void print_pv(const Position &pos, const Move move, vector<BB> &hash_history) {
+void print_pv(const Position &pos, const Move move, vector<u64> &hash_history) {
     // Check move pseudolegality
     if (!is_pseudolegal_move(pos, move)) {
         return;
@@ -818,7 +818,7 @@ void print_pv(const Position &pos, const Move move, vector<BB> &hash_history) {
     cout << " " << move_str(move, pos.flipped);
 
     // Probe the TT in the resulting position
-    const BB tt_key = get_hash(npos);
+    const u64 tt_key = get_hash(npos);
     const TT_Entry &tt_entry = transposition_table[tt_key % num_tt_entries];
 
     // Only continue if the move was valid and comes from a PV search
@@ -840,7 +840,7 @@ void print_pv(const Position &pos, const Move move, vector<BB> &hash_history) {
 // minify disable filter delete
 
 auto iteratively_deepen(Position &pos,
-                        vector<BB> &hash_history,
+                        vector<u64> &hash_history,
                         // minify enable filter delete
                         int thread_id,
                         const bool is_bench,
@@ -1001,7 +1001,7 @@ int main(
 ) {
     setbuf(stdout, 0);
     Position pos;
-    vector<BB> hash_history;
+    vector<u64> hash_history;
     Move moves[256];
 
     // minify enable filter delete
