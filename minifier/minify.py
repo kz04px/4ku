@@ -383,7 +383,6 @@ def rename(tokens):
         "phase":"cg",
         "phases":"ch",
         "do_null":"ci",
-        "full_window":"cj",
         "moves_evaluated":"ck",
         "keys":"cl",
         "transposition_table":"cm",
@@ -423,9 +422,11 @@ def rename(tokens):
         "attacked_by_pawns":"dv",
         "pawn_attacked":"dw",
         "no_move":"dx",
+        "reduction":"dy",
         # Labels
         "do_search":"bk",
-        "full_search":"bl",
+        "full_window":"bl",
+        "zero_window":"cj",
         # Function names
         "knight":"O",
         "bishop":"P",

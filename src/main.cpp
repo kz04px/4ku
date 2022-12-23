@@ -694,11 +694,14 @@ int alphabeta(Position &pos,
                                hh_table,
                                hash_history);
         } else {
-            // Zero window search with late move reduction
+            // Late move reduction
+            int reduction = depth > 3 && moves_evaluated > 3 ? 1 + moves_evaluated / 16 + depth / 10 : 0;
+
+        zero_window:
             score = -alphabeta(npos,
                                -alpha - 1,
                                -alpha,
-                               depth - (depth > 3 && moves_evaluated > 3 ? 2 + moves_evaluated / 16 : 1),
+                               depth - reduction - 1,
                                ply + 1,
                                // minify delete on
                                nodes,
@@ -708,6 +711,12 @@ int alphabeta(Position &pos,
                                stack,
                                hh_table,
                                hash_history);
+
+            if (reduction > 0 && score > alpha) {
+                reduction = 0;
+                goto zero_window;
+            }
+
             if (score > alpha && score < beta) {
                 goto full_window;
             }
