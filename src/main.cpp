@@ -1017,8 +1017,10 @@ int main(
     }
     // minify disable filter delete
 
+    string word;
+
     // Wait for "uci"
-    getchar();
+    cin >> word;
 
     // Send UCI info
     puts("id name 4ku");
@@ -1033,7 +1035,6 @@ int main(
     transposition_table.resize(num_tt_entries);
 
     while (true) {
-        string word;
         cin >> word;
         if (word == "quit"
             // minify enable filter delete
