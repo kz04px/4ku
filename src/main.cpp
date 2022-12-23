@@ -55,6 +55,8 @@ struct Move {
     int promo = 0;
 };
 
+const Move no_move{};
+
 struct [[nodiscard]] Stack {
     Move moves[218];
     Move move;
@@ -71,15 +73,13 @@ struct [[nodiscard]] TT_Entry {
 };
 
 const auto keys = []() {
-    minstd_rand r;
+    mt19937_64 r;
 
     // pieces from 1-12 multiplied the square + ep squares + castling rights
     // 12 * 64 + 64 + 16 = 848
     array<BB, 848> values;
     for (auto &val : values) {
         val = r();
-        val <<= 32;
-        val |= r();
     }
 
     return values;
@@ -479,7 +479,7 @@ const int pawn_attacked[] = {S(-61, -18), S(-53, -42)};
 }
 
 [[nodiscard]] auto get_hash(const Position &pos) {
-    BB hash = 0;
+    BB hash = pos.flipped;
 
     // Pieces
     BB copy = pos.colour[0] | pos.colour[1];
@@ -514,7 +514,6 @@ int alphabeta(Position &pos,
               int64_t (&hh_table)[2][64][64],
               vector<BB> &hash_history,
               const int do_null = true) {
-    const auto in_check = attacked(pos, lsb(pos.colour[0] & pos.pieces[King]));
     const int static_eval = eval(pos);
     // Don't overflow the stack
     if (ply > 127) {
@@ -522,23 +521,20 @@ int alphabeta(Position &pos,
     }
     stack[ply].score = static_eval;
     // Check extensions
+    const auto in_check = attacked(pos, lsb(pos.colour[0] & pos.pieces[King]));
     depth = in_check ? max(1, depth + 1) : depth;
     const int improving = ply > 1 && static_eval > stack[ply - 2].score;
     const int in_qsearch = depth <= 0;
-
-    // TT probing
-    const BB tt_key = get_hash(pos);
-    TT_Entry &tt_entry = transposition_table[tt_key % num_tt_entries];
-    Move tt_move{};
-
-    if (in_qsearch) {
+    if (in_qsearch && static_eval > alpha) {
         if (static_eval >= beta) {
             return beta;
         }
-        if (alpha < static_eval) {
-            alpha = static_eval;
-        }
-    } else if (ply > 0) {
+        alpha = static_eval;
+    }
+
+    const BB tt_key = get_hash(pos);
+
+    if (ply > 0 && !in_qsearch) {
         // Repetition detection
         for (const auto old_hash : hash_history) {
             if (old_hash == tt_key) {
@@ -599,6 +595,8 @@ int alphabeta(Position &pos,
     }
 
     // TT Probing
+    TT_Entry &tt_entry = transposition_table[tt_key % num_tt_entries];
+    Move tt_move{};
     if (tt_entry.key == tt_key) {
         tt_move = tt_entry.move;
         if (ply > 0 && tt_entry.depth >= depth) {
@@ -661,8 +659,11 @@ int alphabeta(Position &pos,
         if (in_qsearch && !in_check && static_eval + 50 + max_material[piece_on(pos, move.to)] < alpha) {
             best_score = alpha;
             break;
-        } else if (!in_qsearch && !in_check && !(move == tt_move) &&
-                   static_eval + 150 * depth + max_material[piece_on(pos, move.to)] < alpha) {
+        }
+
+        // Forward futility pruning
+        if (!in_qsearch && !in_check && !(move == tt_move) &&
+            static_eval + 150 * depth + max_material[piece_on(pos, move.to)] < alpha) {
             best_score = alpha;
             break;
         }
@@ -693,11 +694,15 @@ int alphabeta(Position &pos,
                                hh_table,
                                hash_history);
         } else {
-            // Zero window search with late move reduction
+            // Late move reduction
+            int reduction =
+                depth > 3 && moves_evaluated > 3 ? 1 + moves_evaluated / 16 + depth / 10 + (alpha == beta - 1) : 0;
+
+        zero_window:
             score = -alphabeta(npos,
                                -alpha - 1,
                                -alpha,
-                               depth - (depth > 3 && moves_evaluated > 3) - 1,
+                               depth - reduction - 1,
                                ply + 1,
                                // minify delete on
                                nodes,
@@ -707,6 +712,12 @@ int alphabeta(Position &pos,
                                stack,
                                hh_table,
                                hash_history);
+
+            if (reduction > 0 && score > alpha) {
+                reduction = 0;
+                goto zero_window;
+            }
+
             if (score > alpha && score < beta) {
                 goto full_window;
             }
@@ -753,23 +764,43 @@ int alphabeta(Position &pos,
 
     // Save to TT
     if (tt_entry.key != tt_key || depth >= tt_entry.depth || tt_flag == 0) {
-        tt_entry = TT_Entry{tt_key, best_move, best_score, in_qsearch ? 0 : depth, tt_flag};
+        tt_entry =
+            TT_Entry{tt_key, best_move == no_move ? tt_move : best_move, best_score, in_qsearch ? 0 : depth, tt_flag};
     }
 
     return alpha;
 }
 
 // minify delete on
-void print_pv(const Position &pos, const Move move, vector<BB> &hash_history) {
-    // Print current move
-    cout << " " << move_str(move, pos.flipped);
+[[nodiscard]] bool is_pseudolegal_move(const Position &pos, const Move &move) {
+    Move moves[256];
+    const int num_moves = movegen(pos, moves, false);
+    for (int i = 0; i < num_moves; ++i) {
+        if (moves[i] == move) {
+            return true;
+        }
+    }
+    return false;
+}
+// minify delete off
 
-    // Play the move, probe the TT in the resulting position
+// minify delete on
+void print_pv(const Position &pos, const Move move, vector<BB> &hash_history) {
+    // Check move pseudolegality
+    if (!is_pseudolegal_move(pos, move)) {
+        return;
+    }
+
+    // Check move legality
     auto npos = pos;
     if (!makemove(npos, move)) {
         return;
     }
 
+    // Print current move
+    cout << " " << move_str(move, pos.flipped);
+
+    // Probe the TT in the resulting position
     const BB tt_key = get_hash(npos);
     const TT_Entry &tt_entry = transposition_table[tt_key % num_tt_entries];
 

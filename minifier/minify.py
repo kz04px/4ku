@@ -1,6 +1,7 @@
 import argparse
 import os.path
 import re
+import time
 
 def get_args():
     parser = argparse.ArgumentParser(description='C++ minifier')
@@ -10,7 +11,7 @@ def get_args():
 def get_keywords(src):
     keywords = set({"int", "short", "char", "auto", "bool", "void", "using", "namespace", "define", "else",
                     "long", "unsigned", "timespec", "struct", "class", "return", "operator", "typename", "const", "string", "goto",
-                    "uint64_t", "int64_t", "uint32_t", "int32_t", "uint16_t", "int16_t", "uint8_t", "int8_t", "minstd_rand"})
+                    "uint64_t", "int64_t", "uint32_t", "int32_t", "uint16_t", "int16_t", "uint8_t", "int8_t", "mt19937_64"})
 
     get_next = False
 
@@ -382,7 +383,6 @@ def rename(tokens):
         "phase":"cg",
         "phases":"ch",
         "do_null":"ci",
-        "full_window":"cj",
         "moves_evaluated":"ck",
         "keys":"cl",
         "transposition_table":"cm",
@@ -421,10 +421,13 @@ def rename(tokens):
         "max_material":"m",
         "attacked_by_pawns":"dv",
         "pawn_attacked":"dw",
-        "improving":"dx",
+        "no_move":"dx",
+        "reduction":"dy",
+        "improving":"dz",
         # Labels
         "do_search":"bk",
-        "full_search":"bl",
+        "full_window":"bl",
+        "zero_window":"cj",
         # Function names
         "knight":"O",
         "bishop":"P",
@@ -456,6 +459,7 @@ def rename(tokens):
         # Constants
         "true":"1",
         "false":"0",
+        "CLOCK_MONOTONIC":str(time.CLOCK_MONOTONIC),
     })
     new = []
 
