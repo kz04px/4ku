@@ -1,3 +1,20 @@
+// minify enable filter const
+// minify enable filter line_comment
+// minify enable filter block_comment
+// minify enable filter nodiscard
+// minify enable filter noexcept
+// minify enable filter empty_lines
+// minify enable filter trailing_newline
+// minify enable filter trailing_whitespace
+// minify enable filter whitespace
+
+// minify disable function assert
+// minify disable function static_assert
+
+// minify replace true 1
+// minify replace false 0
+// minify replace NULL 0
+
 #include <array>
 #include <cstdint>
 #include <cstdio>
@@ -8,9 +25,9 @@
 #include <string>
 #include <thread>
 #include <vector>
-// minify delete on
+// minify enable filter delete
 #include <sstream>
-// minify delete off
+// minify disable filter delete
 
 #define MATE_SCORE (1 << 15)
 #define INF (1 << 16)
@@ -504,9 +521,9 @@ int alphabeta(Position &pos,
               const int beta,
               int depth,
               const int ply,
-              // minify delete on
+              // minify enable filter delete
               int64_t &nodes,
-              // minify delete off
+              // minify disable filter delete
               const int64_t stop_time,
               int &stop,
               Stack *const stack,
@@ -561,9 +578,9 @@ int alphabeta(Position &pos,
                                -beta + 1,
                                depth - 4 - depth / 6,
                                ply + 1,
-                               // minify delete on
+                               // minify enable filter delete
                                nodes,
-                               // minify delete off
+                               // minify disable filter delete
                                stop_time,
                                stop,
                                stack,
@@ -581,9 +598,9 @@ int alphabeta(Position &pos,
                                  beta,
                                  0,
                                  ply,
-                                 // minify delete on
+                                 // minify enable filter delete
                                  nodes,
-                                 // minify delete off
+                                 // minify disable filter delete
                                  stop_time,
                                  stop,
                                  stack,
@@ -673,9 +690,9 @@ int alphabeta(Position &pos,
             continue;
         }
 
-        // minify delete on
+        // minify enable filter delete
         nodes++;
-        // minify delete off
+        // minify disable filter delete
 
         int score;
         if (in_qsearch || !moves_evaluated) {
@@ -685,9 +702,9 @@ int alphabeta(Position &pos,
                                -alpha,
                                depth - 1,
                                ply + 1,
-                               // minify delete on
+                               // minify enable filter delete
                                nodes,
-                               // minify delete off
+                               // minify disable filter delete
                                stop_time,
                                stop,
                                stack,
@@ -704,9 +721,9 @@ int alphabeta(Position &pos,
                                -alpha,
                                depth - reduction - 1,
                                ply + 1,
-                               // minify delete on
+                               // minify enable filter delete
                                nodes,
-                               // minify delete off
+                               // minify disable filter delete
                                stop_time,
                                stop,
                                stack,
@@ -771,7 +788,7 @@ int alphabeta(Position &pos,
     return alpha;
 }
 
-// minify delete on
+// minify enable filter delete
 [[nodiscard]] bool is_pseudolegal_move(const Position &pos, const Move &move) {
     Move moves[256];
     const int num_moves = movegen(pos, moves, false);
@@ -782,9 +799,9 @@ int alphabeta(Position &pos,
     }
     return false;
 }
-// minify delete off
+// minify disable filter delete
 
-// minify delete on
+// minify enable filter delete
 void print_pv(const Position &pos, const Move move, vector<BB> &hash_history) {
     // Check move pseudolegality
     if (!is_pseudolegal_move(pos, move)) {
@@ -820,22 +837,22 @@ void print_pv(const Position &pos, const Move move, vector<BB> &hash_history) {
     print_pv(npos, tt_entry.move, hash_history);
     hash_history.pop_back();
 }
-// minify delete off
+// minify disable filter delete
 
 auto iteratively_deepen(Position &pos,
                         vector<BB> &hash_history,
-                        // minify delete on
+                        // minify enable filter delete
                         int thread_id,
                         const bool is_bench,
-                        // minify delete off
+                        // minify disable filter delete
                         const int64_t start_time,
                         const int allocated_time,
                         int &stop) {
     Stack stack[128] = {};
     int64_t hh_table[2][64][64] = {};
-    // minify delete on
+    // minify enable filter delete
     int64_t nodes = 0;
-    // minify delete off
+    // minify disable filter delete
 
     int score = 0;
     for (int i = 1; i < 128; ++i) {
@@ -847,9 +864,9 @@ auto iteratively_deepen(Position &pos,
                                         score + window,
                                         i,
                                         0,
-                                        // minify delete on
+                                        // minify enable filter delete
                                         nodes,
-                                        // minify delete off
+                                        // minify disable filter delete
                                         start_time + allocated_time,
                                         stop,
                                         stack,
@@ -861,7 +878,7 @@ auto iteratively_deepen(Position &pos,
             break;
         }
 
-        // minify delete on
+        // minify enable filter delete
         if (thread_id == 0) {
             const auto elapsed = now() - start_time;
 
@@ -895,7 +912,7 @@ auto iteratively_deepen(Position &pos,
                 break;
             }
         }
-        // minify delete off
+        // minify disable filter delete
 
         if (newscore >= score + window || newscore <= score - window) {
             window <<= ++research;
@@ -913,7 +930,7 @@ auto iteratively_deepen(Position &pos,
     return stack[0].move;
 }
 
-// minify delete on
+// minify enable filter delete
 void set_fen(Position &pos, const string &fen) {
     if (fen == "startpos") {
         pos = Position();
@@ -974,20 +991,20 @@ void set_fen(Position &pos, const string &fen) {
         flip(pos);
     }
 }
-// minify delete off
+// minify disable filter delete
 
 int main(
-    // minify delete on
+    // minify enable filter delete
     const int argc,
     const char **argv
-    // minify delete off
+    // minify disable filter delete
 ) {
     setbuf(stdout, 0);
     Position pos;
     vector<BB> hash_history;
     Move moves[256];
 
-    // minify delete on
+    // minify enable filter delete
     // OpenBench compliance
     if (argc > 1 && argv[1] == string("bench")) {
         // Initialise the TT
@@ -998,7 +1015,7 @@ int main(
 
         return 0;
     }
-    // minify delete off
+    // minify disable filter delete
 
     // Wait for "uci"
     getchar();
@@ -1006,10 +1023,10 @@ int main(
     // Send UCI info
     puts("id name 4ku");
     puts("id author kz04px");
-    // minify delete on
+    // minify enable filter delete
     cout << "option name Threads type spin default " << thread_count << " min 1 max 256\n";
     cout << "option name Hash type spin default " << (num_tt_entries >> 15) << " min 1 max 65536\n";
-    // minify delete off
+    // minify disable filter delete
     puts("uciok");
 
     // Initialise the TT
@@ -1019,9 +1036,9 @@ int main(
         string word;
         cin >> word;
         if (word == "quit"
-            // minify delete on
+            // minify enable filter delete
             || !cin.good()
-            // minify delete off
+            // minify disable filter delete
         ) {
             break;
         } else if (word == "ucinewgame") {
@@ -1029,7 +1046,7 @@ int main(
         } else if (word == "isready") {
             puts("readyok");
         }
-        // minify delete on
+        // minify enable filter delete
         else if (word == "setoption") {
             cin >> word;
             cin >> word;
@@ -1045,7 +1062,7 @@ int main(
                 transposition_table.resize(num_tt_entries);
             }
         }
-        // minify delete off
+        // minify disable filter delete
         else if (word == "go") {
             int wtime;
             int btime;
@@ -1060,10 +1077,10 @@ int main(
                 threads.emplace_back([=, &stops]() mutable {
                     iteratively_deepen(pos,
                                        hash_history,
-                                       // minify delete on
+                                       // minify enable filter delete
                                        i,
                                        false,
-                                       // minify delete off
+                                       // minify disable filter delete
                                        start,
                                        1 << 30,
                                        stops[i]);
@@ -1071,10 +1088,10 @@ int main(
             }
             const auto best_move = iteratively_deepen(pos,
                                                       hash_history,
-                                                      // minify delete on
+                                                      // minify enable filter delete
                                                       0,
                                                       false,
-                                                      // minify delete off
+                                                      // minify disable filter delete
                                                       start,
                                                       allocated_time,
                                                       stops[0]);
@@ -1091,7 +1108,7 @@ int main(
             pos = Position();
             hash_history.clear();
 
-            // minify delete on
+            // minify enable filter delete
             string fen;
             int fen_size = 0;
 
@@ -1112,7 +1129,7 @@ int main(
             if (!fen.empty()) {
                 set_fen(pos, fen);
             }
-            // minify delete off
+            // minify disable filter delete
         } else {
             const int num_moves = movegen(pos, moves, false);
             for (int i = 0; i < num_moves; ++i) {
