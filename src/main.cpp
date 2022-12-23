@@ -627,6 +627,8 @@ int alphabeta(Position &pos,
                 return tt_entry.score;
             }
         }
+    } else if (depth > 3) {
+        depth--;
     }
 
     // Exit early if out of time
