@@ -696,7 +696,7 @@ int alphabeta(Position &pos,
         } else {
             // Late move reduction
             int reduction =
-                depth > 3 && moves_evaluated > 3 ? 1 + moves_evaluated / 16 + depth / 10 + (alpha == beta - 1) : 0;
+                depth > 3 && moves_evaluated > 3 && piece_on(pos, move.to) == None? 1 + moves_evaluated / 16 + depth / 10 + (alpha == beta - 1) : 0;
 
         zero_window:
             score = -alphabeta(npos,
