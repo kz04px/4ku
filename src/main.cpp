@@ -15,16 +15,18 @@
 // minify replace false 0
 // minify replace NULL 0
 
+// clang-format off
+#include <random>
+#include <iostream>
+#include <thread>
 #include <array>
+#include <string>
+#include <cstring>
 #include <cstdint>
 #include <cstdio>
-#include <cstring>
 #include <ctime>
-#include <iostream>
-#include <random>
-#include <string>
-#include <thread>
 #include <vector>
+// clang-format on
 // minify enable filter delete
 #include <sstream>
 // minify disable filter delete
@@ -78,6 +80,7 @@ struct [[nodiscard]] Stack {
     Move moves[218];
     Move move;
     Move killer;
+    int score;
 };
 
 struct [[nodiscard]] TT_Entry {
@@ -104,6 +107,9 @@ const auto keys = []() {
 // Engine options
 auto num_tt_entries = 64ULL << 15;  // The first value is the size in megabytes
 auto thread_count = 1;
+// Possible tournament settings (4095 bytes exe)
+// auto num_tt_entries = 1ULL << 30;  // 32 GB
+// auto thread_count = 52;
 
 vector<TT_Entry> transposition_table;
 
@@ -333,8 +339,9 @@ void generate_piece_moves(Move *const movelist,
     const u64 all = pos.colour[0] | pos.colour[1];
     const u64 to_mask = only_captures ? pos.colour[1] : ~pos.colour[0];
     const u64 pawns = pos.colour[0] & pos.pieces[Pawn];
+    generate_pawn_moves(
+        movelist, num_moves, north(pawns) & ~all & (only_captures ? 0xFF00000000000000ULL : 0xFFFFFFFFFFFF0000ULL), -8);
     if (!only_captures) {
-        generate_pawn_moves(movelist, num_moves, north(pawns) & ~all, -8);
         generate_pawn_moves(movelist, num_moves, north(north(pawns & 0xFF00ULL) & ~all) & ~all, -16);
     }
     generate_pawn_moves(movelist, num_moves, nw(pawns) & (pos.colour[1] | pos.ep), -7);
@@ -485,6 +492,13 @@ const int pawn_attacked[] = {S(-61, -18), S(-53, -42)};
             }
         }
 
+        // Bad bishops
+        score -= S(4, 4)
+            * ((!!(pos.colour[0] & pos.pieces[Bishop] & 0xAA55AA55AA55AA55ULL)
+               * count(pawns[0] & 0xAA55AA55AA55AA55ULL))
+            + (!!(pos.colour[0] & pos.pieces[Bishop] & ~0xAA55AA55AA55AA55ULL)
+               * count(pawns[0] & ~0xAA55AA55AA55AA55ULL)));
+
         flip(pos);
 
         score = -score;
@@ -531,16 +545,15 @@ int alphabeta(Position &pos,
               vector<u64> &hash_history,
               const int do_null = true) {
     const int static_eval = eval(pos);
-
     // Don't overflow the stack
     if (ply > 127) {
         return static_eval;
     }
-
+    stack[ply].score = static_eval;
     // Check extensions
     const auto in_check = attacked(pos, lsb(pos.colour[0] & pos.pieces[King]));
     depth = in_check ? max(1, depth + 1) : depth;
-
+    const int improving = ply > 1 && static_eval > stack[ply - 2].score;
     const int in_qsearch = depth <= 0;
     if (in_qsearch && static_eval > alpha) {
         if (static_eval >= beta) {
@@ -562,8 +575,8 @@ int alphabeta(Position &pos,
         if (!in_check && alpha == beta - 1) {
             // Reverse futility pruning
             if (depth < 5) {
-                const int margins[] = {0, 50, 100, 200, 300};
-                if (static_eval - margins[depth] >= beta) {
+                const int margins[] = {50, 50, 100, 200, 300};
+                if (static_eval - margins[depth - improving] >= beta) {
                     return beta;
                 }
             }
@@ -656,6 +669,7 @@ int alphabeta(Position &pos,
         }
     }
 
+    int quiet_moves_evaluated = 0;
     int moves_evaluated = 0;
     int best_score = -INF;
     Move best_move{};
@@ -743,14 +757,16 @@ int alphabeta(Position &pos,
                 goto full_window;
             }
         }
+        moves_evaluated++;
+        if (piece_on(pos, move.to) == None) {
+            quiet_moves_evaluated++;
+        }
 
         // Exit early if out of time
         if (stop || now() >= stop_time) {
             hash_history.pop_back();
             return 0;
         }
-
-        moves_evaluated++;
 
         if (score > best_score) {
             best_score = score;
@@ -773,6 +789,11 @@ int alphabeta(Position &pos,
                 hh_table[pos.flipped][move.from][move.to] += depth * depth;
                 stack[ply].killer = move;
             }
+            break;
+        }
+
+        // Late move pruning based on quiet move count
+        if (!in_check && alpha == beta - 1 && quiet_moves_evaluated > 3 + 2 * depth * depth) {
             break;
         }
     }
