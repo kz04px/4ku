@@ -628,6 +628,10 @@ int alphabeta(Position &pos,
             }
         }
     }
+    // Internal iterative reduction
+    else if (depth > 3) {
+        depth--;
+    }
 
     // Exit early if out of time
     if (stop || now() >= stop_time) {
