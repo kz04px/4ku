@@ -590,24 +590,6 @@ int alphabeta(Position &pos,
                     return beta;
                 }
             }
-
-            // Razoring
-            if (depth == 1 && static_eval + 200 < alpha) {
-                return alphabeta(pos,
-                                 alpha,
-                                 beta,
-                                 0,
-                                 ply,
-                                 // minify enable filter delete
-                                 nodes,
-                                 // minify disable filter delete
-                                 stop_time,
-                                 stop,
-                                 stack,
-                                 hh_table,
-                                 hash_history,
-                                 do_null);
-            }
         }
     }
 
