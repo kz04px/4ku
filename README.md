@@ -67,7 +67,7 @@ Removed:
 - The first line of input after startup will be interpreted as `uci` even if it isn't.
 - `stop` is unsupported.
 - `position fen [fen] moves [moves]` is not supported. `position startpos moves [moves]` must be used instead.
-- `go` only supports `wtime` and `btime`.
+- `go` only supports `wtime` and `btime`, in that order.
 - `setoption` is not supported. Relevant variables are hard coded.
 
 4ku has additional support for:
