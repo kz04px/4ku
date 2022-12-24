@@ -1072,6 +1072,12 @@ int main(
             int wtime;
             int btime;
             cin >> word >> wtime >> word >> btime;
+            // minify enable filter delete
+            if (word == "wtime") {
+                swap(wtime, btime);
+            }
+            // minify disable filter delete
+
             const auto start = now();
             const auto allocated_time = (pos.flipped ? btime : wtime) / 3;
 
