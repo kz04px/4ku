@@ -638,6 +638,7 @@ int alphabeta(Position &pos,
         }
     }
 
+    int quiet_moves_evaluated = 0;
     int moves_evaluated = 0;
     int best_score = -INF;
     Move best_move{};
@@ -734,6 +735,9 @@ int alphabeta(Position &pos,
         }
 
         moves_evaluated++;
+        if (piece_on(pos, move.to) == None) {
+            quiet_moves_evaluated++;
+        }
 
         if (score > best_score) {
             best_score = score;
@@ -756,6 +760,11 @@ int alphabeta(Position &pos,
                 hh_table[pos.flipped][move.from][move.to] += depth * depth;
                 stack[ply].killer = move;
             }
+            break;
+        }
+
+        // Late move pruning based on quiet move count
+        if (!in_check && alpha == beta - 1 && quiet_moves_evaluated > 3 + 2 * depth * depth) {
             break;
         }
     }
