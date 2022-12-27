@@ -181,7 +181,7 @@ def rename_tokens(tokens: list, global_rename: set, rename: set, replacements: d
 
     # Create global replacements
     # It's possible we might conflict with manual entries, so we still check
-    for name in global_rename:
+    for name in sorted(global_rename):
         w = next(gen)
         while w in replacements:
             w = next(gen)
