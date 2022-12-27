@@ -3,7 +3,9 @@ mkdir -p build
 cd build
 
 # Delete old version
-rm ./4ku-mini
+if [ -f "./4ku-mini" ]; then
+    rm ./4ku-mini
+fi
 
 # Minify the code
 python3 ../minifier/minify.py ../src/main.cpp > ../src/main-mini.cpp

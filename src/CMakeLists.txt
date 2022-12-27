@@ -9,9 +9,9 @@ if(NOT CMAKE_BUILD_TYPE)
 endif()
 
 # Flags
-set(CMAKE_CXX_FLAGS "-Wall -Wextra -Wshadow -Wconversion")
+set(CMAKE_CXX_FLAGS "-pthread -Wall -Wextra -Wshadow -Wconversion")
 set(CMAKE_CXX_FLAGS_DEBUG "-g")
-set(CMAKE_CXX_FLAGS_RELEASE "-O3 -pthread -march=native")
+set(CMAKE_CXX_FLAGS_RELEASE "-O3 -march=native")
 
 # Add the executable
 add_executable(
