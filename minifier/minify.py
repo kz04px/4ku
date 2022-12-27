@@ -555,7 +555,6 @@ def dissect(src: str, settings: Settings = Settings()) -> str:
 
         new.append(token)
 
-
         prev = token
 
     if "trailing_whitespace" in settings.filters:
