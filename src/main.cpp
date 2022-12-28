@@ -330,11 +330,10 @@ void generate_piece_moves(Move *const movelist,
 
 [[nodiscard]] auto movegen(const Position &pos, Move *const movelist, const bool only_captures) {
     int num_moves = 0;
-    const BB all = pos.colour[0] | pos.colour[1];
-    const BB to_mask = only_captures ? pos.colour[1] : ~pos.colour[0];
-    const BB pawns = pos.colour[0] & pos.pieces[Pawn];
-    generate_pawn_moves(
-        movelist, num_moves, north(pawns) & ~all & (only_captures ? 0xFF00000000000000ULL : ~0ULL), -8);
+    const u64 all = pos.colour[0] | pos.colour[1];
+    const u64 to_mask = only_captures ? pos.colour[1] : ~pos.colour[0];
+    const u64 pawns = pos.colour[0] & pos.pieces[Pawn];
+    generate_pawn_moves(movelist, num_moves, north(pawns) & ~all & (only_captures ? 0xFF00000000000000ULL : ~0ULL), -8);
     if (!only_captures) {
         generate_pawn_moves(movelist, num_moves, north(north(pawns & 0xFF00ULL) & ~all) & ~all, -16);
     }
