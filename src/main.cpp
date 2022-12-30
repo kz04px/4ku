@@ -573,7 +573,7 @@ int alphabeta(Position &pos,
             }
 
             // Null move pruning
-            if (depth > 2 && static_eval >= beta && do_null) {
+            if (depth > 2 && static_eval >= beta && do_null && pos.colour[0] & ~(pos.pieces[Pawn] | pos.pieces[King])) {
                 auto npos = pos;
                 flip(npos);
                 npos.ep = 0;
