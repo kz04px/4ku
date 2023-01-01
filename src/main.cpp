@@ -634,7 +634,7 @@ int alphabeta(Position &pos,
         if (moves[j] == tt_move) {
             move_scores[j] = 1LL << 62;
         } else if (capture != None) {
-            move_scores[j] = ((capture + 1) * (1LL << 54)) - piece_on(pos, moves[j].from);
+            move_scores[j] = (capture + 1) * (1LL << 54);
         } else if (moves[j] == stack[ply].killer) {
             move_scores[j] = 1LL << 50;
         } else {
