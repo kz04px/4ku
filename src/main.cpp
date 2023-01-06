@@ -643,6 +643,7 @@ int alphabeta(Position &pos,
     }
 
     int quiet_moves_evaluated = 0;
+    Move quiet_moves_evaluated_list[218];
     int moves_evaluated = 0;
     int best_score = -INF;
     Move best_move{};
@@ -740,6 +741,7 @@ int alphabeta(Position &pos,
 
         moves_evaluated++;
         if (piece_on(pos, move.to) == None) {
+            quiet_moves_evaluated_list[moves_evaluated] = move;
             quiet_moves_evaluated++;
         }
 
@@ -762,6 +764,10 @@ int alphabeta(Position &pos,
             const int capture = piece_on(pos, move.to);
             if (capture == None) {
                 hh_table[pos.flipped][move.from][move.to] += depth * depth;
+                for (int i = 0; i < quiet_moves_evaluated - 1; ++i) {
+                    hh_table[pos.flipped][quiet_moves_evaluated_list[i].from][quiet_moves_evaluated_list[i].to] -=
+                        depth * depth;
+                }
                 stack[ply].killer = move;
             }
             break;
