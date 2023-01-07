@@ -705,7 +705,8 @@ int alphabeta(Position &pos,
         } else {
             // Late move reduction
             int reduction = depth > 1 && num_moves_evaluated > 5 && piece_on(pos, move.to) == None
-                                ? 1 + num_moves_evaluated / 16 + depth / 8 + (alpha == beta - 1) - improving
+                                ? 1 + num_moves_evaluated / 16 + depth / 8 + (alpha == beta - 1) - improving +
+                                      (hh_table[pos.flipped][move.from][move.to] < 0)
                                 : 0;
 
         zero_window:
