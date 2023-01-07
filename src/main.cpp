@@ -687,7 +687,7 @@ int alphabeta(Position &pos,
         // minify disable filter delete
 
         int score;
-        if (in_qsearch || !num_moves_evaluated ) {
+        if (in_qsearch || !num_moves_evaluated) {
         full_window:
             score = -alphabeta(npos,
                                -beta,
@@ -704,8 +704,8 @@ int alphabeta(Position &pos,
                                hash_history);
         } else {
             // Late move reduction
-            int reduction = depth > 1 && num_moves_evaluated  > 5 && piece_on(pos, move.to) == None
-                                ? 1 + num_moves_evaluated  / 16 + depth / 8 + (alpha == beta - 1) - improving
+            int reduction = depth > 1 && num_moves_evaluated > 5 && piece_on(pos, move.to) == None
+                                ? 1 + num_moves_evaluated / 16 + depth / 8 + (alpha == beta - 1) - improving
                                 : 0;
 
         zero_window:
@@ -739,10 +739,10 @@ int alphabeta(Position &pos,
             return 0;
         }
 
-        num_moves_evaluated ++;
+        num_moves_evaluated++;
         if (piece_on(pos, move.to) == None) {
-            quiets_evaluated[num_moves_evaluated ] = move;
-            num_quiets_evaluated ++;
+            quiets_evaluated[num_moves_evaluated] = move;
+            num_quiets_evaluated++;
         }
 
         if (score > best_score) {
@@ -754,7 +754,7 @@ int alphabeta(Position &pos,
                 stack[ply].move = move;
             }
         } else if (!in_qsearch && !in_check && alpha == beta - 1 && depth <= 3 &&
-                   num_moves_evaluated  >= (depth * 3) + 2 && static_eval < alpha - (50 * depth) &&
+                   num_moves_evaluated >= (depth * 3) + 2 && static_eval < alpha - (50 * depth) &&
                    best_move_score < (1LL << 50)) {
             best_score = alpha;
             break;
@@ -765,7 +765,7 @@ int alphabeta(Position &pos,
             const int capture = piece_on(pos, move.to);
             if (capture == None) {
                 hh_table[pos.flipped][move.from][move.to] += depth * depth;
-                for (int j = 0; j < num_quiets_evaluated  - 1; ++j) {
+                for (int j = 0; j < num_quiets_evaluated - 1; ++j) {
                     hh_table[pos.flipped][quiets_evaluated[j].from][quiets_evaluated[j].to] -= depth * depth;
                 }
                 stack[ply].killer = move;
@@ -774,7 +774,7 @@ int alphabeta(Position &pos,
         }
 
         // Late move pruning based on quiet move count
-        if (!in_check && alpha == beta - 1 && num_quiets_evaluated  > 3 + 2 * depth * depth) {
+        if (!in_check && alpha == beta - 1 && num_quiets_evaluated > 3 + 2 * depth * depth) {
             break;
         }
     }
