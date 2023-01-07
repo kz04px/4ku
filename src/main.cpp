@@ -741,7 +741,7 @@ int alphabeta(Position &pos,
 
         num_moves_evaluated++;
         if (piece_on(pos, move.to) == None) {
-            quiets_evaluated[num_moves_evaluated] = move;
+            quiets_evaluated[num_quiets_evaluated] = move;
             num_quiets_evaluated++;
         }
 
