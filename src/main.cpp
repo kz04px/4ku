@@ -764,8 +764,8 @@ int alphabeta(Position &pos,
             const int capture = piece_on(pos, move.to);
             if (capture == None) {
                 hh_table[pos.flipped][move.from][move.to] += depth * depth;
-                for (int i = 0; i < quiet_moves_evaluated - 1; ++i) {
-                    hh_table[pos.flipped][quiet_moves_evaluated_list[i].from][quiet_moves_evaluated_list[i].to] -=
+                for (int j = 0; j < quiet_moves_evaluated - 1; ++j) {
+                    hh_table[pos.flipped][quiet_moves_evaluated_list[j].from][quiet_moves_evaluated_list[j].to] -=
                         depth * depth;
                 }
                 stack[ply].killer = move;
