@@ -642,8 +642,9 @@ int alphabeta(Position &pos,
         }
     }
 
-    int quiet_moves_evaluated = 0;
-    int moves_evaluated = 0;
+    int num_moves_evaluated = 0;
+    int num_quiets_evaluated = 0;
+    Move quiets_evaluated[218];
     int best_score = -INF;
     Move best_move{};
     uint16_t tt_flag = 1;  // Alpha flag
@@ -686,7 +687,7 @@ int alphabeta(Position &pos,
         // minify disable filter delete
 
         int score;
-        if (in_qsearch || !moves_evaluated) {
+        if (in_qsearch || !num_moves_evaluated) {
         full_window:
             score = -alphabeta(npos,
                                -beta,
@@ -703,8 +704,8 @@ int alphabeta(Position &pos,
                                hash_history);
         } else {
             // Late move reduction
-            int reduction = depth > 1 && moves_evaluated > 5 && piece_on(pos, move.to) == None
-                                ? 1 + moves_evaluated / 16 + depth / 8 + (alpha == beta - 1) - improving
+            int reduction = depth > 1 && num_moves_evaluated > 5 && piece_on(pos, move.to) == None
+                                ? 1 + num_moves_evaluated / 16 + depth / 8 + (alpha == beta - 1) - improving
                                 : 0;
 
         zero_window:
@@ -738,9 +739,10 @@ int alphabeta(Position &pos,
             return 0;
         }
 
-        moves_evaluated++;
+        num_moves_evaluated++;
         if (piece_on(pos, move.to) == None) {
-            quiet_moves_evaluated++;
+            quiets_evaluated[num_quiets_evaluated] = move;
+            num_quiets_evaluated++;
         }
 
         if (score > best_score) {
@@ -751,8 +753,9 @@ int alphabeta(Position &pos,
                 alpha = score;
                 stack[ply].move = move;
             }
-        } else if (!in_qsearch && !in_check && alpha == beta - 1 && depth <= 3 && moves_evaluated >= (depth * 3) + 2 &&
-                   static_eval < alpha - (50 * depth) && best_move_score < (1LL << 50)) {
+        } else if (!in_qsearch && !in_check && alpha == beta - 1 && depth <= 3 &&
+                   num_moves_evaluated >= (depth * 3) + 2 && static_eval < alpha - (50 * depth) &&
+                   best_move_score < (1LL << 50)) {
             best_score = alpha;
             break;
         }
@@ -762,13 +765,16 @@ int alphabeta(Position &pos,
             const int capture = piece_on(pos, move.to);
             if (capture == None) {
                 hh_table[pos.flipped][move.from][move.to] += depth * depth;
+                for (int j = 0; j < num_quiets_evaluated - 1; ++j) {
+                    hh_table[pos.flipped][quiets_evaluated[j].from][quiets_evaluated[j].to] -= depth * depth;
+                }
                 stack[ply].killer = move;
             }
             break;
         }
 
         // Late move pruning based on quiet move count
-        if (!in_check && alpha == beta - 1 && quiet_moves_evaluated > 3 + 2 * depth * depth) {
+        if (!in_check && alpha == beta - 1 && num_quiets_evaluated > 3 + 2 * depth * depth) {
             break;
         }
     }
