@@ -76,6 +76,7 @@ const Move no_move{};
 
 struct [[nodiscard]] Stack {
     Move moves[218];
+    Move quiets_evaluated[218];
     Move move;
     Move killer;
     int score;
@@ -644,7 +645,6 @@ int alphabeta(Position &pos,
 
     int num_moves_evaluated = 0;
     int num_quiets_evaluated = 0;
-    Move quiets_evaluated[218];
     int best_score = -INF;
     Move best_move{};
     uint16_t tt_flag = 1;  // Alpha flag
@@ -741,7 +741,7 @@ int alphabeta(Position &pos,
 
         num_moves_evaluated++;
         if (piece_on(pos, move.to) == None) {
-            quiets_evaluated[num_quiets_evaluated] = move;
+            stack[ply].quiets_evaluated[num_quiets_evaluated] = move;
             num_quiets_evaluated++;
         }
 
@@ -766,7 +766,8 @@ int alphabeta(Position &pos,
             if (capture == None) {
                 hh_table[pos.flipped][move.from][move.to] += depth * depth;
                 for (int j = 0; j < num_quiets_evaluated - 1; ++j) {
-                    hh_table[pos.flipped][quiets_evaluated[j].from][quiets_evaluated[j].to] -= depth * depth;
+                    hh_table[pos.flipped][stack[ply].quiets_evaluated[j].from][stack[ply].quiets_evaluated[j].to] -=
+                        depth * depth;
                 }
                 stack[ply].killer = move;
             }
