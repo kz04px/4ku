@@ -621,7 +621,7 @@ int alphabeta(Position &pos,
     }
 
     // Exit early if out of time
-    if (stop || now() >= stop_time) {
+    if (depth > 3 && (stop || now() >= stop_time)) {
         return 0;
     }
 
@@ -735,7 +735,7 @@ int alphabeta(Position &pos,
         }
 
         // Exit early if out of time
-        if (stop || now() >= stop_time) {
+        if (depth > 3 && (stop || now() >= stop_time)) {
             hash_history.pop_back();
             return 0;
         }
