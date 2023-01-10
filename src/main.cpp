@@ -499,11 +499,19 @@ const int pawn_attacked[] = {S(-64, -14), S(-55, -42)};
     u64 hash = pos.flipped;
 
     // Pieces
-    u64 copy = pos.colour[0] | pos.colour[1];
-    while (copy) {
-        const int sq = lsb(copy);
-        copy &= copy - 1;
-        hash ^= keys[(piece_on(pos, sq) + 6 * ((pos.colour[pos.flipped] >> sq) & 1)) * 64 + sq];
+    for (int p = Pawn; p < None; p++) {
+        u64 copy = pos.pieces[p] & pos.colour[0];
+        while (copy) {
+            const int sq = lsb(copy);
+            copy &= copy - 1;
+            hash ^= keys[p * 64 + sq];
+        }
+        copy = pos.pieces[p] & pos.colour[1];
+        while (copy) {
+            const int sq = lsb(copy);
+            copy &= copy - 1;
+            hash ^= keys[(p + 6) * 64 + sq];
+        }
     }
 
     // En passant square
