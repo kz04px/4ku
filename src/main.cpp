@@ -201,7 +201,6 @@ template <typename F>
     mask |= f(mask & ~blockers);
     mask |= f(mask & ~blockers);
     mask |= f(mask & ~blockers);
-    mask |= f(mask & ~blockers);
     return mask;
 }
 
