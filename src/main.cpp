@@ -253,7 +253,7 @@ auto makemove(Position &pos, const Move &move) {
         pos.pieces[Pawn] ^= to >> 8;
     }
 
-    pos.ep = 0x0ULL;
+    pos.ep = 0;
 
     // Pawn double move
     if (piece == Pawn && move.to - move.from == 16) {
