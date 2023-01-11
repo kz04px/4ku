@@ -611,10 +611,10 @@ int alphabeta(Position &pos,
     if (tt_entry.key == tt_key) {
         tt_move = tt_entry.move;
         if (ply > 0 && tt_entry.depth >= depth) {
-            if (tt_entry.flag == 0) {
+            if (tt_entry.flag == 0 && tt_entry.score <= alpha) {
                 return tt_entry.score;
             }
-            if (tt_entry.flag == 1 && tt_entry.score <= alpha) {
+            if (tt_entry.flag == 1) {
                 return tt_entry.score;
             }
             if (tt_entry.flag == 2 && tt_entry.score >= beta) {
@@ -654,7 +654,7 @@ int alphabeta(Position &pos,
     int num_quiets_evaluated = 0;
     int best_score = -INF;
     Move best_move{};
-    uint16_t tt_flag = 1;  // Alpha flag
+    uint16_t tt_flag = 0;  // Alpha flag
     hash_history.emplace_back(tt_key);
     for (int i = 0; i < num_moves; ++i) {
         // Find best move remaining
@@ -758,7 +758,7 @@ int alphabeta(Position &pos,
             best_score = score;
             best_move = move;
             if (score > alpha) {
-                tt_flag = 0;  // Exact flag
+                tt_flag = 1;  // Exact flag
                 alpha = score;
                 stack[ply].move = move;
             }
@@ -796,7 +796,7 @@ int alphabeta(Position &pos,
     }
 
     // Save to TT
-    if (tt_entry.key != tt_key || depth >= tt_entry.depth || tt_flag == 0) {
+    if (tt_entry.key != tt_key || depth >= tt_entry.depth || tt_flag == 1) {
         tt_entry =
             TT_Entry{tt_key, best_move == no_move ? tt_move : best_move, best_score, in_qsearch ? 0 : depth, tt_flag};
     }
