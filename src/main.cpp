@@ -1108,9 +1108,9 @@ int main(
 
             // Lazy SMP
             vector<thread> threads;
-            vector<int> stops(thread_count, false);
+            int stop = false;
             for (int i = 1; i < thread_count; ++i) {
-                threads.emplace_back([=, &stops]() mutable {
+                threads.emplace_back([=, &stop]() mutable {
                     iteratively_deepen(pos,
                                        hash_history,
                                        // minify enable filter delete
@@ -1119,7 +1119,7 @@ int main(
                                        // minify disable filter delete
                                        start,
                                        1 << 30,
-                                       stops[i]);
+                                       stop);
                 });
             }
             const auto best_move = iteratively_deepen(pos,
@@ -1130,10 +1130,8 @@ int main(
                                                       // minify disable filter delete
                                                       start,
                                                       allocated_time,
-                                                      stops[0]);
-            for (int i = 1; i < thread_count; ++i) {
-                stops[i] = true;
-            }
+                                                      stop);
+            stop = true;
             for (int i = 1; i < thread_count; ++i) {
                 threads[i - 1].join();
             }
