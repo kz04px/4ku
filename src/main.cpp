@@ -711,8 +711,8 @@ int alphabeta(Position &pos,
                                hash_history);
         } else {
             // Late move reduction
-            int reduction = depth > 1 && num_moves_evaluated > 5 && piece_on(pos, move.to) == None
-                                ? 1 + num_moves_evaluated / 16 + depth / 8 + (alpha == beta - 1) - improving +
+            int reduction = depth > 2 && num_moves_evaluated > 4 && piece_on(pos, move.to) == None
+                                ? 1 + num_moves_evaluated / 14 + depth / 17 + (alpha == beta - 1) - improving +
                                       (hh_table[pos.flipped][move.from][move.to] < 0) -
                                       (hh_table[pos.flipped][move.from][move.to] > 0)
                                 : 0;
