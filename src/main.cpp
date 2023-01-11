@@ -253,7 +253,7 @@ auto makemove(Position &pos, const Move &move) {
         pos.pieces[Pawn] ^= to >> 8;
     }
 
-    pos.ep = 0x0ULL;
+    pos.ep = 0;
 
     // Pawn double move
     if (piece == Pawn && move.to - move.from == 16) {
@@ -499,11 +499,19 @@ const int pawn_attacked[] = {S(-64, -14), S(-55, -42)};
     u64 hash = pos.flipped;
 
     // Pieces
-    u64 copy = pos.colour[0] | pos.colour[1];
-    while (copy) {
-        const int sq = lsb(copy);
-        copy &= copy - 1;
-        hash ^= keys[(piece_on(pos, sq) + 6 * ((pos.colour[pos.flipped] >> sq) & 1)) * 64 + sq];
+    for (int p = Pawn; p < None; p++) {
+        u64 copy = pos.pieces[p] & pos.colour[0];
+        while (copy) {
+            const int sq = lsb(copy);
+            copy &= copy - 1;
+            hash ^= keys[p * 64 + sq];
+        }
+        copy = pos.pieces[p] & pos.colour[1];
+        while (copy) {
+            const int sq = lsb(copy);
+            copy &= copy - 1;
+            hash ^= keys[(p + 6) * 64 + sq];
+        }
     }
 
     // En passant square
