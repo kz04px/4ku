@@ -75,8 +75,9 @@ struct Move {
 const Move no_move{};
 
 struct [[nodiscard]] Stack {
-    Move moves[218];
-    Move quiets_evaluated[218];
+    Move moves[256];
+    Move quiets_evaluated[256];
+    int64_t move_scores[256];
     Move move;
     Move killer;
     int score;
@@ -632,36 +633,47 @@ int alphabeta(Position &pos,
         return 0;
     }
 
-    auto &moves = stack[ply].moves;
-    const int num_moves = movegen(pos, moves, in_qsearch);
-
-    // Score moves
-    int64_t move_scores[256];
-    for (int j = 0; j < num_moves; ++j) {
-        const int capture = piece_on(pos, moves[j].to);
-        if (moves[j] == tt_move) {
-            move_scores[j] = 1LL << 62;
-        } else if (capture != None) {
-            move_scores[j] = ((capture + 1) * (1LL << 54));
-        } else if (moves[j] == stack[ply].killer) {
-            move_scores[j] = 1LL << 50;
-        } else {
-            move_scores[j] = hh_table[pos.flipped][moves[j].from][moves[j].to];
-        }
-    }
+    hash_history.emplace_back(tt_key);
+    uint16_t tt_flag = 1;  // Alpha flag
 
     int num_moves_evaluated = 0;
     int num_quiets_evaluated = 0;
     int best_score = -INF;
     Move best_move{};
-    uint16_t tt_flag = 1;  // Alpha flag
-    hash_history.emplace_back(tt_key);
+
+    auto &moves = stack[ply].moves;
+    auto &move_scores = stack[ply].move_scores;
+    const int num_moves = movegen(pos, moves, in_qsearch);
     for (int i = 0; i < num_moves; ++i) {
+        // Score moves at the first loop, except if we have a hash move,
+        // then we'll use that first and delay sorting one iteration.
+        if (i == !(no_move == tt_move)) {
+            for (int j = 0; j < num_moves; ++j) {
+                const int capture = piece_on(pos, moves[j].to);
+                if (capture != None) {
+                    move_scores[j] = (capture + 1) * (1LL << 54);
+                } else if (moves[j] == stack[ply].killer) {
+                    move_scores[j] = 1LL << 50;
+                } else {
+                    move_scores[j] = hh_table[pos.flipped][moves[j].from][moves[j].to];
+                }
+            }
+        }
+
         // Find best move remaining
         int best_move_index = i;
-        for (int j = i; j < num_moves; ++j) {
-            if (move_scores[j] > move_scores[best_move_index]) {
-                best_move_index = j;
+        if (i == 0 && !(no_move == tt_move)) {
+            for (int j = i; j < num_moves; ++j) {
+                if (moves[j] == tt_move) {
+                    best_move_index = j;
+                    break;
+                }
+            }
+        } else {
+            for (int j = i; j < num_moves; ++j) {
+                if (move_scores[j] > move_scores[best_move_index]) {
+                    best_move_index = j;
+                }
             }
         }
 
