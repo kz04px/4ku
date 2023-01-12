@@ -612,13 +612,13 @@ int alphabeta(Position &pos,
     if (tt_entry.key == tt_key) {
         tt_move = tt_entry.move;
         if (ply > 0 && tt_entry.depth >= depth) {
-            if (tt_entry.flag == 0) {
+            if (tt_entry.flag == 0 && tt_entry.score <= alpha) {
                 return tt_entry.score;
             }
-            if (tt_entry.flag == 1 && tt_entry.score <= alpha) {
+            if (tt_entry.flag == 1 && tt_entry.score >= beta) {
                 return tt_entry.score;
             }
-            if (tt_entry.flag == 2 && tt_entry.score >= beta) {
+            if (tt_entry.flag == 2) {
                 return tt_entry.score;
             }
         }
@@ -634,7 +634,7 @@ int alphabeta(Position &pos,
     }
 
     hash_history.emplace_back(tt_key);
-    uint16_t tt_flag = 1;  // Alpha flag
+    uint16_t tt_flag = 0;  // Alpha flag
 
     int num_moves_evaluated = 0;
     int num_quiets_evaluated = 0;
@@ -644,6 +644,7 @@ int alphabeta(Position &pos,
     auto &moves = stack[ply].moves;
     auto &move_scores = stack[ply].move_scores;
     const int num_moves = movegen(pos, moves, in_qsearch);
+
     for (int i = 0; i < num_moves; ++i) {
         // Score moves at the first loop, except if we have a hash move,
         // then we'll use that first and delay sorting one iteration.
@@ -770,7 +771,7 @@ int alphabeta(Position &pos,
             best_score = score;
             best_move = move;
             if (score > alpha) {
-                tt_flag = 0;  // Exact flag
+                tt_flag = 2;  // Exact flag
                 alpha = score;
                 stack[ply].move = move;
             }
@@ -782,7 +783,7 @@ int alphabeta(Position &pos,
         }
 
         if (alpha >= beta) {
-            tt_flag = 2;  // Beta flag
+            tt_flag = 1;  // Beta flag
             const int capture = piece_on(pos, move.to);
             if (capture == None) {
                 hh_table[pos.flipped][move.from][move.to] += depth * depth;
@@ -808,7 +809,7 @@ int alphabeta(Position &pos,
     }
 
     // Save to TT
-    if (tt_entry.key != tt_key || depth >= tt_entry.depth || tt_flag == 0) {
+    if (tt_entry.key != tt_key || depth >= tt_entry.depth || tt_flag > tt_entry.flag) {
         tt_entry =
             TT_Entry{tt_key, best_move == no_move ? tt_move : best_move, best_score, in_qsearch ? 0 : depth, tt_flag};
     }
@@ -850,7 +851,7 @@ void print_pv(const Position &pos, const Move move, vector<u64> &hash_history) {
     const TT_Entry &tt_entry = transposition_table[tt_key % num_tt_entries];
 
     // Only continue if the move was valid and comes from a PV search
-    if (tt_entry.key != tt_key || tt_entry.move == Move{} || tt_entry.flag != 0) {
+    if (tt_entry.key != tt_key || tt_entry.move == no_move || tt_entry.flag != 2) {
         return;
     }
 
