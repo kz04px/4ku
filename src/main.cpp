@@ -342,9 +342,9 @@ void generate_piece_moves(Move *const movelist,
     generate_pawn_moves(movelist, num_moves, ne(pawns) & (pos.colour[1] | pos.ep), -9);
     generate_piece_moves(movelist, num_moves, pos, Knight, to_mask, knight);
     generate_piece_moves(movelist, num_moves, pos, Bishop, to_mask, bishop);
-    generate_piece_moves(movelist, num_moves, pos, Queen, to_mask, bishop);
     generate_piece_moves(movelist, num_moves, pos, Rook, to_mask, rook);
     generate_piece_moves(movelist, num_moves, pos, Queen, to_mask, rook);
+    generate_piece_moves(movelist, num_moves, pos, Queen, to_mask, bishop);
     generate_piece_moves(movelist, num_moves, pos, King, to_mask, king);
     if (!only_captures && pos.castling[0] && !(all & 0x60ULL) && !attacked(pos, 4) && !attacked(pos, 5)) {
         add_move(movelist, num_moves, 4, 6);
@@ -642,7 +642,7 @@ int alphabeta(Position &pos,
         if (moves[j] == tt_move) {
             move_scores[j] = 1LL << 62;
         } else if (capture != None) {
-            move_scores[j] = ((capture + 1) * (1LL << 54)) - piece_on(pos, moves[j].from);
+            move_scores[j] = ((capture + 1) * (1LL << 54));
         } else if (moves[j] == stack[ply].killer) {
             move_scores[j] = 1LL << 50;
         } else {
