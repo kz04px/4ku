@@ -1052,13 +1052,13 @@ int main(
     cin >> word;
 
     // Send UCI info
-    puts("id name 4ku");
-    puts("id author kz04px");
+    cout << "id name 4ku\n";
+    cout << "id author kz04px\n";
     // minify enable filter delete
     cout << "option name Threads type spin default " << thread_count << " min 1 max 256\n";
     cout << "option name Hash type spin default " << (num_tt_entries >> 15) << " min 1 max 65536\n";
     // minify disable filter delete
-    puts("uciok");
+    cout << "uciok\n";
 
     // Initialise the TT
     transposition_table.resize(num_tt_entries);
@@ -1074,7 +1074,7 @@ int main(
         } else if (word == "ucinewgame") {
             memset(transposition_table.data(), 0, sizeof(TT_Entry) * transposition_table.size());
         } else if (word == "isready") {
-            puts("readyok");
+            cout << "readyok\n";
         }
         // minify enable filter delete
         else if (word == "setoption") {
