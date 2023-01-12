@@ -307,17 +307,18 @@ void generate_pawn_moves(Move *const movelist, int &num_moves, u64 to_mask, cons
     }
 }
 
+template <typename F>
 void generate_piece_moves(Move *const movelist,
                           int &num_moves,
                           const Position &pos,
                           const int piece,
                           const u64 to_mask,
-                          u64 (*func)(int, u64)) {
+                          F f) {
     u64 copy = pos.colour[0] & pos.pieces[piece];
     while (copy) {
         const int fr = lsb(copy);
         copy &= copy - 1;
-        u64 moves = func(fr, pos.colour[0] | pos.colour[1]) & to_mask;
+        u64 moves = f(fr, pos.colour[0] | pos.colour[1]) & to_mask;
         while (moves) {
             const int to = lsb(moves);
             moves &= moves - 1;
