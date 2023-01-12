@@ -1096,11 +1096,27 @@ int main(
         else if (word == "go") {
             int wtime;
             int btime;
-            cin >> word >> wtime >> word >> btime;
+
             // minify enable filter delete
-            if (word == "wtime") {
-                swap(wtime, btime);
+            int found = 0;
+            while (found < 2) {
+                cin >> word;
+                if (word == "wtime") {
+                    cin >> wtime;
+                    found++;
+                } else if (word == "btime") {
+                    cin >> btime;
+                    found++;
+                }
             }
+
+            goto search_start;
+            // minify disable filter delete
+
+            cin >> word >> wtime >> word >> btime;
+
+        // minify enable filter delete
+        search_start:
             // minify disable filter delete
 
             const auto start = now();
