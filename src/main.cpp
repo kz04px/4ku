@@ -292,21 +292,17 @@ auto makemove(Position &pos, const Move &move) {
     return !attacked(pos, lsb(pos.colour[1] & pos.pieces[King]), false);
 }
 
-void add_move(Move *const movelist, int &num_moves, const int from, const int to, const int promo = None) {
-    movelist[num_moves++] = Move{from, to, promo};
-}
-
 void generate_pawn_moves(Move *const movelist, int &num_moves, u64 to_mask, const int offset) {
     while (to_mask) {
         const int to = lsb(to_mask);
         to_mask &= to_mask - 1;
         if (to >= 56) {
-            add_move(movelist, num_moves, to + offset, to, Queen);
-            add_move(movelist, num_moves, to + offset, to, Rook);
-            add_move(movelist, num_moves, to + offset, to, Bishop);
-            add_move(movelist, num_moves, to + offset, to, Knight);
+            movelist[num_moves++] = Move{to + offset, to, Queen};
+            movelist[num_moves++] = Move{to + offset, to, Rook};
+            movelist[num_moves++] = Move{to + offset, to, Bishop};
+            movelist[num_moves++] = Move{to + offset, to, Knight};
         } else {
-            add_move(movelist, num_moves, to + offset, to);
+            movelist[num_moves++] = Move{to + offset, to};
         }
     }
 }
@@ -325,7 +321,7 @@ void generate_piece_moves(Move *const movelist,
         while (moves) {
             const int to = lsb(moves);
             moves &= moves - 1;
-            add_move(movelist, num_moves, fr, to);
+            movelist[num_moves++] = Move{fr, to};
         }
     }
 }
@@ -348,10 +344,10 @@ void generate_piece_moves(Move *const movelist,
     generate_piece_moves(movelist, num_moves, pos, Queen, to_mask, bishop);
     generate_piece_moves(movelist, num_moves, pos, King, to_mask, king);
     if (!only_captures && pos.castling[0] && !(all & 0x60ULL) && !attacked(pos, 4) && !attacked(pos, 5)) {
-        add_move(movelist, num_moves, 4, 6);
+        movelist[num_moves++] = Move{4, 6};
     }
     if (!only_captures && pos.castling[1] && !(all & 0xEULL) && !attacked(pos, 4) && !attacked(pos, 3)) {
-        add_move(movelist, num_moves, 4, 2);
+        movelist[num_moves++] = Move{4, 2};
     }
     return num_moves;
 }
