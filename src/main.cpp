@@ -302,7 +302,7 @@ void generate_pawn_moves(Move *const movelist, int &num_moves, u64 to_mask, cons
             movelist[num_moves++] = Move{to + offset, to, Bishop};
             movelist[num_moves++] = Move{to + offset, to, Knight};
         } else {
-            movelist[num_moves++] = Move{to + offset, to};
+            movelist[num_moves++] = Move{to + offset, to, None};
         }
     }
 }
@@ -321,7 +321,7 @@ void generate_piece_moves(Move *const movelist,
         while (moves) {
             const int to = lsb(moves);
             moves &= moves - 1;
-            movelist[num_moves++] = Move{fr, to};
+            movelist[num_moves++] = Move{fr, to, None};
         }
     }
 }
@@ -344,10 +344,10 @@ void generate_piece_moves(Move *const movelist,
     generate_piece_moves(movelist, num_moves, pos, Queen, to_mask, bishop);
     generate_piece_moves(movelist, num_moves, pos, King, to_mask, king);
     if (!only_captures && pos.castling[0] && !(all & 0x60ULL) && !attacked(pos, 4) && !attacked(pos, 5)) {
-        movelist[num_moves++] = Move{4, 6};
+        movelist[num_moves++] = Move{4, 6, None};
     }
     if (!only_captures && pos.castling[1] && !(all & 0xEULL) && !attacked(pos, 4) && !attacked(pos, 3)) {
-        movelist[num_moves++] = Move{4, 2};
+        movelist[num_moves++] = Move{4, 2, None};
     }
     return num_moves;
 }
