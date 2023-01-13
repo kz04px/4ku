@@ -91,18 +91,7 @@ struct [[nodiscard]] TT_Entry {
     uint16_t flag;
 };
 
-const auto keys = []() {
-    mt19937_64 r;
-
-    // pieces from 1-12 multiplied the square + ep squares + castling rights
-    // 12 * 64 + 64 + 16 = 848
-    array<u64, 848> values;
-    for (auto &val : values) {
-        val = r();
-    }
-
-    return values;
-}();
+u64 keys[848];
 
 // Engine options
 auto num_tt_entries = 64ULL << 15;  // The first value is the size in megabytes
@@ -1024,9 +1013,15 @@ int main(
     // minify disable filter delete
 ) {
     setbuf(stdout, 0);
+
+    mt19937_64 r;
+    // pieces from 1-12 multiplied by the square + ep squares + castling rights
+    for (auto &k : keys) {
+        k = r();
+    }
+
     Position pos;
     vector<u64> hash_history;
-    Move moves[256];
 
     // minify enable filter delete
     // OpenBench compliance
@@ -1176,6 +1171,7 @@ int main(
             }
             // minify disable filter delete
         } else {
+            Move moves[256];
             const int num_moves = movegen(pos, moves, false);
             for (int i = 0; i < num_moves; ++i) {
                 if (word == move_str(moves[i], pos.flipped)) {
