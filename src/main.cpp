@@ -929,15 +929,14 @@ auto iteratively_deepen(Position &pos,
                 cout << " pv";
                 print_pv(pos, stack[0].move, hash_history);
             }
-            cout << endl;
+            cout << "\n";
 
             // OpenBench compliance
             if (is_bench && i >= 12) {
                 cout << "Bench: ";
                 cout << elapsed << " ms ";
                 cout << nodes << " nodes ";
-                cout << nodes * 1000 / max(elapsed, static_cast<int64_t>(1)) << " nps";
-                cout << endl;
+                cout << nodes * 1000 / max(elapsed, static_cast<int64_t>(1)) << " nps\n";
                 break;
             }
         }
@@ -1152,7 +1151,7 @@ int main(
                 threads[i - 1].join();
             }
 
-            cout << "bestmove " << move_str(best_move, pos.flipped) << endl;
+            cout << "bestmove " << move_str(best_move, pos.flipped) << "\n";
         } else if (word == "position") {
             // Set to startpos
             pos = Position();
