@@ -46,11 +46,6 @@ The build script, launch scripts, and compression tool (lzma) are all specific t
 ## Minification
 The minifier requires Python 3 to run. It's fragile and will not handle arbitrary C++ code. The minifier is not a general-purpose solution and is not guaranteed to work on non-4ku code. If better solutions are found in the future it can be replaced.
 
-Points of note:
-- Variable name substitutions are hard coded
-- Erroneous substitutions may happen
-- Multiple passes required
-
 Removed:
 - Whitespace
 - Single line comments
@@ -59,6 +54,7 @@ Removed:
 - noexcept
 - Attributes: nodiscard, maybe_unused
 - Calls to assert() and static_assert()
+- enums
 
 ---
 
