@@ -91,18 +91,7 @@ struct [[nodiscard]] TT_Entry {
     uint16_t flag;
 };
 
-const auto keys = []() {
-    mt19937_64 r;
-
-    // pieces from 1-12 multiplied the square + ep squares + castling rights
-    // 12 * 64 + 64 + 16 = 848
-    array<u64, 848> values;
-    for (auto &val : values) {
-        val = r();
-    }
-
-    return values;
-}();
+u64 keys[848];
 
 // Engine options
 auto num_tt_entries = 64ULL << 15;  // The first value is the size in megabytes
@@ -292,40 +281,37 @@ auto makemove(Position &pos, const Move &move) {
     return !attacked(pos, lsb(pos.colour[1] & pos.pieces[King]), false);
 }
 
-void add_move(Move *const movelist, int &num_moves, const int from, const int to, const int promo = None) {
-    movelist[num_moves++] = Move{from, to, promo};
-}
-
 void generate_pawn_moves(Move *const movelist, int &num_moves, u64 to_mask, const int offset) {
     while (to_mask) {
         const int to = lsb(to_mask);
         to_mask &= to_mask - 1;
         if (to >= 56) {
-            add_move(movelist, num_moves, to + offset, to, Queen);
-            add_move(movelist, num_moves, to + offset, to, Rook);
-            add_move(movelist, num_moves, to + offset, to, Bishop);
-            add_move(movelist, num_moves, to + offset, to, Knight);
+            movelist[num_moves++] = Move{to + offset, to, Queen};
+            movelist[num_moves++] = Move{to + offset, to, Rook};
+            movelist[num_moves++] = Move{to + offset, to, Bishop};
+            movelist[num_moves++] = Move{to + offset, to, Knight};
         } else {
-            add_move(movelist, num_moves, to + offset, to);
+            movelist[num_moves++] = Move{to + offset, to, None};
         }
     }
 }
 
+template <typename F>
 void generate_piece_moves(Move *const movelist,
                           int &num_moves,
                           const Position &pos,
                           const int piece,
                           const u64 to_mask,
-                          u64 (*func)(int, u64)) {
+                          F f) {
     u64 copy = pos.colour[0] & pos.pieces[piece];
     while (copy) {
         const int fr = lsb(copy);
         copy &= copy - 1;
-        u64 moves = func(fr, pos.colour[0] | pos.colour[1]) & to_mask;
+        u64 moves = f(fr, pos.colour[0] | pos.colour[1]) & to_mask;
         while (moves) {
             const int to = lsb(moves);
             moves &= moves - 1;
-            add_move(movelist, num_moves, fr, to);
+            movelist[num_moves++] = Move{fr, to, None};
         }
     }
 }
@@ -348,10 +334,10 @@ void generate_piece_moves(Move *const movelist,
     generate_piece_moves(movelist, num_moves, pos, Queen, to_mask, bishop);
     generate_piece_moves(movelist, num_moves, pos, King, to_mask, king);
     if (!only_captures && pos.castling[0] && !(all & 0x60ULL) && !attacked(pos, 4) && !attacked(pos, 5)) {
-        add_move(movelist, num_moves, 4, 6);
+        movelist[num_moves++] = Move{4, 6, None};
     }
     if (!only_captures && pos.castling[1] && !(all & 0xEULL) && !attacked(pos, 4) && !attacked(pos, 3)) {
-        add_move(movelist, num_moves, 4, 2);
+        movelist[num_moves++] = Move{4, 2, None};
     }
     return num_moves;
 }
@@ -784,8 +770,7 @@ int alphabeta(Position &pos,
 
         if (alpha >= beta) {
             tt_flag = 1;  // Beta flag
-            const int capture = piece_on(pos, move.to);
-            if (capture == None) {
+            if (piece_on(pos, move.to) == None) {
                 hh_table[pos.flipped][move.from][move.to] += depth * depth;
                 for (int j = 0; j < num_quiets_evaluated - 1; ++j) {
                     hh_table[pos.flipped][stack[ply].quiets_evaluated[j].from][stack[ply].quiets_evaluated[j].to] -=
@@ -929,15 +914,14 @@ auto iteratively_deepen(Position &pos,
                 cout << " pv";
                 print_pv(pos, stack[0].move, hash_history);
             }
-            cout << endl;
+            cout << "\n";
 
             // OpenBench compliance
             if (is_bench && i >= 12) {
                 cout << "Bench: ";
                 cout << elapsed << " ms ";
                 cout << nodes << " nodes ";
-                cout << nodes * 1000 / max(elapsed, static_cast<int64_t>(1)) << " nps";
-                cout << endl;
+                cout << nodes * 1000 / max(elapsed, static_cast<int64_t>(1)) << " nps\n";
                 break;
             }
         }
@@ -1029,9 +1013,15 @@ int main(
     // minify disable filter delete
 ) {
     setbuf(stdout, 0);
+
+    mt19937_64 r;
+    // pieces from 1-12 multiplied by the square + ep squares + castling rights
+    for (auto &k : keys) {
+        k = r();
+    }
+
     Position pos;
     vector<u64> hash_history;
-    Move moves[256];
 
     // minify enable filter delete
     // OpenBench compliance
@@ -1152,7 +1142,7 @@ int main(
                 threads[i - 1].join();
             }
 
-            cout << "bestmove " << move_str(best_move, pos.flipped) << endl;
+            cout << "bestmove " << move_str(best_move, pos.flipped) << "\n";
         } else if (word == "position") {
             // Set to startpos
             pos = Position();
@@ -1181,6 +1171,7 @@ int main(
             }
             // minify disable filter delete
         } else {
+            Move moves[256];
             const int num_moves = movegen(pos, moves, false);
             for (int i = 0; i < num_moves; ++i) {
                 if (word == move_str(moves[i], pos.flipped)) {
