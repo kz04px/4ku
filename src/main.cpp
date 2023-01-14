@@ -98,6 +98,26 @@ u64 keys[848];
 auto num_tt_entries = 64ULL << 15;  // The first value is the size in megabytes
 auto thread_count = 1;
 
+[[nodiscard]] int eval_to_tt(const int eval, const int ply) {
+    if (eval > MATE_SCORE - 128) {
+        return eval + ply;
+    }
+    if (eval < -MATE_SCORE + 128) {
+        return eval - ply;
+    }
+    return eval;
+}
+
+[[nodiscard]] int eval_from_tt(const int eval, const int ply) {
+    if (eval > MATE_SCORE - 128) {
+        return eval - ply;
+    }
+    if (eval < -MATE_SCORE + 128) {
+        return eval + ply;
+    }
+    return eval;
+}
+
 vector<TT_Entry> transposition_table;
 
 [[nodiscard]] u64 flip(const u64 bb) {
@@ -599,14 +619,14 @@ int alphabeta(Position &pos,
     if (tt_entry.key == tt_key) {
         tt_move = tt_entry.move;
         if (ply > 0 && tt_entry.depth >= depth) {
-            if (tt_entry.flag == 0 && tt_entry.score <= alpha) {
-                return tt_entry.score;
+            if (tt_entry.flag == 0 && eval_from_tt(tt_entry.score, ply) <= alpha) {
+                return eval_from_tt(tt_entry.score, ply);
             }
-            if (tt_entry.flag == 1 && tt_entry.score >= beta) {
-                return tt_entry.score;
+            if (tt_entry.flag == 1 && eval_from_tt(tt_entry.score, ply) >= beta) {
+                return eval_from_tt(tt_entry.score, ply);
             }
             if (tt_entry.flag == 2) {
-                return tt_entry.score;
+                return eval_from_tt(tt_entry.score, ply);
             }
         }
     }
@@ -791,13 +811,16 @@ int alphabeta(Position &pos,
 
     // Return mate or draw scores if no moves found
     if (best_score == -INF) {
-        return in_qsearch ? alpha : in_check ? ply - MATE_SCORE : 0;
+        return in_qsearch ? alpha : in_check ? eval_to_tt(ply - MATE_SCORE, ply) : 0;
     }
 
     // Save to TT
     if (tt_entry.key != tt_key || depth >= tt_entry.depth || tt_flag > tt_entry.flag) {
-        tt_entry =
-            TT_Entry{tt_key, best_move == no_move ? tt_move : best_move, best_score, in_qsearch ? 0 : depth, tt_flag};
+        tt_entry = TT_Entry{tt_key,
+                            best_move == no_move ? tt_move : best_move,
+                            eval_to_tt(best_score, ply),
+                            in_qsearch ? 0 : depth,
+                            tt_flag};
     }
 
     return alpha;
