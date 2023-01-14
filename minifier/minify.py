@@ -611,6 +611,27 @@ assert dissect("enum {a, b, c};")[3] == set(["a", "b", "c"])
 assert dissect("enum Test {a, b, c};")[3] == set(["a", "b", "c"])
 assert dissect("enum class Test {a, b, c};")[3] == set(["a", "b", "c"])
 assert dissect("enum class Test : int {a, b, c};")[3] == set(["a", "b", "c"])
+# Assert enum replacements
+assert dissect("enum {a, b, c};")[4] == dict()
+assert dissect("enum Test {a, b, c};")[4] == dict()
+assert dissect("enum class Test {a, b, c};")[4] == dict()
+assert dissect("enum class Test : int {a, b, c};")[4] == dict()
+assert dissect("// minify enable filter enum\nenum {a, b, c};")[4] == dict(
+    {"a": "0", "b": "1", "c": "2"}
+)
+assert dissect("// minify enable filter enum\nenum Test {a, b, c};")[4] == dict(
+    {"a": "0", "b": "1", "c": "2"}
+)
+assert dissect("// minify enable filter enum\nenum class Test {a, b, c};")[4] == dict(
+    {"a": "0", "b": "1", "c": "2"}
+)
+assert dissect("// minify enable filter enum\nenum class Test : int {a, b, c};")[
+    4
+] == dict({"a": "0", "b": "1", "c": "2"})
+# This is not implemented
+# assert dissect("// minify enable filter enum\nenum {a = 3, b, c};")[4] == dict(
+#     {"a": "3", "b": "4", "c": "5"}
+# )
 
 
 def minify(src: str, settings: Settings = Settings()) -> str:
@@ -679,6 +700,13 @@ assert minify("enum { a = 3, b = 4, c = 5 };") == "enum{a=3,b=4,c=5};"
 assert minify("enum class {a, b, c};") == "enum class{a,b,c};"
 assert minify("enum class : int {a, b, c};") == "enum class:int{a,b,c};"
 assert minify("enum : int {a, b, c};") == "enum:int{a,b,c};"
+assert minify("// minify enable filter enum\nenum {a, b, c};") == ""
+assert minify("// minify enable filter enum\nenum : int {a, b, c};") == ""
+assert minify("// minify enable filter enum\nenum class Test : int {a, b, c};") == ""
+assert (
+    minify("// minify enable filter enum\nint n;\nenum {a, b, c};\nint m;")
+    == "int n;int m;"
+)
 
 
 def main():
