@@ -769,8 +769,7 @@ int alphabeta(Position &pos,
 
         if (alpha >= beta) {
             tt_flag = 1;  // Beta flag
-            const int capture = piece_on(pos, move.to);
-            if (capture == None) {
+            if (piece_on(pos, move.to) == None) {
                 hh_table[pos.flipped][move.from][move.to] += depth * depth;
                 for (int j = 0; j < num_quiets_evaluated - 1; ++j) {
                     hh_table[pos.flipped][stack[ply].quiets_evaluated[j].from][stack[ply].quiets_evaluated[j].to] -=
