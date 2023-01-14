@@ -7,6 +7,7 @@
 // minify enable filter trailing_newline
 // minify enable filter trailing_whitespace
 // minify enable filter whitespace
+// minify enable filter enum
 
 // minify disable function assert
 // minify disable function static_assert

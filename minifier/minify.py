@@ -367,6 +367,8 @@ def dissect(src: str, settings: Settings = Settings()) -> str:
         }
     )
     our_types: set = set()
+    replacements = dict()
+    enum_depth = 0
 
     prev = None
     for token in tokens[:-1]:
@@ -391,7 +393,11 @@ def dissect(src: str, settings: Settings = Settings()) -> str:
         bracket_depth += 1 if token == "(" else -1 if token == ")" else 0
         found_include = found_include or (prev == "#" and token == "include")
         found_define = found_define or (prev == "#" and token == "define")
-        found_enum = found_enum or prev == "enum"
+
+        found_enum = found_enum or token == "enum"
+        if token == "enum":
+            enum_depth = 0
+
         found_template = found_template or prev == "template"
         name_next = name_next or (
             (prev in types or prev in our_types or (found_define and prev == "define"))
@@ -527,11 +533,24 @@ def dissect(src: str, settings: Settings = Settings()) -> str:
         elif (
             found_enum
             and is_name(token)
-            and token not in ["struct", "class"]
+            and token not in ["enum", "struct", "class"]
             and token not in types
             and token not in our_types
         ):
-            names.add(token)
+            if "enum" in settings.filters:
+                replacements[token] = str(enum_depth)
+                enum_depth += 1
+            else:
+                names.add(token)
+
+        if token == "\n" and "trailing_whitespace" in settings.filters:
+            while new[-1:] in [" ", "\t"]:
+                new.pop()
+
+        if found_enum and "enum" in settings.filters:
+            pass
+        else:
+            new.append(token)
 
         # Reset state
         if is_end:
@@ -549,12 +568,6 @@ def dissect(src: str, settings: Settings = Settings()) -> str:
             bracket_depth = 0
             template_depth = 0
 
-        if token == "\n" and "trailing_whitespace" in settings.filters:
-            while new[-1:] in [" ", "\t"]:
-                new.pop()
-
-        new.append(token)
-
         prev = token
 
     if "trailing_whitespace" in settings.filters:
@@ -565,7 +578,7 @@ def dissect(src: str, settings: Settings = Settings()) -> str:
         while len(new) > 0 and new[-1:][0] == "\n":
             new.pop()
 
-    return new, our_types, global_names, names
+    return new, our_types, global_names, names, replacements
 
 
 # Assert types
@@ -598,14 +611,43 @@ assert dissect("enum {a, b, c};")[3] == set(["a", "b", "c"])
 assert dissect("enum Test {a, b, c};")[3] == set(["a", "b", "c"])
 assert dissect("enum class Test {a, b, c};")[3] == set(["a", "b", "c"])
 assert dissect("enum class Test : int {a, b, c};")[3] == set(["a", "b", "c"])
+# Assert enum replacements
+assert dissect("enum {a, b, c};")[4] == dict()
+assert dissect("enum Test {a, b, c};")[4] == dict()
+assert dissect("enum class Test {a, b, c};")[4] == dict()
+assert dissect("enum class Test : int {a, b, c};")[4] == dict()
+assert dissect("// minify enable filter enum\nenum {a, b, c};")[4] == dict(
+    {"a": "0", "b": "1", "c": "2"}
+)
+assert dissect("// minify enable filter enum\nenum Test {a, b, c};")[4] == dict(
+    {"a": "0", "b": "1", "c": "2"}
+)
+assert dissect("// minify enable filter enum\nenum class Test {a, b, c};")[4] == dict(
+    {"a": "0", "b": "1", "c": "2"}
+)
+assert dissect("// minify enable filter enum\nenum class Test : int {a, b, c};")[
+    4
+] == dict({"a": "0", "b": "1", "c": "2"})
+# This is not implemented
+# assert dissect("// minify enable filter enum\nenum {a = 3, b, c};")[4] == dict(
+#     {"a": "3", "b": "4", "c": "5"}
+# )
 
 
 def minify(src: str, settings: Settings = Settings()) -> str:
-    tokens, our_types, global_names, names = dissect(src, settings)
+    tokens, our_types, global_names, names, replacements = dissect(src, settings)
+
+    for a, b in replacements.items():
+        settings.replacements[a] = b
 
     # Time to rename stuff
     if settings.rename:
-        rename_tokens(tokens, global_names, names | our_types, settings.replacements)
+        rename_tokens(
+            tokens,
+            global_names,
+            names | our_types,
+            settings.replacements,
+        )
 
     return "".join(tokens)
 
@@ -658,6 +700,13 @@ assert minify("enum { a = 3, b = 4, c = 5 };") == "enum{a=3,b=4,c=5};"
 assert minify("enum class {a, b, c};") == "enum class{a,b,c};"
 assert minify("enum class : int {a, b, c};") == "enum class:int{a,b,c};"
 assert minify("enum : int {a, b, c};") == "enum:int{a,b,c};"
+assert minify("// minify enable filter enum\nenum {a, b, c};") == ""
+assert minify("// minify enable filter enum\nenum : int {a, b, c};") == ""
+assert minify("// minify enable filter enum\nenum class Test : int {a, b, c};") == ""
+assert (
+    minify("// minify enable filter enum\nint n;\nenum {a, b, c};\nint m;")
+    == "int n;int m;"
+)
 
 
 def main():
@@ -678,13 +727,13 @@ def main():
     if args.output:
         print(minify(src, settings))
     elif args.tokens:
-        tokens, our_types, global_names, names = dissect(src, settings)
+        tokens, our_types, global_names, names, _ = dissect(src, settings)
         print(tokens)
     elif args.types:
-        tokens, our_types, global_names, names = dissect(src, settings)
+        tokens, our_types, global_names, names, _ = dissect(src, settings)
         print(our_types)
     elif args.names:
-        tokens, our_types, global_names, names = dissect(src, settings)
+        tokens, our_types, global_names, names, _ = dissect(src, settings)
         print(global_names | names)
     else:
         print(minify(src, settings))
