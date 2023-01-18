@@ -539,7 +539,7 @@ int alphabeta(Position &pos,
 
     // Check extensions
     const auto in_check = attacked(pos, lsb(pos.colour[0] & pos.pieces[King]));
-    depth = in_check ? max(1, depth + 1) : depth;
+    depth += !!in_check;
 
     const int in_qsearch = depth <= 0;
     if (in_qsearch && static_eval > alpha) {
