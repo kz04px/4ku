@@ -684,6 +684,14 @@ int alphabeta(Position &pos,
             break;
         }
 
+        // Poor man's SEE pruning
+        if (in_qsearch && !in_check &&
+            max_material[piece_on(pos, move.to)] - max_material[piece_on(pos, move.from)] < -150 &&
+            attacked(pos, move.to)) {
+            best_score = alpha;
+            continue;
+        }
+
         auto npos = pos;
         if (!makemove(npos, move)) {
             continue;
