@@ -1062,7 +1062,7 @@ int main(
     cin >> word;
 
     // Send UCI info
-    cout << "id name 4ku\n";
+    cout << "id name 4ku 2.0\n";
     cout << "id author kz04px\n";
     // minify enable filter delete
     cout << "option name Threads type spin default " << thread_count << " min 1 max 256\n";
