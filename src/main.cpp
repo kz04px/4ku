@@ -694,7 +694,7 @@ int alphabeta(Position &pos,
         // minify disable filter delete
 
         int score;
-        if (in_qsearch || !num_moves_evaluated) {
+        if (!num_moves_evaluated) {
         full_window:
             score = -alphabeta(npos,
                                -beta,
