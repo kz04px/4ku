@@ -37,13 +37,13 @@ using namespace std;
 
 enum
 {
+    None,
     Pawn,
     Knight,
     Bishop,
     Rook,
     Queen,
-    King,
-    None
+    King
 };
 
 [[nodiscard]] int64_t now() {
@@ -57,7 +57,8 @@ using u64 = uint64_t;
 struct [[nodiscard]] Position {
     array<int, 4> castling = {true, true, true, true};
     array<u64, 2> colour = {0xFFFFULL, 0xFFFF000000000000ULL};
-    array<u64, 6> pieces = {0xFF00000000FF00ULL,
+    array<u64, 7> pieces = {0x0ULL,
+                            0xFF00000000FF00ULL,
                             0x4200000000000042ULL,
                             0x2400000000000024ULL,
                             0x8100000000000081ULL,
@@ -154,15 +155,15 @@ vector<TT_Entry> transposition_table;
     str += '1' + (flip ? (7 - move.from / 8) : (move.from / 8));
     str += 'a' + (move.to % 8);
     str += '1' + (flip ? (7 - move.to / 8) : (move.to / 8));
-    if (move.promo != None) {
-        str += "\0nbrq\0\0"[move.promo];
+    if (move.promo) {
+        str += "\0\0nbrq\0"[move.promo];
     }
     return str;
 }
 
 [[nodiscard]] int piece_on(const Position &pos, const int sq) {
     const u64 bb = 1ULL << sq;
-    for (int i = 0; i < 6; ++i) {
+    for (int i = 1; i < 7; ++i) {
         if (pos.pieces[i] & bb) {
             return i;
         }
@@ -173,7 +174,7 @@ vector<TT_Entry> transposition_table;
 void flip(Position &pos) {
     pos.colour[0] = flip(pos.colour[0]);
     pos.colour[1] = flip(pos.colour[1]);
-    for (int i = 0; i < 6; ++i) {
+    for (int i = 1; i < 7; ++i) {
         pos.pieces[i] = flip(pos.pieces[i]);
     }
     pos.ep = flip(pos.ep);
@@ -252,7 +253,7 @@ auto makemove(Position &pos, const Move &move) {
     }
 
     // Captures
-    if (captured != None) {
+    if (captured) {
         pos.colour[1] ^= to;
         pos.pieces[captured] ^= to;
     }
@@ -348,7 +349,7 @@ void generate_piece_moves(Move *const movelist,
 }
 
 const int phases[] = {0, 1, 1, 2, 4, 0};
-const int max_material[] = {133, 418, 401, 603, 1262, 0, 0};
+const int max_material[] = {0, 133, 418, 401, 603, 1262, 0};
 const int material[] = {S(80, 133), S(418, 292), S(401, 328), S(546, 603), S(1262, 1065), 0};
 const int psts[][4] = {
     {S(-19, 0), S(-1, -2), S(6, 0), S(6, 11)},
@@ -391,7 +392,7 @@ const int pawn_attacked[] = {S(-64, -14), S(-155, -142)};
 
         // For each piece type
         for (int p = 0; p < 6; ++p) {
-            auto copy = pos.colour[0] & pos.pieces[p];
+            auto copy = pos.colour[0] & pos.pieces[p + 1];
             while (copy) {
                 phase += phases[p];
 
@@ -424,7 +425,7 @@ const int pawn_attacked[] = {S(-64, -14), S(-155, -142)};
                     score += pawn_attacked[c];
                 }
 
-                if (p == Pawn) {
+                if (p + 1 == Pawn) {
                     // Passed pawns
                     u64 blockers = 0x101010101010101ULL << sq;
                     blockers = nw(blockers) | ne(blockers);
@@ -448,7 +449,7 @@ const int pawn_attacked[] = {S(-64, -14), S(-155, -142)};
                     if ((north(piece_bb) | north(north(piece_bb))) & pawns[0]) {
                         score += pawn_doubled;
                     }
-                } else if (p == Rook) {
+                } else if (p + 1 == Rook) {
                     // Rook on open or semi-open files
                     const u64 file_bb = 0x101010101010101ULL << file;
                     if (!(file_bb & pawns[0])) {
@@ -463,7 +464,7 @@ const int pawn_attacked[] = {S(-64, -14), S(-155, -142)};
                     if (rank >= 6) {
                         score += rook_rank78;
                     }
-                } else if (p == King && piece_bb & 0xE7) {
+                } else if (p + 1 == King && piece_bb & 0xE7) {
                     const u64 shield = file < 3 ? 0x700 : 0xE000;
                     score += count(shield & pawns[0]) * king_shield[0];
                     score += count(north(shield) & pawns[0]) * king_shield[1];
@@ -487,18 +488,18 @@ const int pawn_attacked[] = {S(-64, -14), S(-155, -142)};
     u64 hash = pos.flipped;
 
     // Pieces
-    for (int p = Pawn; p < None; p++) {
+    for (int p = 1; p < 7; p++) {
         u64 copy = pos.pieces[p] & pos.colour[0];
         while (copy) {
             const int sq = lsb(copy);
             copy &= copy - 1;
-            hash ^= keys[p * 64 + sq];
+            hash ^= keys[(p - 1) * 64 + sq];
         }
         copy = pos.pieces[p] & pos.colour[1];
         while (copy) {
             const int sq = lsb(copy);
             copy &= copy - 1;
-            hash ^= keys[(p + 6) * 64 + sq];
+            hash ^= keys[(p + 5) * 64 + sq];
         }
     }
 
@@ -638,8 +639,8 @@ int alphabeta(Position &pos,
         if (i == !(no_move == tt_move)) {
             for (int j = 0; j < num_moves; ++j) {
                 const int capture = piece_on(pos, moves[j].to);
-                if (capture != None) {
-                    move_scores[j] = (capture + 1) * (1LL << 54);
+                if (capture) {
+                    move_scores[j] = capture * (1LL << 54);
                 } else if (moves[j] == stack[ply].killer) {
                     move_scores[j] = 1LL << 50;
                 } else {
@@ -711,7 +712,7 @@ int alphabeta(Position &pos,
                                hash_history);
         } else {
             // Late move reduction
-            int reduction = depth > 2 && num_moves_evaluated > 4 && piece_on(pos, move.to) == None
+            int reduction = depth > 2 && num_moves_evaluated > 4 && !piece_on(pos, move.to)
                                 ? 1 + num_moves_evaluated / 14 + depth / 17 + (alpha == beta - 1) - improving +
                                       (hh_table[pos.flipped][move.from][move.to] < 0) -
                                       (hh_table[pos.flipped][move.from][move.to] > 0)
@@ -749,7 +750,7 @@ int alphabeta(Position &pos,
         }
 
         num_moves_evaluated++;
-        if (piece_on(pos, move.to) == None) {
+        if (!piece_on(pos, move.to)) {
             stack[ply].quiets_evaluated[num_quiets_evaluated] = move;
             num_quiets_evaluated++;
         }
@@ -771,7 +772,7 @@ int alphabeta(Position &pos,
 
         if (alpha >= beta) {
             tt_flag = 1;  // Beta flag
-            if (piece_on(pos, move.to) == None) {
+            if (!piece_on(pos, move.to)) {
                 hh_table[pos.flipped][move.from][move.to] += depth * depth;
                 for (int j = 0; j < num_quiets_evaluated - 1; ++j) {
                     hh_table[pos.flipped][stack[ply].quiets_evaluated[j].from][stack[ply].quiets_evaluated[j].to] -=
@@ -1176,7 +1177,7 @@ int main(
             const int num_moves = movegen(pos, moves, false);
             for (int i = 0; i < num_moves; ++i) {
                 if (word == move_str(moves[i], pos.flipped)) {
-                    if (piece_on(pos, moves[i].to) != None || piece_on(pos, moves[i].from) == Pawn) {
+                    if (piece_on(pos, moves[i].to) || piece_on(pos, moves[i].from) == Pawn) {
                         hash_history.clear();
                     } else {
                         hash_history.emplace_back(get_hash(pos));
