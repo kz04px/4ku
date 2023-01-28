@@ -348,27 +348,28 @@ void generate_piece_moves(Move *const movelist,
 }
 
 const int phases[] = {0, 1, 1, 2, 4, 0};
-const int max_material[] = {147, 358, 381, 682, 1218, 0, 0};
-const int material[] = {S(69, 147), S(358, 351), S(348, 381), S(472, 682), S(1082, 1218)};
+const int max_material[] = {153, 357, 381, 682, 1218, 0, 0};
+const int material[] = {S(66, 153), S(357, 351), S(348, 381), S(472, 682), S(1083, 1218), 0};
 const int psts[][4] = {
-    {S(-15, -10), S(-2, -1), S(6, 0), S(11, 11)},
-    {S(-18, -5), S(-8, -4), S(10, 2), S(16, 7)},
+    {S(-14, -10), S(-2, -1), S(6, 0), S(11, 11)},
+    {S(-18, -5), S(-9, -4), S(11, 2), S(16, 7)},
     {S(-3, -5), S(-6, -5), S(2, 3), S(7, 8)},
-    {S(-22, -5), S(-12, -10), S(0, 12), S(34, 2)},
+    {S(-22, -4), S(-12, -9), S(0, 12), S(34, 2)},
     {S(-1, -41), S(0, -34), S(-25, 25), S(26, 49)},
-    {S(-23, -0), S(-12, -3), S(31, -4), S(4, 8)},
+    {S(-23, -1), S(-12, -3), S(31, -4), S(4, 8)},
 };
-const int centralities[] = {S(11, -14), S(14, 17), S(19, 11), S(-5, 1), S(-0, 23), S(-6, 14)};
-const int outside_files[] = {S(5, -9), S(-1, -5), S(7, -2), S(-1, -3), S(-2, 4), S(7, 1)};
-const int pawn_protection[] = {S(10, 17), S(6, 23), S(-6, 16), S(-1, 12), S(-5, 19), S(-52, 27)};
-const int passers[] = {S(-6, 9), S(-11, -4), S(-9, 18), S(0, 46), S(35, 132), S(114, 212)};
-const int pawn_doubled = S(-22, -26);
-const int pawn_passed_blocked[] = {S(4, -36), S(-16, -8), S(-8, -22), S(3, -31), S(5, -69), S(42, -110)};
+const int centralities[] = {S(11, -14), S(14, 17), S(19, 11), S(-4, 1), S(-0, 23), S(-6, 13)};
+const int outside_files[] = {S(4, -9), S(-1, -5), S(7, -2), S(-1, -3), S(-2, 4), S(7, 1)};
+const int pawn_protection[] = {S(10, 17), S(5, 23), S(-6, 16), S(-1, 12), S(-5, 19), S(-52, 27)};
+const int passers[] = {S(-6, 9), S(-10, -4), S(-9, 19), S(0, 46), S(36, 132), S(115, 213)};
+const int pawn_doubled = S(-20, -29);
+const int pawn_passed_blocked[] = {S(4, -37), S(-16, -9), S(-8, -22), S(3, -31), S(5, -68), S(43, -110)};
 const int pawn_passed_king_distance[] = {S(3, -6), S(-4, 9)};
-const int bishop_pair = S(23, 62);
-const int rook_open = S(51, 9);
+const int pawn_open = S(3, -5);
+const int bishop_pair = S(24, 61);
+const int rook_open = S(52, 9);
 const int rook_semi_open = S(23, 16);
-const int rook_rank78 = S(19, 9);
+const int rook_rank78 = S(19, 10);
 const int king_shield[] = {S(20, -3), S(11, -11), S(-86, 25)};
 const int pawn_attacked[] = {S(-64, -14), S(-155, -142)};
 
@@ -425,22 +426,27 @@ const int pawn_attacked[] = {S(-64, -14), S(-155, -142)};
                 }
 
                 if (p == Pawn) {
-                    // Passed pawns
                     u64 blockers = 0x101010101010101ULL << sq;
-                    blockers |= nw(blockers) | ne(blockers);
                     if (!(blockers & pawns[1])) {
-                        score += passers[rank - 1];
+                        // Open pawns
+                        score += pawn_open;
 
-                        // Blocked passed pawns
-                        if (north(piece_bb) & pos.colour[1]) {
-                            score += pawn_passed_blocked[rank - 1];
-                        }
+                        // Passed pawns
+                        blockers |= nw(blockers) | ne(blockers);
+                        if (!(blockers & pawns[1])) {
+                            score += passers[rank - 1];
 
-                        // King defense/attack
-                        // king distance to square in front of passer
-                        for (int i = 0; i < 2; ++i) {
-                            score += pawn_passed_king_distance[i] * (rank - 1) *
-                                     max(abs((kings[i] / 8) - (rank + 1)), abs((kings[i] % 8) - file));
+                            // Blocked passed pawns
+                            if (north(piece_bb) & pos.colour[1]) {
+                                score += pawn_passed_blocked[rank - 1];
+                            }
+
+                            // King defense/attack
+                            // king distance to square in front of passer
+                            for (int i = 0; i < 2; ++i) {
+                                score += pawn_passed_king_distance[i] * (rank - 1) *
+                                         max(abs((kings[i] / 8) - (rank + 1)), abs((kings[i] % 8) - file));
+                            }
                         }
                     }
 
