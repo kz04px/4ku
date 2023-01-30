@@ -349,7 +349,7 @@ void generate_piece_moves(Move *const movelist,
 
 const int phases[] = {0, 1, 1, 2, 4, 0};
 const int max_material[] = {143, 358, 381, 674, 1217, 0, 0};
-const int material[] = {S(89, 143), S(348, 358), S(338, 381), S(480, 674), S(979, 1217)};
+const int material[] = {S(89, 143), S(348, 358), S(338, 381), S(480, 674), S(979, 1217), 0};
 const int psts[][4] = {
     {S(-19, -6), S(-2, -2), S(7, 3), S(18, 7)},
     {S(-32, -2), S(-14, -4), S(20, 6), S(38, 7)},
