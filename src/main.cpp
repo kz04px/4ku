@@ -1007,6 +1007,31 @@ void set_fen(Position &pos, const string &fen) {
 }
 // minify disable filter delete
 
+// minify enable filter delete
+[[nodiscard]] auto perft(const Position &pos, const int depth) -> u64 {
+    if (depth == 0) {
+        return 1;
+    }
+
+    u64 nodes = 0;
+    Move moves[256];
+    const int num_moves = movegen(pos, moves, false);
+
+    for (int i = 0; i < num_moves; ++i) {
+        auto npos = pos;
+
+        // Check move legality
+        if (!makemove(npos, moves[i])) {
+            continue;
+        }
+
+        nodes += perft(npos, depth - 1);
+    }
+
+    return nodes;
+}
+// minify disable filter delete
+
 int main(
     // minify enable filter delete
     const int argc,
@@ -1171,7 +1196,29 @@ int main(
                 set_fen(pos, fen);
             }
             // minify disable filter delete
-        } else {
+        }
+        // minify enable filter delete
+        else if (word == "perft") {
+            int depth = 0;
+            cin >> depth;
+            const auto t0 = std::chrono::steady_clock::now();
+            const auto nodes = perft(pos, depth);
+            const auto t1 = std::chrono::steady_clock::now();
+            const auto dt = std::chrono::duration_cast<std::chrono::milliseconds>(t1 - t0);
+            const auto nps = dt.count() ? (1000 * nodes) / dt.count() : 0;
+
+            std::cout << "info";
+            std::cout << " depth " << depth;
+            std::cout << " nodes " << nodes;
+            std::cout << " time " << dt.count();
+            if (nps > 0) {
+                std::cout << " nps " << nps;
+            }
+            std::cout << std::endl;
+            std::cout << "nodes " << nodes << "\n";
+        }
+        // minify disable filter delete
+        else {
             Move moves[256];
             const int num_moves = movegen(pos, moves, false);
             for (int i = 0; i < num_moves; ++i) {
