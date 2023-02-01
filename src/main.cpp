@@ -350,16 +350,20 @@ void generate_piece_moves(Move *const movelist,
 const int phases[] = {0, 1, 1, 2, 4, 0};
 const int max_material[] = {143, 358, 381, 674, 1217, 0, 0};
 const int material[] = {S(89, 143), S(348, 358), S(338, 381), S(480, 674), S(979, 1217), 0};
-const int psts[][4] = {
-    {S(-19, -6), S(-2, -2), S(7, 3), S(18, 7)},
-    {S(-32, -2), S(-14, -4), S(20, 6), S(38, 7)},
-    {S(-9, -6), S(-9, -2), S(13, 1), S(24, 7)},
-    {S(-31, -12), S(-9, -25), S(2, 13), S(48, 1)},
-    {S(-11, -35), S(-1, -36), S(-25, 38), S(30, 51)},
-    {S(-33, -4), S(-8, -10), S(15, 4), S(8, 17)},
+const int pst_rank[][8] = {{0, S(-2, -8), S(-1, -15), S(11, -17), S(28, -9), S(50, -13), S(27, -5), 0},
+                           {S(-54, -36), S(-33, -8), S(-10, 7), S(7, 26), S(41, 26), S(75, 12), S(38, 3), S(-41, -13)},
+                           {S(-25, -28), S(4, -13), S(20, -6), S(32, 2), S(39, 6), S(66, -5), S(32, -6), S(6, -19)},
+                           {S(-21, -13), S(-32, -20), S(-38, -16), S(-35, 1), S(-11, 15), S(21, 12), S(20, 22), S(25, 17)},
+                           {S(-25, -69), S(-10, -59), S(-9, -31), S(-14, 11), S(3, 28), S(25, 33), S(-5, 37), S(-7, 44)},
+                           {S(14, -30), S(24, -7), S(-32, 11), S(-26, 19), S(11, 26), S(68, 21), S(36, 19), S(-10, -19)}};
+const int pst_file[][4] = {
+    {S(-6, -27), S(25, -28), S(15, -28), S(18, -35)},
+    {S(-31, -34), S(-5, -18), S(16, -4), S(26, 1)},
+    {S(0, -14), S(26, -7), S(21, 2), S(24, 6)},
+    {S(-8, -26), S(-5, -23), S(0, -21), S(6, -28)},
+    {S(-14, -10), S(-6, 6), S(3, 22), S(3, 24)},
+    {S(9, -27), S(16, -7), S(-30, 5), S(5, -6)},
 };
-const int centralities[] = {S(12, -15), S(20, 15), S(26, 8), S(-5, 0), S(3, 25), S(-6, 16)};
-const int outside_files[] = {S(8, -10), S(-3, -4), S(7, -3), S(-4, -1), S(-3, 4), S(3, 1)};
 const int pawn_protection[] = {S(18, 16), S(11, 16), S(1, 10), S(2, 10), S(-5, 21), S(-49, 29)};
 const int passers[] = {S(-6, 11), S(-22, 2), S(-8, 22), S(6, 47), S(42, 124), S(122, 187)};
 const int pawn_doubled = S(-31, -22);
@@ -368,7 +372,6 @@ const int pawn_passed_king_distance[] = {S(3, -6), S(-4, 9)};
 const int bishop_pair = S(37, 62);
 const int rook_open = S(62, 8);
 const int rook_semi_open = S(30, 17);
-const int rook_rank78 = S(19, 5);
 const int king_shield[] = {S(37, -7), S(15, -12), S(-90, 21)};
 const int pawn_attacked[] = {S(-64, -14), S(-155, -142)};
 
@@ -393,25 +396,19 @@ const int pawn_attacked[] = {S(-64, -14), S(-155, -142)};
         for (int p = 0; p < 6; ++p) {
             auto copy = pos.colour[0] & pos.pieces[p];
             while (copy) {
-                phase += phases[p];
-
                 const int sq = lsb(copy);
                 copy &= copy - 1;
-                const int rank = sq / 8;
-                const int file = sq % 8;
-                const int centrality = (7 - abs(7 - rank - file) - abs(rank - file)) / 2;
 
                 // Material
+                phase += phases[p];
                 score += material[p];
 
-                // Centrality
-                score += centrality * centralities[p];
+                const int rank = sq / 8;
+                const int file = sq % 8;
 
-                // Closeness to outside files
-                score += abs(file - 3) * outside_files[p];
-
-                // Quadrant PSTs
-                score += psts[p][(rank / 4) * 2 + file / 4];
+                // Split PSTs
+                score += pst_rank[p][rank];
+                score += pst_file[p][min(file, 7 - file)];
 
                 // Pawn protection
                 const u64 piece_bb = 1ULL << sq;
@@ -457,11 +454,6 @@ const int pawn_attacked[] = {S(-64, -14), S(-155, -142)};
                         } else {
                             score += rook_semi_open;
                         }
-                    }
-
-                    // Rook on 7th or 8th rank
-                    if (rank >= 6) {
-                        score += rook_rank78;
                     }
                 } else if (p == King && piece_bb & 0xE7) {
                     const u64 shield = file < 3 ? 0x700 : 0xE000;
