@@ -349,17 +349,10 @@ void generate_piece_moves(Move *const movelist,
 
 const int phases[] = {0, 1, 1, 2, 4, 0};
 const int max_material[] = {143, 358, 381, 674, 1217, 0, 0};
-const int material[] = {S(89, 143), S(348, 358), S(338, 381), S(480, 674), S(979, 1217), 0};
-const int psts[][4] = {
-    {S(-19, -6), S(-2, -2), S(7, 3), S(18, 7)},
-    {S(-32, -2), S(-14, -4), S(20, 6), S(38, 7)},
-    {S(-9, -6), S(-9, -2), S(13, 1), S(24, 7)},
-    {S(-31, -12), S(-9, -25), S(2, 13), S(48, 1)},
-    {S(-11, -35), S(-1, -36), S(-25, 38), S(30, 51)},
-    {S(-33, -4), S(-8, -10), S(15, 4), S(8, 17)},
-};
-const int centralities[] = {S(12, -15), S(20, 15), S(26, 8), S(-5, 0), S(3, 25), S(-6, 16)};
-const int outside_files[] = {S(8, -10), S(-3, -4), S(7, -3), S(-4, -1), S(-3, 4), S(3, 1)};
+const int material[] = {S(86, 112), S(270, 318), S(331, 355), S(443, 648), S(762, 1289), 0};
+const int pst_file[] = {S(4, -2), S(17, 10), S(4, 7), S(5, -1), S(6, 10), S(-6, 5)};
+const int pst_rank_mid[] = {S(-12, -4), S(3, 17), S(10, 9), S(-17, 4), S(-1, 17), S(-22, 12)};
+const int pst_rank_top[] = {S(18, 1), S(20, 0), S(8, 1), S(13, 5), S(5, 16), S(10, 4)};
 const int pawn_protection[] = {S(18, 16), S(11, 16), S(1, 10), S(2, 10), S(-5, 21), S(-49, 29)};
 const int passers[] = {S(-6, 11), S(-22, 2), S(-8, 22), S(6, 47), S(42, 124), S(122, 187)};
 const int pawn_doubled = S(-31, -22);
@@ -393,25 +386,19 @@ const int pawn_attacked[] = {S(-64, -14), S(-155, -142)};
         for (int p = 0; p < 6; ++p) {
             auto copy = pos.colour[0] & pos.pieces[p];
             while (copy) {
+                // Material
+                score += material[p];
                 phase += phases[p];
 
                 const int sq = lsb(copy);
                 copy &= copy - 1;
                 const int rank = sq / 8;
                 const int file = sq % 8;
-                const int centrality = (7 - abs(7 - rank - file) - abs(rank - file)) / 2;
 
-                // Material
-                score += material[p];
-
-                // Centrality
-                score += centrality * centralities[p];
-
-                // Closeness to outside files
-                score += abs(file - 3) * outside_files[p];
-
-                // Quadrant PSTs
-                score += psts[p][(rank / 4) * 2 + file / 4];
+                // Split parametric PSTs
+                score += pst_rank_mid[p] * min(rank, 7 - rank);
+                score += pst_rank_top[p] * rank;
+                score += pst_file[p] * min(file, 7 - file);
 
                 // Pawn protection
                 const u64 piece_bb = 1ULL << sq;
