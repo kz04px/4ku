@@ -348,31 +348,31 @@ void generate_piece_moves(Move *const movelist,
 }
 
 const int phases[] = {0, 1, 1, 2, 4, 0};
-const int max_material[] = {143, 358, 381, 674, 1217, 0, 0};
-const int material[] = {S(89, 143), S(348, 358), S(338, 381), S(480, 674), S(979, 1217), 0};
-const int pst_rank[][8] = {{0, S(-2, -8), S(-1, -15), S(11, -17), S(28, -9), S(50, -13), S(27, -5), 0},
-                           {S(-54, -36), S(-33, -8), S(-10, 7), S(7, 26), S(41, 26), S(75, 12), S(38, 3), S(-41, -13)},
-                           {S(-25, -28), S(4, -13), S(20, -6), S(32, 2), S(39, 6), S(66, -5), S(32, -6), S(6, -19)},
-                           {S(-21, -13), S(-32, -20), S(-38, -16), S(-35, 1), S(-11, 15), S(21, 12), S(20, 22), S(25, 17)},
-                           {S(-25, -69), S(-10, -59), S(-9, -31), S(-14, 11), S(3, 28), S(25, 33), S(-5, 37), S(-7, 44)},
-                           {S(14, -30), S(24, -7), S(-32, 11), S(-26, 19), S(11, 26), S(68, 21), S(36, 19), S(-10, -19)}};
-const int pst_file[][4] = {
-    {S(-6, -27), S(25, -28), S(15, -28), S(18, -35)},
-    {S(-31, -34), S(-5, -18), S(16, -4), S(26, 1)},
-    {S(0, -14), S(26, -7), S(21, 2), S(24, 6)},
-    {S(-8, -26), S(-5, -23), S(0, -21), S(6, -28)},
-    {S(-14, -10), S(-6, 6), S(3, 22), S(3, 24)},
-    {S(9, -27), S(16, -7), S(-30, 5), S(5, -6)},
+const int max_material[] = {116, 352, 378, 662, 1227, 0, 0};
+const int material[] = {S(116, 109), S(352, 348), S(378, 365), S(472, 662), S(967, 1227), 0};
+const int pst_rank[][8] = {
+    {0, S(-9, 4), S(-10, 2), S(-6, 2), S(-2, 3), S(6, 4), S(3, -4), 0},
+    {S(-12, -5), S(-6, 0), S(-1, 4), S(4, 8), S(12, 9), S(20, 5), S(11, 2), S(-10, -1)},
+    {S(-10, -3), S(-3, 1), S(1, 3), S(3, 5), S(5, 6), S(14, 2), S(4, 3), S(-13, 2)},
+    {S(-1, -9), S(-4, -11), S(-5, -9), S(-5, -5), S(1, -2), S(9, -2), S(12, -1), S(5, 0)},
+    {S(-8, -20), S(-4, -17), S(-4, -10), S(-6, 1), S(-2, 6), S(6, 3), S(-7, 11), S(-1, 3)},
+    {S(-1, -8), S(5, -2), S(-9, 2), S(-11, 5), S(-10, 8), S(-2, 8), S(15, 3), S(-6, -1)},
 };
-const int pawn_protection[] = {S(18, 16), S(11, 16), S(1, 10), S(2, 10), S(-5, 21), S(-49, 29)};
-const int passers[] = {S(-6, 11), S(-22, 2), S(-8, 22), S(6, 47), S(42, 124), S(122, 187)};
-const int pawn_doubled = S(-31, -22);
-const int pawn_passed_blocked[] = {S(5, -32), S(-16, -7), S(-11, -25), S(5, -38), S(11, -70), S(42, -106)};
-const int pawn_passed_king_distance[] = {S(3, -6), S(-4, 9)};
-const int bishop_pair = S(37, 62);
-const int rook_open = S(62, 8);
-const int rook_semi_open = S(30, 17);
-const int king_shield[] = {S(37, -7), S(15, -12), S(-90, 21)};
+const int pst_file[][4] = {{S(2, -5), S(9, -5), S(6, -5), S(7, -7)},
+                           {S(-10, -9), S(-4, -5), S(2, -1), S(3, 1)},
+                           {S(-4, -5), S(2, -3), S(1, -1), S(2, 0)},
+                           {S(-3, 0), S(-2, 1), S(-1, 2), S(0, 1)},
+                           {S(-9, 0), S(-6, 1), S(-4, 5), S(-3, 5)},
+                           {S(-1, -3), S(1, 1), S(-10, 4), S(1, 1)}};
+const int pawn_protection[] = {S(20, 15), S(9, 12), S(2, 5), S(4, 7), S(-6, 19), S(-48, 27)};
+const int passers[] = {S(-31, 17), S(-19, 8), S(3, 20), S(19, 52), S(48, 119), S(132, 209)};
+const int pawn_doubled = S(-29, -25);
+const int pawn_passed_blocked[] = {S(16, -16), S(-35, -4), S(-55, -11), S(5, -35), S(6, -65), S(28, -75)};
+const int pawn_passed_king_distance[] = {S(3, -6), S(-6, 9)};
+const int bishop_pair = S(27, 68);
+const int rook_open = S(61, 7);
+const int rook_semi_open = S(27, 20);
+const int king_shield[] = {S(40, -5), S(26, -7), S(-85, 18)};
 const int pawn_attacked[] = {S(-64, -14), S(-155, -142)};
 
 [[nodiscard]] int eval(Position &pos) {
@@ -406,9 +406,9 @@ const int pawn_attacked[] = {S(-64, -14), S(-155, -142)};
                 const int rank = sq / 8;
                 const int file = sq % 8;
 
-                // Split PSTs
-                score += pst_rank[p][rank];
-                score += pst_file[p][min(file, 7 - file)];
+                // Split quantized PSTs
+                score += pst_rank[p][rank] * 4;
+                score += pst_file[p][min(file, 7 - file)] * 4;
 
                 // Pawn protection
                 const u64 piece_bb = 1ULL << sq;
