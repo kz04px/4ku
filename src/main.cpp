@@ -415,11 +415,6 @@ const int pawn_attacked[] = {S(-64, -14), S(-155, -142)};
                 if (piece_bb & protected_by_pawns) {
                     score += pawn_protection[p];
                 }
-                if (~pawns[0] & piece_bb & attacked_by_pawns) {
-                    // If we're to move, we'll just lose some options and our tempo.
-                    // If we're not to move, we lose a piece?
-                    score += pawn_attacked[c];
-                }
 
                 if (p == Pawn) {
                     // Passed pawns
@@ -445,23 +440,32 @@ const int pawn_attacked[] = {S(-64, -14), S(-155, -142)};
                     if ((north(piece_bb) | north(north(piece_bb))) & pawns[0]) {
                         score += pawn_doubled;
                     }
-                } else if (p == Rook) {
-                    // Rook on open or semi-open files
-                    const u64 file_bb = 0x101010101010101ULL << file;
-                    if (!(file_bb & pawns[0])) {
-                        if (!(file_bb & pawns[1])) {
-                            score += rook_open;
-                        } else {
-                            score += rook_semi_open;
-                        }
+                } else {
+                    // Pawn attacks
+                    if (piece_bb & attacked_by_pawns) {
+                        // If we're to move, we'll just lose some options and our tempo.
+                        // If we're not to move, we lose a piece?
+                        score += pawn_attacked[c];
                     }
-                } else if (p == King && piece_bb & 0xE7) {
-                    const u64 shield = file < 3 ? 0x700 : 0xE000;
-                    score += count(shield & pawns[0]) * king_shield[0];
-                    score += count(north(shield) & pawns[0]) * king_shield[1];
 
-                    // C3D7 = Reasonable king squares
-                    score += !(piece_bb & 0xC3D7) * king_shield[2];
+                    if (p == Rook) {
+                        // Rook on open or semi-open files
+                        const u64 file_bb = 0x101010101010101ULL << file;
+                        if (!(file_bb & pawns[0])) {
+                            if (!(file_bb & pawns[1])) {
+                                score += rook_open;
+                            } else {
+                                score += rook_semi_open;
+                            }
+                        }
+                    } else if (p == King && piece_bb & 0xE7) {
+                        const u64 shield = file < 3 ? 0x700 : 0xE000;
+                        score += count(shield & pawns[0]) * king_shield[0];
+                        score += count(north(shield) & pawns[0]) * king_shield[1];
+
+                        // C3D7 = Reasonable king squares
+                        score += !(piece_bb & 0xC3D7) * king_shield[2];
+                    }
                 }
             }
         }
