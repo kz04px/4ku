@@ -614,11 +614,6 @@ int alphabeta(Position &pos,
         depth--;
     }
 
-    // Exit early if out of time
-    if (depth > 3 && (stop || now() >= stop_time)) {
-        return 0;
-    }
-
     hash_history.emplace_back(tt_key);
     uint16_t tt_flag = 0;  // Alpha flag
 
@@ -742,7 +737,7 @@ int alphabeta(Position &pos,
         }
 
         // Exit early if out of time
-        if (depth > 3 && (stop || now() >= stop_time)) {
+        if (depth > 4 && (stop || now() >= stop_time)) {
             hash_history.pop_back();
             return 0;
         }
