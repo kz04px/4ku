@@ -215,16 +215,13 @@ template <typename F>
            (((bb << 1) | (bb << 9) | (bb >> 7)) & 0xFEFEFEFEFEFEFEFEULL);
 }
 
-[[nodiscard]] auto attacked(const Position &pos, const int sq, const int them = true) {
+[[nodiscard]] auto is_attacked(const Position &pos, const int sq, const int them = true) {
     const u64 bb = 1ULL << sq;
-    const u64 kt = pos.colour[them] & pos.pieces[Knight];
-    const u64 BQ = pos.pieces[Bishop] | pos.pieces[Queen];
-    const u64 RQ = pos.pieces[Rook] | pos.pieces[Queen];
     const u64 pawns = pos.colour[them] & pos.pieces[Pawn];
     const u64 pawn_attacks = them ? sw(pawns) | se(pawns) : nw(pawns) | ne(pawns);
-    return (pawn_attacks & bb) | (kt & knight(sq, 0)) |
-           (bishop(sq, pos.colour[0] | pos.colour[1]) & pos.colour[them] & BQ) |
-           (rook(sq, pos.colour[0] | pos.colour[1]) & pos.colour[them] & RQ) |
+    return (pawn_attacks & bb) || (pos.colour[them] & pos.pieces[Knight] & knight(sq, 0)) ||
+           (bishop(sq, pos.colour[0] | pos.colour[1]) & pos.colour[them] & (pos.pieces[Bishop] | pos.pieces[Queen])) ||
+           (rook(sq, pos.colour[0] | pos.colour[1]) & pos.colour[them] & (pos.pieces[Rook] | pos.pieces[Queen])) ||
            (king(sq, 0) & pos.colour[them] & pos.pieces[King]);
 }
 
@@ -279,7 +276,7 @@ auto makemove(Position &pos, const Move &move) {
     flip(pos);
 
     // Return move legality
-    return !attacked(pos, lsb(pos.colour[1] & pos.pieces[King]), false);
+    return !is_attacked(pos, lsb(pos.colour[1] & pos.pieces[King]), false);
 }
 
 void generate_pawn_moves(Move *const movelist, int &num_moves, u64 to_mask, const int offset) {
@@ -334,10 +331,10 @@ void generate_piece_moves(Move *const movelist,
     generate_piece_moves(movelist, num_moves, pos, Queen, to_mask, rook);
     generate_piece_moves(movelist, num_moves, pos, Queen, to_mask, bishop);
     generate_piece_moves(movelist, num_moves, pos, King, to_mask, king);
-    if (!only_captures && pos.castling[0] && !(all & 0x60ULL) && !attacked(pos, 4) && !attacked(pos, 5)) {
+    if (!only_captures && pos.castling[0] && !(all & 0x60ULL) && !is_attacked(pos, 4) && !is_attacked(pos, 5)) {
         movelist[num_moves++] = Move{4, 6, None};
     }
-    if (!only_captures && pos.castling[1] && !(all & 0xEULL) && !attacked(pos, 4) && !attacked(pos, 3)) {
+    if (!only_captures && pos.castling[1] && !(all & 0xEULL) && !is_attacked(pos, 4) && !is_attacked(pos, 3)) {
         movelist[num_moves++] = Move{4, 2, None};
     }
     return num_moves;
@@ -537,8 +534,8 @@ int alphabeta(Position &pos,
     const auto improving = ply > 1 && static_eval > stack[ply - 2].score;
 
     // Check extensions
-    const auto in_check = attacked(pos, lsb(pos.colour[0] & pos.pieces[King]));
-    depth += !!in_check;
+    const auto in_check = is_attacked(pos, lsb(pos.colour[0] & pos.pieces[King]));
+    depth += in_check;
 
     const int in_qsearch = depth <= 0;
     if (in_qsearch && static_eval > alpha) {
