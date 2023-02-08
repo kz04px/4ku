@@ -636,9 +636,9 @@ int alphabeta(Position &pos,
         // then we'll use that first and delay sorting one iteration.
         if (i == !(no_move == tt_move)) {
             for (int j = 0; j < num_moves; ++j) {
-                const int capture = piece_on(pos, moves[j].to);
-                if (capture != None) {
-                    move_scores[j] = (capture + 1) * (1LL << 54);
+                const auto gain = moves[j].promo != None ? moves[j].promo : piece_on(pos, moves[j].to);
+                if (gain != None) {
+                    move_scores[j] = gain + (1LL << 54);
                 } else if (moves[j] == stack[ply].killer) {
                     move_scores[j] = 1LL << 50;
                 } else {
@@ -665,20 +665,20 @@ int alphabeta(Position &pos,
         }
 
         const auto move = moves[best_move_index];
-        const auto best_move_score = move_scores[best_move_index];
-
         moves[best_move_index] = moves[i];
         move_scores[best_move_index] = move_scores[i];
 
+        // Material gain
+        const auto gain = max_material[move.promo != None ? move.promo : piece_on(pos, move.to)];
+
         // Delta pruning
-        if (in_qsearch && !in_check && static_eval + 50 + max_material[piece_on(pos, move.to)] < alpha) {
+        if (in_qsearch && !in_check && static_eval + 50 + gain < alpha) {
             best_score = alpha;
             break;
         }
 
         // Forward futility pruning
-        if (!in_qsearch && !in_check && !(move == tt_move) &&
-            static_eval + 150 * depth + max_material[piece_on(pos, move.to)] < alpha) {
+        if (!in_qsearch && !in_check && !(move == tt_move) && static_eval + 150 * depth + gain < alpha) {
             best_score = alpha;
             break;
         }
@@ -710,7 +710,7 @@ int alphabeta(Position &pos,
                                hash_history);
         } else {
             // Late move reduction
-            int reduction = depth > 2 && num_moves_evaluated > 4 && piece_on(pos, move.to) == None
+            int reduction = depth > 2 && num_moves_evaluated > 4 && !gain
                                 ? 1 + num_moves_evaluated / 14 + depth / 17 + (alpha == beta - 1) - improving +
                                       (hh_table[pos.flipped][move.from][move.to] < 0) -
                                       (hh_table[pos.flipped][move.from][move.to] > 0)
@@ -748,7 +748,7 @@ int alphabeta(Position &pos,
         }
 
         num_moves_evaluated++;
-        if (piece_on(pos, move.to) == None) {
+        if (!gain) {
             stack[ply].quiets_evaluated[num_quiets_evaluated] = move;
             num_quiets_evaluated++;
         }
@@ -761,16 +761,15 @@ int alphabeta(Position &pos,
                 alpha = score;
                 stack[ply].move = move;
             }
-        } else if (!in_qsearch && !in_check && alpha == beta - 1 && depth <= 3 &&
-                   num_moves_evaluated >= (depth * 3) + 2 && static_eval < alpha - (50 * depth) &&
-                   best_move_score < (1LL << 50)) {
+        } else if (!in_qsearch && !in_check && !gain && alpha == beta - 1 && depth <= 3 &&
+                   num_moves_evaluated >= (depth * 3) + 2 && static_eval < alpha - (50 * depth)) {
             best_score = alpha;
             break;
         }
 
         if (alpha >= beta) {
             tt_flag = 1;  // Beta flag
-            if (piece_on(pos, move.to) == None) {
+            if (!gain) {
                 hh_table[pos.flipped][move.from][move.to] += depth * depth;
                 for (int j = 0; j < num_quiets_evaluated - 1; ++j) {
                     hh_table[pos.flipped][stack[ply].quiets_evaluated[j].from][stack[ply].quiets_evaluated[j].to] -=
