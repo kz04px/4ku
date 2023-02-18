@@ -363,16 +363,16 @@ const int pst_file[][8] = {
     {S(-5, -10), S(-1, -7), S(0, -3), S(-1, 5), S(-2, 6), S(1, 5), S(6, 1), S(3, 4)},
     {S(1, -7), S(7, -3), S(-2, 1), S(-9, 3), S(-7, 3), S(-2, 2), S(6, -1), S(7, -8)},
 };
+const int open_files[][3] = {
+    {S(25, 17), S(2, 28), S(-20, 2)},
+    {S(51, 12), S(-1, 29), S(-55, -8)},
+};
 const int pawn_protection[] = {S(14, 17), S(5, 21), S(-1, 11), S(6, 8), S(-10, 15), S(-36, 24)};
 const int passers[] = {S(-4, 5), S(-6, -2), S(-13, 22), S(4, 54), S(26, 117), S(125, 222)};
 const int pawn_doubled = S(-20, -29);
 const int pawn_passed_blocked[] = {S(15, -33), S(-20, -5), S(-7, -18), S(7, -37), S(-3, -70), S(25, -108)};
 const int pawn_passed_king_distance[] = {S(3, -6), S(-3, 9)};
 const int bishop_pair = S(22, 68);
-const int open_files[][3] = {
-    {S(25, 17), S(2, 28), S(-20, 2)},
-    {S(51, 12), S(-1, 29), S(-55, -8)},
-};
 const int king_shield[] = {S(34, -6), S(24, -7)};
 const int pawn_attacked[] = {S(-64, -14), S(-155, -142)};
 
