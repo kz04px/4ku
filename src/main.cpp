@@ -345,33 +345,35 @@ void generate_piece_moves(Move *const movelist,
 }
 
 const int phases[] = {0, 1, 1, 2, 4, 0};
-const int max_material[] = {113, 371, 394, 715, 1308, 0, 0};
-const int material[] = {S(113, 111), S(369, 371), S(391, 394), S(493, 715), S(1086, 1308), 0};
+const int max_material[] = {113, 371, 395, 709, 1299, 0, 0};
+const int material[] = {S(113, 111), S(371, 369), S(393, 395), S(492, 709), S(1099, 1299), 0};
 const int pst_rank[][8] = {
-    {0, S(-7, 1), S(-6, -1), S(-2, -2), S(1, -1), S(6, 6), S(1, 2), 0},
+    {0, S(-7, 1), S(-7, -1), S(-2, -2), S(1, -1), S(6, 6), S(1, 2), 0},
     {S(-9, -8), S(-4, -3), 0, S(4, 7), S(9, 8), S(18, 1), S(9, -3), S(-27, -3)},
-    {S(-8, -5), S(-1, -4), S(2, -1), S(3, 3), S(5, 4), S(10, 1), S(2, 1), S(-13, 0)},
+    {S(-8, -4), S(-1, -4), S(2, -1), S(3, 3), S(5, 4), S(10, 1), S(2, 0), S(-13, 0)},
     {S(-5, -2), S(-9, -4), S(-8, -4), S(-7, 1), S(0, 2), S(6, 1), S(9, 3), S(14, 3)},
-    {S(-3, -14), S(0, -20), S(0, -10), S(-1, 3), S(-1, 11), S(5, 8), S(-3, 13), S(4, 10)},
-    {S(-5, -3), S(-5, 4), S(-3, 5), S(-5, 7), S(-1, 8), S(17, 6), S(9, 5), S(-3, -2)},
+    {S(-3, -14), S(0, -20), S(0, -10), S(-2, 4), S(-1, 11), S(5, 8), S(-3, 13), S(4, 9)},
+    {S(-5, -3), S(-5, 4), S(-3, 5), S(-5, 7), S(-1, 9), S(18, 7), S(10, 5), S(-2, -2)},
 };
 const int pst_file[][8] = {
-    {S(-4, 0), S(-2, 1), S(-2, 0), S(1, -3), S(3, 0), S(4, 0), S(5, 1), S(-5, 0)},
+    {S(-4, 0), S(-2, 1), S(-1, 0), S(2, -3), S(2, 0), S(4, 0), S(4, 1), S(-5, 0)},
     {S(-8, -9), S(-2, -2), S(1, 3), S(3, 7), S(3, 6), S(4, 3), S(2, -1), S(-3, -6)},
     {S(-5, -4), S(1, -1), S(1, 1), S(0, 2), S(0, 3), S(0, 2), S(4, 2), S(-1, -4)},
-    {S(-2, 0), S(-3, 1), S(-1, 2), 0, S(1, 0), S(2, 0), S(3, -1), S(0, -2)},
-    {S(-5, -10), S(-1, -7), S(0, -2), S(-1, 6), S(-2, 6), S(1, 4), S(6, 0), S(2, 4)},
-    {S(1, -6), S(7, -3), S(-2, 1), S(-11, 3), S(-8, 3), S(-2, 2), S(6, 0), S(7, -7)},
+    {S(-2, 0), S(-3, 1), S(-1, 2), S(1, 0), S(1, 0), S(2, 0), S(2, -1), S(0, -2)},
+    {S(-5, -10), S(-1, -7), S(0, -3), S(-1, 5), S(-2, 6), S(1, 5), S(6, 1), S(3, 4)},
+    {S(1, -7), S(7, -3), S(-2, 1), S(-9, 3), S(-7, 3), S(-2, 2), S(6, -1), S(7, -8)},
 };
-const int pawn_protection[] = {S(14, 17), S(5, 21), S(-1, 11), S(6, 8), S(-9, 18), S(-38, 24)};
-const int passers[] = {S(-5, 5), S(-6, -2), S(-12, 21), S(5, 53), S(26, 117), S(125, 222)};
-const int pawn_doubled = S(-21, -29);
-const int pawn_passed_blocked[] = {S(14, -34), S(-19, -7), S(-8, -21), S(7, -39), S(-3, -73), S(26, -109)};
-const int pawn_passed_king_distance[] = {S(3, -6), S(-4, 9)};
+const int open_files[][3] = {
+    {S(25, 17), S(2, 28), S(-20, 2)},
+    {S(51, 12), S(-1, 29), S(-55, -8)},
+};
+const int pawn_protection[] = {S(14, 17), S(5, 21), S(-1, 11), S(6, 8), S(-10, 15), S(-36, 24)};
+const int passers[] = {S(-4, 5), S(-6, -2), S(-13, 22), S(4, 54), S(26, 117), S(125, 222)};
+const int pawn_doubled = S(-20, -29);
+const int pawn_passed_blocked[] = {S(15, -33), S(-20, -5), S(-7, -18), S(7, -37), S(-3, -70), S(25, -108)};
+const int pawn_passed_king_distance[] = {S(3, -6), S(-3, 9)};
 const int bishop_pair = S(22, 68);
-const int rook_open = S(53, 11);
-const int rook_semi_open = S(25, 17);
-const int king_shield[] = {S(35, -5), S(25, -5)};
+const int king_shield[] = {S(34, -6), S(24, -7)};
 const int pawn_attacked[] = {S(-64, -14), S(-155, -142)};
 
 [[nodiscard]] int eval(Position &pos) {
@@ -447,17 +449,13 @@ const int pawn_attacked[] = {S(-64, -14), S(-155, -142)};
                         score += pawn_attacked[c];
                     }
 
-                    if (p == Rook) {
-                        // Rook on open or semi-open files
-                        const u64 file_bb = 0x101010101010101ULL << file;
-                        if (!(file_bb & pawns[0])) {
-                            if (!(file_bb & pawns[1])) {
-                                score += rook_open;
-                            } else {
-                                score += rook_semi_open;
-                            }
-                        }
-                    } else if (p == King && piece_bb & 0xC3D7) {
+                    // Open or semi-open files
+                    const u64 file_bb = 0x101010101010101ULL << file;
+                    if (p > Bishop && !(file_bb & pawns[0])) {
+                        score += open_files[!(file_bb & pawns[1])][p - 3];
+                    }
+
+                    if (p == King && piece_bb & 0xC3D7) {
                         // C3D7 = Reasonable king squares
                         // Pawn cover is fixed in position, so it won't
                         // walk around with the king.
