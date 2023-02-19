@@ -30,10 +30,11 @@
 #include <sstream>
 // minify disable filter delete
 
-#define MATE_SCORE (1 << 15)
-#define INF (1 << 16)
-
 using namespace std;
+
+// Constants
+const int mate_score = 1 << 15;
+const int inf = 1 << 16;
 
 enum
 {
@@ -613,7 +614,7 @@ int alphabeta(Position &pos,
 
     int num_moves_evaluated = 0;
     int num_quiets_evaluated = 0;
-    int best_score = -INF;
+    int best_score = -inf;
     Move best_move{};
 
     auto &moves = stack[ply].moves;
@@ -777,8 +778,8 @@ int alphabeta(Position &pos,
     hash_history.pop_back();
 
     // Return mate or draw scores if no moves found
-    if (best_score == -INF) {
-        return in_qsearch ? alpha : in_check ? ply - MATE_SCORE : 0;
+    if (best_score == -inf) {
+        return in_qsearch ? alpha : in_check ? ply - mate_score : 0;
     }
 
     // Save to TT
