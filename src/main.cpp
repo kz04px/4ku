@@ -345,32 +345,32 @@ void generate_piece_moves(Move *const movelist,
 }
 
 const int phases[] = {0, 1, 1, 2, 4, 0};
-const int max_material[] = {113, 371, 395, 709, 1299, 0, 0};
-const int material[] = {S(113, 111), S(371, 369), S(393, 395), S(492, 709), S(1099, 1299), 0};
+const int max_material[] = {113, 372, 396, 708, 1298, 0, 0};
+const int material[] = {S(112, 113), S(372, 370), S(394, 396), S(492, 708), S(1100, 1298), 0};
 const int pst_rank[][8] = {
-    {0, S(-7, 1), S(-7, -1), S(-2, -2), S(1, -1), S(6, 6), S(1, 2), 0},
+    {0, S(-7, 2), S(-6, 0), S(-2, -2), S(2, 0), S(6, 6), S(-1, 1), 0},
     {S(-9, -8), S(-4, -3), 0, S(4, 7), S(9, 8), S(18, 1), S(9, -3), S(-27, -3)},
-    {S(-8, -4), S(-1, -4), S(2, -1), S(3, 3), S(5, 4), S(10, 1), S(2, 0), S(-13, 0)},
-    {S(-5, -2), S(-9, -4), S(-8, -4), S(-7, 1), S(0, 2), S(6, 1), S(9, 3), S(14, 3)},
+    {S(-8, -4), S(-1, -4), S(2, 0), S(3, 3), S(5, 4), S(10, 1), S(2, 0), S(-13, 0)},
+    {S(-5, -2), S(-9, -4), S(-8, -4), S(-7, 1), S(1, 2), S(6, 2), S(9, 3), S(14, 3)},
     {S(-3, -14), S(0, -20), S(0, -10), S(-2, 4), S(-1, 11), S(5, 8), S(-3, 13), S(4, 9)},
-    {S(-5, -3), S(-5, 4), S(-3, 5), S(-5, 7), S(-1, 9), S(18, 7), S(10, 5), S(-2, -2)},
+    {S(-5, -4), S(-5, 4), S(-3, 5), S(-5, 8), S(-1, 9), S(18, 7), S(11, 5), S(-2, -2)},
 };
 const int pst_file[][8] = {
     {S(-4, 0), S(-2, 1), S(-1, 0), S(2, -3), S(2, 0), S(4, 0), S(4, 1), S(-5, 0)},
     {S(-8, -9), S(-2, -2), S(1, 3), S(3, 7), S(3, 6), S(4, 3), S(2, -1), S(-3, -6)},
     {S(-5, -4), S(1, -1), S(1, 1), S(0, 2), S(0, 3), S(0, 2), S(4, 2), S(-1, -4)},
     {S(-2, 0), S(-3, 1), S(-1, 2), S(1, 0), S(1, 0), S(2, 0), S(2, -1), S(0, -2)},
-    {S(-5, -10), S(-1, -7), S(0, -3), S(-1, 5), S(-2, 6), S(1, 5), S(6, 1), S(3, 4)},
-    {S(1, -7), S(7, -3), S(-2, 1), S(-9, 3), S(-7, 3), S(-2, 2), S(6, -1), S(7, -8)},
+    {S(-5, -10), S(-1, -8), S(0, -3), S(-1, 5), S(-2, 6), S(1, 5), S(6, 1), S(3, 4)},
+    {S(1, -7), S(7, -3), S(-2, 2), S(-9, 4), S(-7, 3), S(-2, 2), S(6, -1), S(7, -8)},
 };
 const int open_files[][3] = {
-    {S(25, 17), S(2, 28), S(-20, 2)},
-    {S(51, 12), S(-1, 29), S(-55, -8)},
+    {S(25, 18), S(2, 28), S(-20, 3)},
+    {S(51, 11), S(-1, 29), S(-54, -8)},
 };
-const int pawn_protection[] = {S(14, 17), S(5, 21), S(-1, 11), S(6, 8), S(-10, 15), S(-36, 24)};
-const int passers[] = {S(-4, 5), S(-6, -2), S(-13, 22), S(4, 54), S(26, 117), S(125, 222)};
-const int pawn_doubled = S(-20, -29);
-const int pawn_passed_blocked[] = {S(15, -33), S(-20, -5), S(-7, -18), S(7, -37), S(-3, -70), S(25, -108)};
+const int pawn_protection[] = {S(15, 16), S(5, 20), S(-1, 11), S(6, 8), S(-10, 15), S(-36, 23)};
+const int passers[] = {S(-16, 18), S(-1, 50), S(17, 113), S(123, 221)};
+const int pawn_doubled = S(-19, -30);
+const int pawn_passed_blocked[] = {S(-7, -17), S(7, -35), S(-3, -68), S(25, -106)};
 const int pawn_passed_king_distance[] = {S(3, -6), S(-3, 9)};
 const int bishop_pair = S(22, 68);
 const int king_shield[] = {S(34, -6), S(24, -7)};
@@ -421,12 +421,12 @@ const int pawn_attacked[] = {S(-64, -14), S(-155, -142)};
                     // Passed pawns
                     u64 blockers = 0x101010101010101ULL << sq;
                     blockers |= nw(blockers) | ne(blockers);
-                    if (!(blockers & pawns[1])) {
-                        score += passers[rank - 1];
+                    if (rank > 2 && !(blockers & pawns[1])) {
+                        score += passers[rank - 3];
 
                         // Blocked passed pawns
                         if (north(piece_bb) & pos.colour[1]) {
-                            score += pawn_passed_blocked[rank - 1];
+                            score += pawn_passed_blocked[rank - 3];
                         }
 
                         // King defense/attack
