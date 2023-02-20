@@ -20,7 +20,7 @@ cmake --build .
 ```
 To build 4ku-mini on Linux, run `build-mini.sh` located in the root directory:
 ```
-sh build-mini.sh
+bash build-mini.sh
 ```
 4ku-mini is currently unavailable on Windows.
 
@@ -28,7 +28,7 @@ sh build-mini.sh
 
 ## 4ku-mini Size
 ```
-4,010 bytes
+3,980 bytes
 ```
 
 ---
