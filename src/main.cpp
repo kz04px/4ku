@@ -426,6 +426,7 @@ const int pawn_attacked[] = {S(-64, -14), S(-155, -142)};
                     if (rank > 2 && !(blockers & pawns[1])) {
                         score += passers[rank - 3];
 
+                        // Protected passed pawns
                         if (piece_bb & protected_by_pawns) {
                             score += pawn_passed_protected;
                         }
