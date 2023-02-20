@@ -13,6 +13,7 @@ python3 ../minifier/minify.py ../src/main.cpp > ../src/main-mini.cpp
 # Compress the source copy
 echo Finding best compression parameters...
 SMALLEST=1000000
+LAUNCHER_SIZE=$(stat -c%s "../src/launcher.sh")
 for MF in hc3 hc4 bt2 bt3 bt4
 do
 	for NICE in {4..273}
@@ -20,7 +21,7 @@ do
 		lzma -f -k --lzma1=preset=9,lc=0,lp=0,pb=0,mf=$MF,nice=$NICE ../src/main-mini.cpp
 		FILESIZE=$(stat -c%s "../src/main-mini.cpp.lzma")
 		if [ "$FILESIZE" -lt "$SMALLEST" ]; then
-			echo mf=$MF nice=$NICE size=$FILESIZE
+			echo mf=$MF nice=$NICE size=$(($LAUNCHER_SIZE + $FILESIZE))
 			cp -f ../src/main-mini.cpp.lzma ../src/main-mini-smallest.cpp.lzma
 			SMALLEST=$FILESIZE
 		fi
