@@ -2,4 +2,5 @@ build/
 .vscode/
 .vs/
 *.exe
+*.lzma
 src/main-mini.cpp
