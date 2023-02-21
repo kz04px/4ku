@@ -912,7 +912,7 @@ auto iteratively_deepen(Position &pos,
             cout << "\n";
 
             // OpenBench compliance
-            if (is_bench && i >= 14) {
+            if (is_bench && i >= 16) {
                 cout << "Bench: ";
                 cout << elapsed << " ms ";
                 cout << nodes << " nodes ";
