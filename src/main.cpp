@@ -421,9 +421,7 @@ const int pawn_attacked[] = {S(-64, -14), S(-155, -142)};
 
                 if (p == Pawn) {
                     // Passed pawns
-                    u64 blockers = 0x101010101010101ULL << sq;
-                    blockers |= nw(blockers) | ne(blockers);
-                    if (rank > 2 && !(blockers & pawns[1])) {
+                    if (rank > 2 && !(0x101010101010101ULL << sq & (pawns[1] | attacked_by_pawns))) {
                         score += passers[rank - 3];
 
                         // Protected passed pawns
