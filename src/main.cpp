@@ -396,6 +396,9 @@ const int pawn_attacked[] = {S(-64, -14), S(-155, -142)};
             score += bishop_pair;
         }
 
+        // Doubled pawns
+        score += pawn_doubled * count((north(pawns[0]) | north(north(pawns[0]))) & pawns[0]);
+
         // Phalanx pawns
         score += pawn_phalanx * count(west(pawns[0]) & pawns[0]);
 
@@ -444,11 +447,6 @@ const int pawn_attacked[] = {S(-64, -14), S(-155, -142)};
                             score += pawn_passed_king_distance[i] * (rank - 1) *
                                      max(abs((kings[i] / 8) - (rank + 1)), abs((kings[i] % 8) - file));
                         }
-                    }
-
-                    // Doubled pawns
-                    if ((north(piece_bb) | north(north(piece_bb))) & pawns[0]) {
-                        score += pawn_doubled;
                     }
                 } else {
                     // Pawn attacks
