@@ -405,6 +405,10 @@ const int pawn_attacked[] = {S(-64, -14), S(-155, -142)};
         // For each piece type
         for (int p = 0; p < 6; ++p) {
             auto copy = pos.colour[0] & pos.pieces[p];
+
+            // Pawn protection
+            score += pawn_protection[p] * count(copy & protected_by_pawns);
+
             while (copy) {
                 const int sq = lsb(copy);
                 copy &= copy - 1;
@@ -420,12 +424,7 @@ const int pawn_attacked[] = {S(-64, -14), S(-155, -142)};
                 score += pst_rank[p][rank] * 4;
                 score += pst_file[p][file] * 4;
 
-                // Pawn protection
                 const u64 piece_bb = 1ULL << sq;
-                if (piece_bb & protected_by_pawns) {
-                    score += pawn_protection[p];
-                }
-
                 if (p == Pawn) {
                     // Passed pawns
                     if (rank > 2 && !(0x101010101010101ULL << sq & (pawns[1] | attacked_by_pawns))) {
