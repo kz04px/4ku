@@ -779,7 +779,7 @@ int alphabeta(Position &pos,
         }
 
         // Late move pruning based on quiet move count
-        if (!in_check && alpha == beta - 1 && num_quiets_evaluated > 3 + 2 * depth * depth) {
+        if (!in_check && alpha == beta - 1 && num_quiets_evaluated > 3 + depth * depth) {
             break;
         }
     }
