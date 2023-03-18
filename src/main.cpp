@@ -759,10 +759,6 @@ int alphabeta(Position &pos,
                 alpha = score;
                 stack[ply].move = move;
             }
-        } else if (!in_qsearch && !in_check && !gain && alpha == beta - 1 && depth <= 3 &&
-                   num_moves_evaluated >= (depth * 3) + 2 && static_eval < alpha - (50 * depth)) {
-            best_score = alpha;
-            break;
         }
 
         if (alpha >= beta) {
