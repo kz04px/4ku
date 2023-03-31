@@ -85,6 +85,13 @@ struct [[nodiscard]] Stack {
     int score;
 };
 
+enum
+{
+    Upper,
+    Lower,
+    Exact
+};
+
 struct [[nodiscard]] TT_Entry {
     u64 key;
     Move move;
@@ -601,13 +608,13 @@ int alphabeta(Position &pos,
     if (tt_entry.key == tt_key) {
         tt_move = tt_entry.move;
         if (ply > 0 && tt_entry.depth >= depth) {
-            if (tt_entry.flag == 0 && tt_entry.score <= alpha) {
+            if (tt_entry.flag == Upper && tt_entry.score <= alpha) {
                 return tt_entry.score;
             }
-            if (tt_entry.flag == 1 && tt_entry.score >= beta) {
+            if (tt_entry.flag == Lower && tt_entry.score >= beta) {
                 return tt_entry.score;
             }
-            if (tt_entry.flag == 2) {
+            if (tt_entry.flag == Exact) {
                 return tt_entry.score;
             }
         }
@@ -618,7 +625,7 @@ int alphabeta(Position &pos,
     }
 
     hash_history.emplace_back(tt_key);
-    uint16_t tt_flag = 0;  // Alpha flag
+    uint16_t tt_flag = Upper;
 
     int num_moves_evaluated = 0;
     int num_quiets_evaluated = 0;
@@ -755,14 +762,14 @@ int alphabeta(Position &pos,
             best_score = score;
             best_move = move;
             if (score > alpha) {
-                tt_flag = 2;  // Exact flag
+                tt_flag = Exact;
                 alpha = score;
                 stack[ply].move = move;
             }
         }
 
         if (alpha >= beta) {
-            tt_flag = 1;  // Beta flag
+            tt_flag = Lower;
             if (!gain) {
                 hh_table[pos.flipped][move.from][move.to] += depth * depth;
                 for (int j = 0; j < num_quiets_evaluated - 1; ++j) {
