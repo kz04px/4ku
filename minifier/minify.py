@@ -499,7 +499,11 @@ def dissect(src: str, settings: Settings = Settings()) -> str:
         num_whitespace += 1 if token in [" ", "\t"] else 0
 
         # Add a separator if we can't attach the new token to the last
-        if prev and not can_attach(prev, token):
+        if (
+            prev
+            and not can_attach(prev, token)
+            and (not found_enum or "enum" not in settings.filters)
+        ):
             new.append(" ")
 
         # False alarm on an upcoming type
@@ -706,6 +710,45 @@ assert minify("// minify enable filter enum\nenum class Test : int {a, b, c};") 
 assert (
     minify("// minify enable filter enum\nint n;\nenum {a, b, c};\nint m;")
     == "int n;int m;"
+)
+assert (
+    minify("// minify enable filter enum\nint test;\nenum class Test : int {a, b, c};")
+    == "int test;"
+)
+assert (
+    minify("// minify enable filter enum\nenum class Test : int {a, b, c};\nint test;")
+    == "int test;"
+)
+assert minify("// minify enable filter enum\nenum {a};\nint test;") == "int test;"
+assert (
+    minify("// minify enable filter enum\nenum class Test : int {a};\nint test;")
+    == "int test;"
+)
+assert (
+    minify("// minify enable filter enum\nint test1;\nenum {a, b, c};\nint test2;")
+    == "int test1;int test2;"
+)
+assert (
+    minify(
+        "// minify enable filter enum\nint test1;\nenum Test int {a, b, c};\nint test2;"
+    )
+    == "int test1;int test2;"
+)
+assert (
+    minify(
+        "// minify enable filter enum\nint test1;\nenum class Test {a, b, c};\nint test2;"
+    )
+    == "int test1;int test2;"
+)
+assert (
+    minify("// minify enable filter enum\nint test1;\nenum Test {a, b, c};\nint test2;")
+    == "int test1;int test2;"
+)
+assert (
+    minify(
+        "// minify enable filter enum\nint test1;\nenum class Test : int {a, b, c};\nint test2;"
+    )
+    == "int test1;int test2;"
 )
 
 
