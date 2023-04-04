@@ -121,11 +121,11 @@ vector<TT_Entry> transposition_table;
 }
 
 [[nodiscard]] auto east(const u64 bb) {
-    return (bb << 1) & ~0x0101010101010101ULL;
+    return bb << 1 & ~0x0101010101010101ULL;
 }
 
 [[nodiscard]] auto west(const u64 bb) {
-    return (bb >> 1) & ~0x8080808080808080ULL;
+    return bb >> 1 & ~0x8080808080808080ULL;
 }
 
 [[nodiscard]] u64 north(const u64 bb) {
@@ -158,10 +158,10 @@ vector<TT_Entry> transposition_table;
 
 [[nodiscard]] auto move_str(const Move &move, const int flip) {
     string str;
-    str += 'a' + (move.from % 8);
-    str += '1' + (flip ? (7 - move.from / 8) : (move.from / 8));
-    str += 'a' + (move.to % 8);
-    str += '1' + (flip ? (7 - move.to / 8) : (move.to / 8));
+    str += 'a' + move.from % 8;
+    str += '1' + (flip ? 7 - move.from / 8 : move.from / 8);
+    str += 'a' + move.to % 8;
+    str += '1' + (flip ? 7 - move.to / 8 : move.to / 8);
     if (move.promo != None) {
         str += "\0nbrq\0\0"[move.promo];
     }
@@ -205,8 +205,8 @@ template <typename F>
 
 [[nodiscard]] u64 knight(const int sq, const u64) {
     const u64 bb = 1ULL << sq;
-    return (((bb << 15) | (bb >> 17)) & 0x7F7F7F7F7F7F7F7FULL) | (((bb << 17) | (bb >> 15)) & 0xFEFEFEFEFEFEFEFEULL) |
-           (((bb << 10) | (bb >> 6)) & 0xFCFCFCFCFCFCFCFCULL) | (((bb << 6) | (bb >> 10)) & 0x3F3F3F3F3F3F3F3FULL);
+    return (bb << 15 | bb >> 17) & 0x7F7F7F7F7F7F7F7FULL | (bb << 17 | bb >> 15) & 0xFEFEFEFEFEFEFEFEULL |
+           (bb << 10 | bb >> 6) & 0xFCFCFCFCFCFCFCFCULL | (bb << 6 | bb >> 10) & 0x3F3F3F3F3F3F3F3FULL;
 }
 
 [[nodiscard]] auto bishop(const int sq, const u64 blockers) {
@@ -219,18 +219,18 @@ template <typename F>
 
 [[nodiscard]] u64 king(const int sq, const u64) {
     const u64 bb = 1ULL << sq;
-    return (bb << 8) | (bb >> 8) | (((bb >> 1) | (bb >> 9) | (bb << 7)) & 0x7F7F7F7F7F7F7F7FULL) |
-           (((bb << 1) | (bb << 9) | (bb >> 7)) & 0xFEFEFEFEFEFEFEFEULL);
+    return bb << 8 | bb >> 8 | (bb >> 1 | bb >> 9 | bb << 7) & 0x7F7F7F7F7F7F7F7FULL |
+           (bb << 1 | bb << 9 | bb >> 7) & 0xFEFEFEFEFEFEFEFEULL;
 }
 
 [[nodiscard]] auto is_attacked(const Position &pos, const int sq, const int them = true) {
     const u64 bb = 1ULL << sq;
     const u64 pawns = pos.colour[them] & pos.pieces[Pawn];
     const u64 pawn_attacks = them ? sw(pawns) | se(pawns) : nw(pawns) | ne(pawns);
-    return (pawn_attacks & bb) || (pos.colour[them] & pos.pieces[Knight] & knight(sq, 0)) ||
-           (bishop(sq, pos.colour[0] | pos.colour[1]) & pos.colour[them] & (pos.pieces[Bishop] | pos.pieces[Queen])) ||
-           (rook(sq, pos.colour[0] | pos.colour[1]) & pos.colour[them] & (pos.pieces[Rook] | pos.pieces[Queen])) ||
-           (king(sq, 0) & pos.colour[them] & pos.pieces[King]);
+    return pawn_attacks & bb || pos.colour[them] & pos.pieces[Knight] & knight(sq, 0) ||
+           bishop(sq, pos.colour[0] | pos.colour[1]) & pos.colour[them] & (pos.pieces[Bishop] | pos.pieces[Queen]) ||
+           rook(sq, pos.colour[0] | pos.colour[1]) & pos.colour[them] & (pos.pieces[Rook] | pos.pieces[Queen]) ||
+           king(sq, 0) & pos.colour[them] & pos.pieces[King];
 }
 
 auto makemove(Position &pos, const Move &move) {
@@ -452,7 +452,7 @@ const int pawn_attacked[] = {S(-64, -14), S(-155, -142)};
                         // king distance to square in front of passer
                         for (int i = 0; i < 2; ++i) {
                             score += pawn_passed_king_distance[i] * (rank - 1) *
-                                     max(abs((kings[i] / 8) - (rank + 1)), abs((kings[i] % 8) - file));
+                                     max(abs(kings[i] / 8 - (rank + 1)), abs(kings[i] % 8 - file));
                         }
                     }
                 } else {
@@ -964,12 +964,12 @@ void set_fen(Position &pos, const string &fen) {
             i -= 16;
         } else {
             const int side = c == 'p' || c == 'n' || c == 'b' || c == 'r' || c == 'q' || c == 'k';
-            const int piece = (c == 'p' || c == 'P')   ? Pawn
-                              : (c == 'n' || c == 'N') ? Knight
-                              : (c == 'b' || c == 'B') ? Bishop
-                              : (c == 'r' || c == 'R') ? Rook
-                              : (c == 'q' || c == 'Q') ? Queen
-                                                       : King;
+            const int piece = c == 'p' || c == 'P'   ? Pawn
+                              : c == 'n' || c == 'N' ? Knight
+                              : c == 'b' || c == 'B' ? Bishop
+                              : c == 'r' || c == 'R' ? Rook
+                              : c == 'q' || c == 'Q' ? Queen
+                                                     : King;
             pos.colour.at(side) ^= 1ULL << i;
             pos.pieces.at(piece) ^= 1ULL << i;
             i++;
@@ -1201,7 +1201,7 @@ int main(
             const auto nodes = perft(pos, depth);
             const auto t1 = std::chrono::steady_clock::now();
             const auto dt = std::chrono::duration_cast<std::chrono::milliseconds>(t1 - t0);
-            const auto nps = dt.count() ? (1000 * nodes) / dt.count() : 0;
+            const auto nps = dt.count() ? 1000 * nodes / dt.count() : 0;
 
             std::cout << "info";
             std::cout << " depth " << depth;
