@@ -571,7 +571,7 @@ int alphabeta(Position &pos,
         if (!in_check && alpha == beta - 1) {
             // Reverse futility pruning
             if (depth < 7) {
-                const int margins[] = {0, 70, 140, 210, 280, 400, 550};
+                const int margins[] = {0, 50, 100, 200, 300, 500, 800};
                 if (static_eval - margins[depth - improving] >= beta) {
                     return beta;
                 }
@@ -585,7 +585,7 @@ int alphabeta(Position &pos,
                 if (-alphabeta(npos,
                                -beta,
                                -beta + 1,
-                               depth - 3 - depth / 6 - min((static_eval - beta) / 200, 3),
+                               depth - 4 - depth / 6,
                                // increment ply by two to get refutation for killer tables if it fails
                                ply + 2, 
                                // minify enable filter delete
