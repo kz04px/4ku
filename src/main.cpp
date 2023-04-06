@@ -585,8 +585,8 @@ int alphabeta(Position &pos,
                 if (-alphabeta(npos,
                                -beta,
                                -beta + 1,
-                               depth - 3 - depth / 6 - std::min((static_eval - beta)/200, 3),
-                               //increment ply by two to get refutation for killer tables if it fails
+                               depth - 3 - depth / 6 - min((static_eval - beta) / 200, 3),
+                               // increment ply by two to get refutation for killer tables if it fails
                                ply + 2, 
                                // minify enable filter delete
                                nodes,
