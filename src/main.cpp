@@ -608,13 +608,8 @@ int alphabeta(Position &pos,
     if (tt_entry.key == tt_key) {
         tt_move = tt_entry.move;
         if (ply > 0 && tt_entry.depth >= depth) {
-            if (tt_entry.flag == Upper && tt_entry.score <= alpha) {
-                return tt_entry.score;
-            }
-            if (tt_entry.flag == Lower && tt_entry.score >= beta) {
-                return tt_entry.score;
-            }
-            if (tt_entry.flag == Exact) {
+            if (tt_entry.flag == Upper && tt_entry.score <= alpha || tt_entry.flag == Lower && tt_entry.score >= beta ||
+                tt_entry.flag == Exact) {
                 return tt_entry.score;
             }
         }
