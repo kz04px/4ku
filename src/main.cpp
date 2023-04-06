@@ -585,7 +585,7 @@ int alphabeta(Position &pos,
                 if (-alphabeta(npos,
                                -beta,
                                -beta + 1,
-                               depth - 4 - depth / 6,
+                               depth - 3 - depth / 6 - min((eval - beta) / 200, 3),
                                // increment ply by two to get refutation for killer tables if it fails
                                ply + 2, 
                                // minify enable filter delete
@@ -616,7 +616,7 @@ int alphabeta(Position &pos,
         }
     }
     // Internal iterative reduction
-    else if (depth > 3 && alpha != beta-1) {
+    else if (depth > 3) {
         depth--;
     }
 
