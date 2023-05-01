@@ -203,18 +203,25 @@ template <typename F>
     return mask;
 }
 
+u64 diag_mask[64];
+
+[[nodiscard]] u64 xattack(const int sq, const u64 blockers, const u64 dir_mask) {
+    return dir_mask & ((blockers & dir_mask) - (1ULL << sq) ^ flip(flip(blockers & dir_mask) - flip(1ULL << sq)));
+}
+
+[[nodiscard]] u64 bishop(const int sq, const u64 blockers) {
+    return xattack(sq, blockers, diag_mask[sq]) | xattack(sq, blockers, flip(diag_mask[sq ^ 56]));
+}
+
+[[nodiscard]] u64 rook(const int sq, const u64 blockers) {
+    return xattack(sq, blockers, (1ULL << sq) ^ (0x101010101010101ULL << (sq % 8))) | ray(sq, blockers, east) |
+           ray(sq, blockers, west);
+}
+
 [[nodiscard]] u64 knight(const int sq, const u64) {
     const u64 bb = 1ULL << sq;
     return (bb << 15 | bb >> 17) & 0x7F7F7F7F7F7F7F7FULL | (bb << 17 | bb >> 15) & 0xFEFEFEFEFEFEFEFEULL |
            (bb << 10 | bb >> 6) & 0xFCFCFCFCFCFCFCFCULL | (bb << 6 | bb >> 10) & 0x3F3F3F3F3F3F3F3FULL;
-}
-
-[[nodiscard]] auto bishop(const int sq, const u64 blockers) {
-    return ray(sq, blockers, nw) | ray(sq, blockers, ne) | ray(sq, blockers, sw) | ray(sq, blockers, se);
-}
-
-[[nodiscard]] auto rook(const int sq, const u64 blockers) {
-    return ray(sq, blockers, north) | ray(sq, blockers, east) | ray(sq, blockers, south) | ray(sq, blockers, west);
 }
 
 [[nodiscard]] u64 king(const int sq, const u64) {
@@ -1031,6 +1038,10 @@ int main(
 ) {
     setbuf(stdout, 0);
 
+    // Generate used attack masks
+    for (int i = 0; i < 64; ++i) {
+        diag_mask[i] = ray(i, 0, ne) | ray(i, 0, sw);
+    }
     mt19937_64 r;
     // pieces from 1-12 multiplied by the square + ep squares + castling rights
     for (auto &k : keys) {
