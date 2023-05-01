@@ -259,7 +259,7 @@ auto makemove(Position &pos, const Move &move) {
     pos.ep = 0;
 
     // Pawn double move
-    if (piece == Pawn &&move.to - move.from == 16) {
+    if (piece == Pawn && move.to - move.from == 16) {
         pos.ep = to >> 8;
     }
 
@@ -346,10 +346,10 @@ void generate_piece_moves(Move *const movelist,
     generate_piece_moves(movelist, num_moves, pos, Queen, to_mask, rook);
     generate_piece_moves(movelist, num_moves, pos, Queen, to_mask, bishop);
     generate_piece_moves(movelist, num_moves, pos, King, to_mask, king);
-    if (!only_captures &&pos.castling[0] && !(all & 0x60ULL) &&!is_attacked(pos, 4) && !is_attacked(pos, 5)) {
+    if (!only_captures &&pos.castling[0] && !(all & 0x60ULL) && !is_attacked(pos, 4) && !is_attacked(pos, 5)) {
         movelist[num_moves++] = Move{4, 6, None};
     }
-    if (!only_captures &&pos.castling[1] && !(all & 0xEULL) &&!is_attacked(pos, 4) && !is_attacked(pos, 3)) {
+    if (!only_captures &&pos.castling[1] && !(all & 0xEULL) && !is_attacked(pos, 4) && !is_attacked(pos, 3)) {
         movelist[num_moves++] = Move{4, 2, None};
     }
     return num_moves;
@@ -566,7 +566,7 @@ int alphabeta(Position &pos,
     }
 
     stack[ply].score = static_eval;
-    const auto improving = ply > 1 &&static_eval > stack[ply - 2].score;
+    const auto improving = ply > 1 && static_eval > stack[ply - 2].score;
 
     // Check extensions
     const auto in_check = is_attacked(pos, lsb(pos.colour[0] & pos.pieces[King]));
@@ -582,7 +582,7 @@ int alphabeta(Position &pos,
 
     const u64 tt_key = get_hash(pos);
 
-    if (ply > 0 &&!in_qsearch) {
+    if (ply > 0 && !in_qsearch) {
         // Repetition detection
         for (const auto old_hash : hash_history) {
             if (old_hash == tt_key) {
@@ -590,7 +590,7 @@ int alphabeta(Position &pos,
             }
         }
 
-        if (!in_check &&alpha == beta - 1) {
+        if (!in_check && alpha == beta - 1) {
             // Reverse futility pruning
             if (depth < 7) {
                 const int margins[] = {0, 50, 100, 200, 300, 500, 800};
@@ -600,7 +600,7 @@ int alphabeta(Position &pos,
             }
 
             // Null move pruning
-            if (depth > 2 &&static_eval >= beta &&do_null &&pos.colour[0] & ~(pos.pieces[Pawn] | pos.pieces[King])) {
+            if (depth > 2 &&static_eval >= beta && do_null &&pos.colour[0] & ~(pos.pieces[Pawn] | pos.pieces[King])) {
                 auto npos = pos;
                 flip(npos);
                 npos.ep = 0;
@@ -629,8 +629,8 @@ int alphabeta(Position &pos,
     Move tt_move{};
     if (tt_entry.key == tt_key) {
         tt_move = tt_entry.move;
-        if (ply > 0 &&tt_entry.depth >= depth) {
-            if (tt_entry.flag == Upper &&tt_entry.score <= alpha || tt_entry.flag == Lower &&tt_entry.score >= beta ||
+        if (ply > 0 && tt_entry.depth >= depth) {
+            if (tt_entry.flag == Upper && tt_entry.score <= alpha || tt_entry.flag == Lower &&tt_entry.score >= beta ||
                 tt_entry.flag == Exact) {
                 return tt_entry.score;
             }
@@ -671,7 +671,7 @@ int alphabeta(Position &pos,
 
         // Find best move remaining
         int best_move_index = i;
-        if (i == 0 &&!(no_move == tt_move)) {
+        if (i == 0 && !(no_move == tt_move)) {
             for (int j = i; j < num_moves; ++j) {
                 if (moves[j] == tt_move) {
                     best_move_index = j;
@@ -694,13 +694,13 @@ int alphabeta(Position &pos,
         const auto gain = max_material[move.promo] + max_material[piece_on(pos, move.to)];
 
         // Delta pruning
-        if (in_qsearch &&!in_check &&static_eval + 50 + gain < alpha) {
+        if (in_qsearch && !in_check &&static_eval + 50 + gain < alpha) {
             best_score = alpha;
             break;
         }
 
         // Forward futility pruning
-        if (!in_qsearch &&!in_check &&!(move == tt_move) &&static_eval + 150 * depth + gain < alpha) {
+        if (!in_qsearch && !in_check &&!(move == tt_move) &&static_eval + 150 * depth + gain < alpha) {
             best_score = alpha;
             break;
         }
@@ -732,7 +732,7 @@ int alphabeta(Position &pos,
                                hash_history);
         } else {
             // Late move reduction
-            int reduction = depth > 2 &&num_moves_evaluated > 4 &&!gain
+            int reduction = depth > 2 &&num_moves_evaluated > 4 && !gain
                                 ? 1 + num_moves_evaluated / 14 + depth / 17 + (alpha == beta - 1) - improving +
                                       (hh_table[pos.flipped][move.from][move.to] < 0) -
                                       (hh_table[pos.flipped][move.from][move.to] > 0)
@@ -753,18 +753,18 @@ int alphabeta(Position &pos,
                                hh_table,
                                hash_history);
 
-            if (reduction > 0 &&score > alpha) {
+            if (reduction > 0 && score > alpha) {
                 reduction = 0;
                 goto zero_window;
             }
 
-            if (score > alpha &&score < beta) {
+            if (score > alpha && score < beta) {
                 goto full_window;
             }
         }
 
         // Exit early if out of time
-        if (depth > 4 &&(stop || now() >= stop_time)) {
+        if (depth > 4 && (stop || now() >= stop_time)) {
             hash_history.pop_back();
             return 0;
         }
@@ -931,7 +931,7 @@ auto iteratively_deepen(Position &pos,
             cout << "\n";
 
             // OpenBench compliance
-            if (is_bench &&i >= 16) {
+            if (is_bench && i >= 16) {
                 cout << "Bench: ";
                 cout << elapsed << " ms ";
                 cout << nodes << " nodes ";
@@ -950,7 +950,7 @@ auto iteratively_deepen(Position &pos,
         score = newscore;
 
         // Early exit after completed ply
-        if (!research &&now() >= start_time + allocated_time / 10) {
+        if (!research && now() >= start_time + allocated_time / 10) {
             break;
         }
     }
@@ -975,7 +975,7 @@ void set_fen(Position &pos, const string &fen) {
     ss >> word;
     int i = 56;
     for (const auto c : word) {
-        if (c >= '1' &&c <= '8') {
+        if (c >= '1' && c <= '8') {
             i += c - '1' + 1;
         } else if (c == '/') {
             i -= 16;
@@ -1068,7 +1068,7 @@ int main(
 
     // minify enable filter delete
     // OpenBench compliance
-    if (argc > 1 &&argv[1] == string("bench")) {
+    if (argc > 1 && argv[1] == string("bench")) {
         // Initialise the TT
         transposition_table.resize(num_tt_entries);
 
@@ -1196,7 +1196,7 @@ int main(
             int fen_size = 0;
 
             // Try collect FEN string
-            while (fen_size < 6 &&cin >> word) {
+            while (fen_size < 6 && cin >> word) {
                 if (word == "moves" || word == "startpos") {
                     break;
                 } else if (word != "fen") {
