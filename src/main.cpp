@@ -251,7 +251,7 @@ auto makemove(Position &pos, const Move &move) {
     pos.pieces[piece] ^= from | to;
 
     // En passant
-    if (piece == Pawn &&to == pos.ep) {
+    if (piece == Pawn && to == pos.ep) {
         pos.colour[1] ^= to >> 8;
         pos.pieces[Pawn] ^= to >> 8;
     }
@@ -277,7 +277,7 @@ auto makemove(Position &pos, const Move &move) {
     }
 
     // Promotions
-    if (piece == Pawn &&move.to >= 56) {
+    if (piece == Pawn && move.to >= 56) {
         pos.pieces[Pawn] ^= to;
         pos.pieces[move.promo] ^= to;
     }
@@ -346,10 +346,10 @@ void generate_piece_moves(Move *const movelist,
     generate_piece_moves(movelist, num_moves, pos, Queen, to_mask, rook);
     generate_piece_moves(movelist, num_moves, pos, Queen, to_mask, bishop);
     generate_piece_moves(movelist, num_moves, pos, King, to_mask, king);
-    if (!only_captures &&pos.castling[0] &&!(all & 0x60ULL) &&!is_attacked(pos, 4) &&!is_attacked(pos, 5)) {
+    if (!only_captures &&pos.castling[0] && !(all & 0x60ULL) &&!is_attacked(pos, 4) && !is_attacked(pos, 5)) {
         movelist[num_moves++] = Move{4, 6, None};
     }
-    if (!only_captures &&pos.castling[1] &&!(all & 0xEULL) &&!is_attacked(pos, 4) &&!is_attacked(pos, 3)) {
+    if (!only_captures &&pos.castling[1] && !(all & 0xEULL) &&!is_attacked(pos, 4) && !is_attacked(pos, 3)) {
         movelist[num_moves++] = Move{4, 2, None};
     }
     return num_moves;
