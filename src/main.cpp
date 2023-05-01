@@ -346,10 +346,10 @@ void generate_piece_moves(Move *const movelist,
     generate_piece_moves(movelist, num_moves, pos, Queen, to_mask, rook);
     generate_piece_moves(movelist, num_moves, pos, Queen, to_mask, bishop);
     generate_piece_moves(movelist, num_moves, pos, King, to_mask, king);
-    if (!only_captures &&pos.castling[0] && !(all & 0x60ULL) && !is_attacked(pos, 4) && !is_attacked(pos, 5)) {
+    if (!only_captures && pos.castling[0] && !(all & 0x60ULL) && !is_attacked(pos, 4) && !is_attacked(pos, 5)) {
         movelist[num_moves++] = Move{4, 6, None};
     }
-    if (!only_captures &&pos.castling[1] && !(all & 0xEULL) && !is_attacked(pos, 4) && !is_attacked(pos, 3)) {
+    if (!only_captures && pos.castling[1] && !(all & 0xEULL) && !is_attacked(pos, 4) && !is_attacked(pos, 3)) {
         movelist[num_moves++] = Move{4, 2, None};
     }
     return num_moves;
@@ -444,7 +444,7 @@ const int pawn_attacked[] = {S(-64, -14), S(-155, -142)};
 
                 if (p == Pawn) {
                     // Passed pawns
-                    if (rank > 2 &&!(0x101010101010101ULL << sq & (pawns[1] | attacked_by_pawns))) {
+                    if (rank > 2 && !(0x101010101010101ULL << sq & (pawns[1] | attacked_by_pawns))) {
                         score += passers[rank - 3];
 
                         // Protected passed pawns
@@ -474,7 +474,7 @@ const int pawn_attacked[] = {S(-64, -14), S(-155, -142)};
 
                     // Open or semi-open files
                     const u64 file_bb = 0x101010101010101ULL << file;
-                    if (p > Bishop &&!(file_bb & pawns[0])) {
+                    if (p > Bishop && !(file_bb & pawns[0])) {
                         score += open_files[!(file_bb & pawns[1])][p - 3];
                     }
 
@@ -491,7 +491,7 @@ const int pawn_attacked[] = {S(-64, -14), S(-155, -142)};
                     mobility &= ~pos.colour[0];
                     score += mobilities[p - 1] * count(mobility);
 
-                    if (p == King &&piece_bb & 0xC3D7) {
+                    if (p == King && piece_bb & 0xC3D7) {
                         // C3D7 = Reasonable king squares
                         // Pawn cover is fixed in position, so it won't
                         // walk around with the king.
@@ -573,7 +573,7 @@ int alphabeta(Position &pos,
     depth += in_check;
 
     const int in_qsearch = depth <= 0;
-    if (in_qsearch &&static_eval > alpha) {
+    if (in_qsearch && static_eval > alpha) {
         if (static_eval >= beta) {
             return beta;
         }
@@ -600,7 +600,7 @@ int alphabeta(Position &pos,
             }
 
             // Null move pruning
-            if (depth > 2 &&static_eval >= beta && do_null &&pos.colour[0] & ~(pos.pieces[Pawn] | pos.pieces[King])) {
+            if (depth > 2 && static_eval >= beta && do_null && pos.colour[0] & ~(pos.pieces[Pawn] | pos.pieces[King])) {
                 auto npos = pos;
                 flip(npos);
                 npos.ep = 0;
@@ -630,7 +630,7 @@ int alphabeta(Position &pos,
     if (tt_entry.key == tt_key) {
         tt_move = tt_entry.move;
         if (ply > 0 && tt_entry.depth >= depth) {
-            if (tt_entry.flag == Upper && tt_entry.score <= alpha || tt_entry.flag == Lower &&tt_entry.score >= beta ||
+            if (tt_entry.flag == Upper && tt_entry.score <= alpha || tt_entry.flag == Lower && tt_entry.score >= beta ||
                 tt_entry.flag == Exact) {
                 return tt_entry.score;
             }
@@ -694,13 +694,13 @@ int alphabeta(Position &pos,
         const auto gain = max_material[move.promo] + max_material[piece_on(pos, move.to)];
 
         // Delta pruning
-        if (in_qsearch && !in_check &&static_eval + 50 + gain < alpha) {
+        if (in_qsearch && !in_check && static_eval + 50 + gain < alpha) {
             best_score = alpha;
             break;
         }
 
         // Forward futility pruning
-        if (!in_qsearch && !in_check &&!(move == tt_move) &&static_eval + 150 * depth + gain < alpha) {
+        if (!in_qsearch && !in_check && !(move == tt_move) && static_eval + 150 * depth + gain < alpha) {
             best_score = alpha;
             break;
         }
@@ -732,7 +732,7 @@ int alphabeta(Position &pos,
                                hash_history);
         } else {
             // Late move reduction
-            int reduction = depth > 2 &&num_moves_evaluated > 4 && !gain
+            int reduction = depth > 2 && num_moves_evaluated > 4 && !gain
                                 ? 1 + num_moves_evaluated / 14 + depth / 17 + (alpha == beta - 1) - improving +
                                       (hh_table[pos.flipped][move.from][move.to] < 0) -
                                       (hh_table[pos.flipped][move.from][move.to] > 0)
@@ -799,7 +799,7 @@ int alphabeta(Position &pos,
         }
 
         // Late move pruning based on quiet move count
-        if (!in_check &&alpha == beta - 1 &&num_quiets_evaluated > (3 + depth * depth) / (2 - improving)) {
+        if (!in_check && alpha == beta - 1 && num_quiets_evaluated > (3 + depth * depth) / (2 - improving)) {
             break;
         }
     }
