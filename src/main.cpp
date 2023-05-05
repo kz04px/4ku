@@ -474,12 +474,12 @@ const int pawn_attacked[] = {S(-64, -14), S(-155, -142)};
                     u64 mobility = 0;
                     if (p == Knight) {
                         mobility = knight(sq, all_pieces);
-                    } else if (p == Bishop) {
-                        mobility = bishop(sq, all_pieces);
-                    } else if (p == Rook) {
-                        mobility = rook(sq, all_pieces);
-                    } else if (p == Queen) {
-                        mobility = bishop(sq, all_pieces) | rook(sq, all_pieces);
+                    }
+                    if (p == Bishop || p == Queen) {
+                        mobility |= bishop(sq, all_pieces);
+                    }
+                    if (p == Rook || p == Queen) {
+                        mobility |= rook(sq, all_pieces);
                     }
                     mobility &= ~pos.colour[0];
                     score += mobilities[p - 1] * count(mobility);
