@@ -433,11 +433,9 @@ const int pawn_attacked[] = {S(-64, -14), S(-155, -142)};
                         if (piece_bb & protected_by_pawns)
                             score += pawn_passed_protected;
 
-
                         // Blocked passed pawns
                         if (north(piece_bb) & pos.colour[1])
                             score += pawn_passed_blocked[rank - 3];
-
 
                         // King defense/attack
                         // king distance to square in front of passer
