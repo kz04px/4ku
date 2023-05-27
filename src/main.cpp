@@ -159,9 +159,9 @@ vector<TT_Entry> transposition_table;
 [[nodiscard]] auto move_str(const Move &move, const int flip) {
     string str;
     str += 'a' + move.from % 8;
-    str += '1' + (flip ? 7 - move.from / 8 : move.from / 8);
+    str += '1' + move.from / 8 ^ 7 * flip;
     str += 'a' + move.to % 8;
-    str += '1' + (flip ? 7 - move.to / 8 : move.to / 8);
+    str += '1' + move.to / 8 ^ 7 * flip;
     if (move.promo != None) {
         str += "\0nbrq\0\0"[move.promo];
     }
