@@ -527,9 +527,6 @@ int alphabeta(Position &pos,
     if (ply > 127)
         return static_eval;
 
-    stack[ply].score = static_eval;
-    const auto improving = ply > 1 && static_eval > stack[ply - 2].score;
-
     // Check extensions
     const auto in_check = is_attacked(pos, lsb(pos.colour[0] & pos.pieces[King]));
     depth += in_check;
@@ -565,6 +562,9 @@ int alphabeta(Position &pos,
     // Internal iterative reduction
     else if (depth > 3)
         depth--;
+
+    stack[ply].score = static_eval;
+    const auto improving = ply > 1 && static_eval > stack[ply - 2].score;
 
     if (ply > 0 && !in_qsearch) {
         if (!in_check && alpha == beta - 1) {
