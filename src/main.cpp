@@ -548,7 +548,25 @@ int alphabeta(Position &pos,
         for (const auto old_hash : hash_history)
             if (old_hash == tt_key)
                 return 0;
+    }
 
+    // TT Probing
+    TT_Entry &tt_entry = transposition_table[tt_key % num_tt_entries];
+    Move tt_move{};
+    if (tt_entry.key == tt_key) {
+        tt_move = tt_entry.move;
+        if (ply > 0 && tt_entry.depth >= depth) {
+            if (tt_entry.flag == Upper && tt_entry.score <= alpha || tt_entry.flag == Lower && tt_entry.score >= beta ||
+                tt_entry.flag == Exact) {
+                return tt_entry.score;
+            }
+        }
+    }
+    // Internal iterative reduction
+    else if (depth > 3)
+        depth--;
+
+    if (ply > 0 && !in_qsearch) {
         if (!in_check && alpha == beta - 1) {
             // Reverse futility pruning
             if (depth < 7) {
@@ -580,22 +598,6 @@ int alphabeta(Position &pos,
             }
         }
     }
-
-    // TT Probing
-    TT_Entry &tt_entry = transposition_table[tt_key % num_tt_entries];
-    Move tt_move{};
-    if (tt_entry.key == tt_key) {
-        tt_move = tt_entry.move;
-        if (ply > 0 && tt_entry.depth >= depth) {
-            if (tt_entry.flag == Upper && tt_entry.score <= alpha || tt_entry.flag == Lower && tt_entry.score >= beta ||
-                tt_entry.flag == Exact) {
-                return tt_entry.score;
-            }
-        }
-    }
-    // Internal iterative reduction
-    else if (depth > 3)
-        depth--;
 
     hash_history.emplace_back(tt_key);
     uint16_t tt_flag = Upper;
