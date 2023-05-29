@@ -521,26 +521,15 @@ int alphabeta(Position &pos,
               int64_t (&hh_table)[2][64][64],
               vector<u64> &hash_history,
               const int do_null = true) {
-    const int static_eval = eval(pos);
-
     // Don't overflow the stack
     if (ply > 127)
-        return static_eval;
-
-    stack[ply].score = static_eval;
-    const auto improving = ply > 1 && static_eval > stack[ply - 2].score;
+        return eval(pos);
 
     // Check extensions
     const auto in_check = is_attacked(pos, lsb(pos.colour[0] & pos.pieces[King]));
     depth += in_check;
 
     const int in_qsearch = depth <= 0;
-    if (in_qsearch && static_eval > alpha) {
-        if (static_eval >= beta)
-            return beta;
-        alpha = static_eval;
-    }
-
     const u64 tt_key = get_hash(pos);
 
     if (ply > 0 && !in_qsearch) {
@@ -565,6 +554,16 @@ int alphabeta(Position &pos,
     // Internal iterative reduction
     else if (depth > 3)
         depth--;
+
+    const int static_eval = eval(pos);
+    stack[ply].score = static_eval;
+    const auto improving = ply > 1 && static_eval > stack[ply - 2].score;
+
+    if (in_qsearch && static_eval > alpha) {
+        if (static_eval >= beta)
+            return beta;
+        alpha = static_eval;
+    }
 
     if (ply > 0 && !in_qsearch) {
         if (!in_check && alpha == beta - 1) {
