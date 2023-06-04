@@ -826,7 +826,7 @@ auto iteratively_deepen(Position &pos,
 
     int score = 0;
     for (int i = 1; i < 128; ++i) {
-        auto window = 40;
+        int window = 32 + score * score / 16384;
         auto research = 0;
     research:
         const auto newscore = alphabeta(pos,
