@@ -1000,6 +1000,7 @@ int main(
 
     // minify enable filter delete
     // OpenBench compliance
+    u64 total_nodes = 0;
     if (argc > 1 && argv[1] == string("bench")) {
         // Initialise the TT
         transposition_table.resize(num_tt_entries);
@@ -1032,7 +1033,6 @@ int main(
             {"8/8/p1Pk2pp/3p1p2/p4P2/6P1/5K1P/8 w - - 0 1", 16}                       // Phase 0
         };
 
-        u64 total_nodes = 0;
         const auto start_time = now();
         for (const auto &[fen, depth] : bench_positions) {
             int stop = false;
