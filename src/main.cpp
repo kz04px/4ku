@@ -984,7 +984,7 @@ void set_fen(Position &pos, const string &fen) {
 // minify disable filter delete
 
 // minify enable filter delete
-struct bench_entry {
+[[nodiscard]] struct BenchEntry {
     string fen;
     int depth;
 };
@@ -1013,7 +1013,7 @@ int main(
         // Initialise the TT
         transposition_table.resize(num_tt_entries);
 
-        const bench_entry entries[] = {
+        const BenchEntry entries[] = {
             {"rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq", 14},         // Phase 24, startpos
             {"r1n2rk1/1pq2pp1/4bn1p/N1bpp3/4P3/3QBP2/PPP1B1PP/2KR3R w -", 13},  // Phase 23
             {"r1bq1rk1/pp2p1bp/2p3p1/1P3p2/2QPn3/6P1/PB1NPPBP/R4RK1 b -", 14},  // Phase 22
