@@ -535,7 +535,7 @@ i32 alphabeta(Position &pos,
 
     if (ply > 0 && !in_qsearch) {
         // Repetition detection
-        for (const auto old_hash : hash_history)
+        for (const u64 old_hash : hash_history)
             if (old_hash == tt_key)
                 return 0;
     }
@@ -810,7 +810,7 @@ void print_pv(const Position &pos, const Move move, vector<u64> &hash_history) {
 }
 // minify disable filter delete
 
-auto iteratively_deepen(Position &pos,
+Move iteratively_deepen(Position &pos,
                         vector<u64> &hash_history,
                         // minify enable filter delete
                         i32 thread_id,
@@ -829,21 +829,21 @@ auto iteratively_deepen(Position &pos,
     i32 score = 0;
     for (i32 i = 1; i < 128; ++i) {
         i32 window = 32 + score * score / 16384;
-        auto research = 0;
+        i32 research = 0;
     research:
-        const auto newscore = alphabeta(pos,
-                                        score - window,
-                                        score + window,
-                                        i,
-                                        0,
-                                        // minify enable filter delete
-                                        nodes,
-                                        // minify disable filter delete
-                                        start_time + allocated_time,
-                                        stop,
-                                        stack,
-                                        hh_table,
-                                        hash_history);
+        const i32 newscore = alphabeta(pos,
+                                       score - window,
+                                       score + window,
+                                       i,
+                                       0,
+                                       // minify enable filter delete
+                                       nodes,
+                                       // minify disable filter delete
+                                       start_time + allocated_time,
+                                       stop,
+                                       stack,
+                                       hh_table,
+                                       hash_history);
 
         // Hard time limit exceeded
         if (now() >= start_time + allocated_time || stop)
