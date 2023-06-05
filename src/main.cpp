@@ -32,9 +32,12 @@
 
 using namespace std;
 
+using i32 = int;
+using u64 = uint64_t;
+
 // Constants
-const int mate_score = 1 << 15;
-const int inf = 1 << 16;
+const i32 mate_score = 1 << 15;
+const i32 inf = 1 << 16;
 
 enum
 {
@@ -53,8 +56,6 @@ enum
     return t.tv_sec * 1000 + t.tv_nsec / 1000000;
 }
 
-using u64 = uint64_t;
-
 struct [[nodiscard]] Position {
     array<int, 4> castling = {true, true, true, true};
     array<u64, 2> colour = {0xFFFFULL, 0xFFFF000000000000ULL};
@@ -65,13 +66,13 @@ struct [[nodiscard]] Position {
                             0x800000000000008ULL,
                             0x1000000000000010ULL};
     u64 ep = 0x0ULL;
-    int flipped = false;
+    i32 flipped = false;
 };
 
 struct Move {
-    int from = 0;
-    int to = 0;
-    int promo = 0;
+    i32 from = 0;
+    i32 to = 0;
+    i32 promo = 0;
 };
 
 const Move no_move{};
@@ -82,7 +83,7 @@ struct [[nodiscard]] Stack {
     int64_t move_scores[256];
     Move move;
     Move killer;
-    int score;
+    i32 score;
 };
 
 enum
@@ -95,8 +96,8 @@ enum
 struct [[nodiscard]] TT_Entry {
     u64 key;
     Move move;
-    int score;
-    int depth;
+    i32 score;
+    i32 depth;
     uint16_t flag;
 };
 
@@ -156,7 +157,7 @@ vector<TT_Entry> transposition_table;
     return !memcmp(&rhs, &lhs, sizeof(Move));
 }
 
-[[nodiscard]] auto move_str(const Move &move, const int flip) {
+[[nodiscard]] auto move_str(const Move &move, const i32 flip) {
     string str;
     str += 'a' + move.from % 8;
     str += '1' + (move.from / 8 ^ 7 * flip);
@@ -168,9 +169,9 @@ vector<TT_Entry> transposition_table;
     return str;
 }
 
-[[nodiscard]] int piece_on(const Position &pos, const int sq) {
+[[nodiscard]] i32 piece_on(const Position &pos, const i32 sq) {
     const u64 bb = 1ULL << sq;
-    for (int i = 0; i < 6; ++i)
+    for (i32 i = 0; i < 6; ++i)
         if (pos.pieces[i] & bb)
             return i;
     return None;
@@ -179,7 +180,7 @@ vector<TT_Entry> transposition_table;
 void flip(Position &pos) {
     pos.colour[0] = flip(pos.colour[0]);
     pos.colour[1] = flip(pos.colour[1]);
-    for (int i = 0; i < 6; ++i)
+    for (i32 i = 0; i < 6; ++i)
         pos.pieces[i] = flip(pos.pieces[i]);
     pos.ep = flip(pos.ep);
     swap(pos.colour[0], pos.colour[1]);
@@ -189,7 +190,7 @@ void flip(Position &pos) {
 }
 
 template <typename F>
-[[nodiscard]] auto ray(const int sq, const u64 blockers, F f) {
+[[nodiscard]] auto ray(const i32 sq, const u64 blockers, F f) {
     u64 mask = f(1ULL << sq);
     mask |= f(mask & ~blockers);
     mask |= f(mask & ~blockers);
@@ -200,27 +201,27 @@ template <typename F>
     return mask;
 }
 
-[[nodiscard]] u64 knight(const int sq, const u64) {
+[[nodiscard]] u64 knight(const i32 sq, const u64) {
     const u64 bb = 1ULL << sq;
     return (bb << 15 | bb >> 17) & 0x7F7F7F7F7F7F7F7FULL | (bb << 17 | bb >> 15) & 0xFEFEFEFEFEFEFEFEULL |
            (bb << 10 | bb >> 6) & 0xFCFCFCFCFCFCFCFCULL | (bb << 6 | bb >> 10) & 0x3F3F3F3F3F3F3F3FULL;
 }
 
-[[nodiscard]] auto bishop(const int sq, const u64 blockers) {
+[[nodiscard]] auto bishop(const i32 sq, const u64 blockers) {
     return ray(sq, blockers, nw) | ray(sq, blockers, ne) | ray(sq, blockers, sw) | ray(sq, blockers, se);
 }
 
-[[nodiscard]] auto rook(const int sq, const u64 blockers) {
+[[nodiscard]] auto rook(const i32 sq, const u64 blockers) {
     return ray(sq, blockers, north) | ray(sq, blockers, east) | ray(sq, blockers, south) | ray(sq, blockers, west);
 }
 
-[[nodiscard]] u64 king(const int sq, const u64) {
+[[nodiscard]] u64 king(const i32 sq, const u64) {
     const u64 bb = 1ULL << sq;
     return bb << 8 | bb >> 8 | (bb >> 1 | bb >> 9 | bb << 7) & 0x7F7F7F7F7F7F7F7FULL |
            (bb << 1 | bb << 9 | bb >> 7) & 0xFEFEFEFEFEFEFEFEULL;
 }
 
-[[nodiscard]] auto is_attacked(const Position &pos, const int sq, const int them = true) {
+[[nodiscard]] auto is_attacked(const Position &pos, const i32 sq, const i32 them = true) {
     const u64 bb = 1ULL << sq;
     const u64 pawns = pos.colour[them] & pos.pieces[Pawn];
     const u64 pawn_attacks = them ? sw(pawns) | se(pawns) : nw(pawns) | ne(pawns);
@@ -231,8 +232,8 @@ template <typename F>
 }
 
 auto makemove(Position &pos, const Move &move) {
-    const int piece = piece_on(pos, move.from);
-    const int captured = piece_on(pos, move.to);
+    const i32 piece = piece_on(pos, move.from);
+    const i32 captured = piece_on(pos, move.to);
     const u64 to = 1ULL << move.to;
     const u64 from = 1ULL << move.from;
 
@@ -283,9 +284,9 @@ auto makemove(Position &pos, const Move &move) {
     return !is_attacked(pos, lsb(pos.colour[1] & pos.pieces[King]), false);
 }
 
-void generate_pawn_moves(Move *const movelist, int &num_moves, u64 to_mask, const int offset) {
+void generate_pawn_moves(Move *const movelist, i32 &num_moves, u64 to_mask, const i32 offset) {
     while (to_mask) {
-        const int to = lsb(to_mask);
+        const i32 to = lsb(to_mask);
         to_mask &= to_mask - 1;
         if (to >= 56) {
             movelist[num_moves++] = Move{to + offset, to, Queen};
@@ -300,18 +301,18 @@ void generate_pawn_moves(Move *const movelist, int &num_moves, u64 to_mask, cons
 
 template <typename F>
 void generate_piece_moves(Move *const movelist,
-                          int &num_moves,
+                          i32 &num_moves,
                           const Position &pos,
-                          const int piece,
+                          const i32 piece,
                           const u64 to_mask,
                           F f) {
     u64 copy = pos.colour[0] & pos.pieces[piece];
     while (copy) {
-        const int fr = lsb(copy);
+        const i32 fr = lsb(copy);
         copy &= copy - 1;
         u64 moves = f(fr, pos.colour[0] | pos.colour[1]) & to_mask;
         while (moves) {
-            const int to = lsb(moves);
+            const i32 to = lsb(moves);
             moves &= moves - 1;
             movelist[num_moves++] = Move{fr, to, None};
         }
@@ -319,7 +320,7 @@ void generate_piece_moves(Move *const movelist,
 }
 
 [[nodiscard]] auto movegen(const Position &pos, Move *const movelist, const bool only_captures) {
-    int num_moves = 0;
+    i32 num_moves = 0;
     const u64 all = pos.colour[0] | pos.colour[1];
     const u64 to_mask = only_captures ? pos.colour[1] : ~pos.colour[0];
     const u64 pawns = pos.colour[0] & pos.pieces[Pawn];
@@ -341,14 +342,14 @@ void generate_piece_moves(Move *const movelist,
     return num_moves;
 }
 
-[[nodiscard]] int S(const int mg, const int eg) {
+[[nodiscard]] i32 S(const i32 mg, const i32 eg) {
     return (eg << 16) + mg;
 }
 
-const int phases[] = {0, 1, 1, 2, 4, 0};
-const int max_material[] = {121, 395, 422, 737, 1455, 0, 0};
-const int material[] = {S(121, 116), S(389, 395), S(406, 422), S(512, 737), S(925, 1455), 0};
-const int pst_rank[][8] = {
+const i32 phases[] = {0, 1, 1, 2, 4, 0};
+const i32 max_material[] = {121, 395, 422, 737, 1455, 0, 0};
+const i32 material[] = {S(121, 116), S(389, 395), S(406, 422), S(512, 737), S(925, 1455), 0};
+const i32 pst_rank[][8] = {
     {0, S(-4, 0), S(-4, 0), S(-1, -1), S(2, 0), S(7, 1), 0, 0},
     {S(-7, -5), S(-4, -1), S(-1, 0), S(2, 3), S(6, 3), S(12, 1), S(6, -1), S(-13, 0)},
     {S(-5, -3), S(-1, -1), S(1, 0), S(2, 1), S(3, 2), S(8, 0), S(2, 0), S(-10, 1)},
@@ -356,7 +357,7 @@ const int pst_rank[][8] = {
     {S(-3, -9), S(0, -9), S(0, -6), S(-2, 2), S(-1, 6), S(3, 4), S(-1, 7), S(4, 4)},
     {S(1, -6), S(0, -2), S(-3, 0), S(-7, 3), S(-4, 4), S(2, 4), S(2, 3), S(2, -3)},
 };
-const int pst_file[][8] = {
+const i32 pst_file[][8] = {
     {S(-2, 1), S(-1, 1), S(-1, 0), S(0, -1), S(1, 0), S(2, 0), S(3, 0), S(-2, 0)},
     {S(-7, -3), S(-2, 0), S(1, 2), S(3, 3), S(3, 2), S(3, 1), S(1, -1), S(-2, -4)},
     {S(-3, -1), S(-1, 0), S(1, 0), S(1, 1), S(1, 2), S(0, 1), S(3, -1), S(-1, -2)},
@@ -364,32 +365,32 @@ const int pst_file[][8] = {
     {S(-4, -4), S(-2, -1), S(-1, 1), S(0, 2), S(0, 3), S(1, 3), S(3, 0), S(3, -2)},
     {S(-1, -3), S(2, -1), S(-3, 1), S(-3, 2), S(-5, 2), S(-1, 1), S(2, 0), S(1, -3)},
 };
-const int open_files[][3] = {
+const i32 open_files[][3] = {
     {S(30, 17), S(9, 14), S(-31, 10)},
     {S(63, 8), S(-11, 42), S(-84, 1)},
 };
-const int pawn_protection[] = {S(30, 13), S(6, 12), S(4, 6), S(11, 2), S(-9, 11), S(-31, 21)};
-const int passers[] = {S(4, 11), S(40, 38), S(80, 95), S(269, 162)};
-const int pawn_passed_protected = S(15, 19);
-const int pawn_doubled = S(-18, -30);
-const int pawn_phalanx = S(13, 12);
-const int pawn_passed_blocked[] = {S(-10, -18), S(7, -42), S(13, -75), S(-12, -85)};
-const int pawn_passed_king_distance[] = {S(0, -5), S(-4, 9)};
-const int bishop_pair = S(39, 61);
-const int king_shield[] = {S(49, -11), S(37, -10)};
-const int pawn_attacked[] = {S(-64, -14), S(-155, -142)};
+const i32 pawn_protection[] = {S(30, 13), S(6, 12), S(4, 6), S(11, 2), S(-9, 11), S(-31, 21)};
+const i32 passers[] = {S(4, 11), S(40, 38), S(80, 95), S(269, 162)};
+const i32 pawn_passed_protected = S(15, 19);
+const i32 pawn_doubled = S(-18, -30);
+const i32 pawn_phalanx = S(13, 12);
+const i32 pawn_passed_blocked[] = {S(-10, -18), S(7, -42), S(13, -75), S(-12, -85)};
+const i32 pawn_passed_king_distance[] = {S(0, -5), S(-4, 9)};
+const i32 bishop_pair = S(39, 61);
+const i32 king_shield[] = {S(49, -11), S(37, -10)};
+const i32 pawn_attacked[] = {S(-64, -14), S(-155, -142)};
 
-[[nodiscard]] int eval(Position &pos) {
+[[nodiscard]] i32 eval(Position &pos) {
     // Include side to move bonus
-    int score = S(28, 10);
-    int phase = 0;
+    i32 score = S(28, 10);
+    i32 phase = 0;
 
-    for (int c = 0; c < 2; ++c) {
+    for (i32 c = 0; c < 2; ++c) {
         // our pawns, their pawns
         const u64 pawns[] = {pos.colour[0] & pos.pieces[Pawn], pos.colour[1] & pos.pieces[Pawn]};
         const u64 protected_by_pawns = nw(pawns[0]) | ne(pawns[0]);
         const u64 attacked_by_pawns = se(pawns[1]) | sw(pawns[1]);
-        const int kings[] = {lsb(pos.colour[0] & pos.pieces[King]), lsb(pos.colour[1] & pos.pieces[King])};
+        const i32 kings[] = {lsb(pos.colour[0] & pos.pieces[King]), lsb(pos.colour[1] & pos.pieces[King])};
 
         // Bishop pair
         if (count(pos.colour[0] & pos.pieces[Bishop]) == 2)
@@ -402,18 +403,18 @@ const int pawn_attacked[] = {S(-64, -14), S(-155, -142)};
         score += pawn_phalanx * count(west(pawns[0]) & pawns[0]);
 
         // For each piece type
-        for (int p = 0; p < 6; ++p) {
+        for (i32 p = 0; p < 6; ++p) {
             auto copy = pos.colour[0] & pos.pieces[p];
             while (copy) {
-                const int sq = lsb(copy);
+                const i32 sq = lsb(copy);
                 copy &= copy - 1;
 
                 // Material
                 phase += phases[p];
                 score += material[p];
 
-                const int rank = sq / 8;
-                const int file = sq % 8;
+                const i32 rank = sq / 8;
+                const i32 file = sq % 8;
 
                 // Split quantized PSTs
                 score += pst_rank[p][rank] * 8;
@@ -439,7 +440,7 @@ const int pawn_attacked[] = {S(-64, -14), S(-155, -142)};
 
                         // King defense/attack
                         // king distance to square in front of passer
-                        for (int i = 0; i < 2; ++i)
+                        for (i32 i = 0; i < 2; ++i)
                             score += pawn_passed_king_distance[i] * (rank - 1) *
                                      max(abs(kings[i] / 8 - rank - 1), abs(kings[i] % 8 - file));
                     }
@@ -482,16 +483,16 @@ const int pawn_attacked[] = {S(-64, -14), S(-155, -142)};
     u64 hash = pos.flipped;
 
     // Pieces
-    for (int p = Pawn; p < None; p++) {
+    for (i32 p = Pawn; p < None; p++) {
         u64 copy = pos.pieces[p] & pos.colour[0];
         while (copy) {
-            const int sq = lsb(copy);
+            const i32 sq = lsb(copy);
             copy &= copy - 1;
             hash ^= keys[p * 64 + sq];
         }
         copy = pos.pieces[p] & pos.colour[1];
         while (copy) {
-            const int sq = lsb(copy);
+            const i32 sq = lsb(copy);
             copy &= copy - 1;
             hash ^= keys[(p + 6) * 64 + sq];
         }
@@ -507,20 +508,20 @@ const int pawn_attacked[] = {S(-64, -14), S(-155, -142)};
     return hash;
 }
 
-int alphabeta(Position &pos,
-              int alpha,
-              const int beta,
-              int depth,
-              const int ply,
+i32 alphabeta(Position &pos,
+              i32 alpha,
+              const i32 beta,
+              i32 depth,
+              const i32 ply,
               // minify enable filter delete
               u64 &nodes,
               // minify disable filter delete
               const int64_t stop_time,
-              int &stop,
+              i32 &stop,
               Stack *const stack,
               int64_t (&hh_table)[2][64][64],
               vector<u64> &hash_history,
-              const int do_null = true) {
+              const i32 do_null = true) {
     // Don't overflow the stack
     if (ply > 127)
         return eval(pos);
@@ -529,7 +530,7 @@ int alphabeta(Position &pos,
     const auto in_check = is_attacked(pos, lsb(pos.colour[0] & pos.pieces[King]));
     depth += in_check;
 
-    const int in_qsearch = depth <= 0;
+    const i32 in_qsearch = depth <= 0;
     const u64 tt_key = get_hash(pos);
 
     if (ply > 0 && !in_qsearch) {
@@ -555,7 +556,7 @@ int alphabeta(Position &pos,
     else if (depth > 3)
         depth--;
 
-    const int static_eval = eval(pos);
+    const i32 static_eval = eval(pos);
     stack[ply].score = static_eval;
     const auto improving = ply > 1 && static_eval > stack[ply - 2].score;
 
@@ -569,7 +570,7 @@ int alphabeta(Position &pos,
         if (!in_check && alpha == beta - 1) {
             // Reverse futility pruning
             if (depth < 7) {
-                const int margins[] = {0, 50, 100, 200, 300, 500, 800};
+                const i32 margins[] = {0, 50, 100, 200, 300, 500, 800};
                 if (static_eval - margins[depth - improving] >= beta)
                     return beta;
             }
@@ -601,20 +602,20 @@ int alphabeta(Position &pos,
     hash_history.emplace_back(tt_key);
     uint16_t tt_flag = Upper;
 
-    int num_moves_evaluated = 0;
-    int num_quiets_evaluated = 0;
-    int best_score = -inf;
+    i32 num_moves_evaluated = 0;
+    i32 num_quiets_evaluated = 0;
+    i32 best_score = -inf;
     Move best_move{};
 
     auto &moves = stack[ply].moves;
     auto &move_scores = stack[ply].move_scores;
-    const int num_moves = movegen(pos, moves, in_qsearch);
+    const i32 num_moves = movegen(pos, moves, in_qsearch);
 
-    for (int i = 0; i < num_moves; ++i) {
+    for (i32 i = 0; i < num_moves; ++i) {
         // Score moves at the first loop, except if we have a hash move,
         // then we'll use that first and delay sorting one iteration.
         if (i == !(no_move == tt_move)) {
-            for (int j = 0; j < num_moves; ++j) {
+            for (i32 j = 0; j < num_moves; ++j) {
                 const auto gain = max_material[moves[j].promo] + max_material[piece_on(pos, moves[j].to)];
                 if (gain)
                     move_scores[j] = gain + (1LL << 54);
@@ -626,16 +627,16 @@ int alphabeta(Position &pos,
         }
 
         // Find best move remaining
-        int best_move_index = i;
+        i32 best_move_index = i;
         if (i == 0 && !(no_move == tt_move)) {
-            for (int j = i; j < num_moves; ++j) {
+            for (i32 j = i; j < num_moves; ++j) {
                 if (moves[j] == tt_move) {
                     best_move_index = j;
                     break;
                 }
             }
         } else
-            for (int j = i; j < num_moves; ++j)
+            for (i32 j = i; j < num_moves; ++j)
                 if (move_scores[j] > move_scores[best_move_index])
                     best_move_index = j;
 
@@ -666,7 +667,7 @@ int alphabeta(Position &pos,
         nodes++;
         // minify disable filter delete
 
-        int score;
+        i32 score;
         if (!num_moves_evaluated) {
         full_window:
             score = -alphabeta(npos,
@@ -684,7 +685,7 @@ int alphabeta(Position &pos,
                                hash_history);
         } else {
             // Late move reduction
-            int reduction = depth > 2 && num_moves_evaluated > 4 && !gain
+            i32 reduction = depth > 2 && num_moves_evaluated > 4 && !gain
                                 ? 1 + num_moves_evaluated / 14 + depth / 17 + (alpha == beta - 1) - improving +
                                       (hh_table[pos.flipped][move.from][move.to] < 0) -
                                       (hh_table[pos.flipped][move.from][move.to] > 0)
@@ -740,7 +741,7 @@ int alphabeta(Position &pos,
             tt_flag = Lower;
             if (!gain) {
                 hh_table[pos.flipped][move.from][move.to] += depth * depth;
-                for (int j = 0; j < num_quiets_evaluated - 1; ++j) {
+                for (i32 j = 0; j < num_quiets_evaluated - 1; ++j) {
                     hh_table[pos.flipped][stack[ply].quiets_evaluated[j].from][stack[ply].quiets_evaluated[j].to] -=
                         depth * depth;
                 }
@@ -768,8 +769,8 @@ int alphabeta(Position &pos,
 // minify enable filter delete
 [[nodiscard]] bool is_pseudolegal_move(const Position &pos, const Move &move) {
     Move moves[256];
-    const int num_moves = movegen(pos, moves, false);
-    for (int i = 0; i < num_moves; ++i)
+    const i32 num_moves = movegen(pos, moves, false);
+    for (i32 i = 0; i < num_moves; ++i)
         if (moves[i] == move)
             return true;
     return false;
@@ -787,7 +788,7 @@ void print_pv(const Position &pos, const Move move, vector<u64> &hash_history) {
     if (!makemove(npos, move))
         return;
 
-    // Print current move
+    // Pri32 current move
     cout << " " << move_str(move, pos.flipped);
 
     // Probe the TT in the resulting position
@@ -812,22 +813,22 @@ void print_pv(const Position &pos, const Move move, vector<u64> &hash_history) {
 auto iteratively_deepen(Position &pos,
                         vector<u64> &hash_history,
                         // minify enable filter delete
-                        int thread_id,
-                        const int bench_depth,
+                        i32 thread_id,
+                        const i32 bench_depth,
                         u64 &total_nodes,
                         // minify disable filter delete
                         const int64_t start_time,
-                        const int allocated_time,
-                        int &stop) {
+                        const i32 allocated_time,
+                        i32 &stop) {
     Stack stack[128] = {};
     int64_t hh_table[2][64][64] = {};
     // minify enable filter delete
     u64 nodes = 0;
     // minify disable filter delete
 
-    int score = 0;
-    for (int i = 1; i < 128; ++i) {
-        int window = 32 + score * score / 16384;
+    i32 score = 0;
+    for (i32 i = 1; i < 128; ++i) {
+        i32 window = 32 + score * score / 16384;
         auto research = 0;
     research:
         const auto newscore = alphabeta(pos,
@@ -913,15 +914,15 @@ void set_fen(Position &pos, const string &fen) {
     string word;
 
     ss >> word;
-    int i = 56;
+    i32 i = 56;
     for (const auto c : word) {
         if (c >= '1' && c <= '8') {
             i += c - '1' + 1;
         } else if (c == '/') {
             i -= 16;
         } else {
-            const int side = c == 'p' || c == 'n' || c == 'b' || c == 'r' || c == 'q' || c == 'k';
-            const int piece = c == 'p' || c == 'P'   ? Pawn
+            const i32 side = c == 'p' || c == 'n' || c == 'b' || c == 'r' || c == 'q' || c == 'k';
+            const i32 piece = c == 'p' || c == 'P'   ? Pawn
                               : c == 'n' || c == 'N' ? Knight
                               : c == 'b' || c == 'B' ? Bishop
                               : c == 'r' || c == 'R' ? Rook
@@ -949,7 +950,7 @@ void set_fen(Position &pos, const string &fen) {
     // En passant
     ss >> word;
     if (word != "-") {
-        const int sq = word[0] - 'a' + 8 * (word[1] - '1');
+        const i32 sq = word[0] - 'a' + 8 * (word[1] - '1');
         pos.ep = 1ULL << sq;
     }
 
@@ -961,16 +962,16 @@ void set_fen(Position &pos, const string &fen) {
 // minify disable filter delete
 
 // minify enable filter delete
-[[nodiscard]] auto perft(const Position &pos, const int depth) -> u64 {
+[[nodiscard]] auto perft(const Position &pos, const i32 depth) -> u64 {
     if (depth == 0) {
         return 1;
     }
 
     u64 nodes = 0;
     Move moves[256];
-    const int num_moves = movegen(pos, moves, false);
+    const i32 num_moves = movegen(pos, moves, false);
 
-    for (int i = 0; i < num_moves; ++i) {
+    for (i32 i = 0; i < num_moves; ++i) {
         auto npos = pos;
 
         // Check move legality
@@ -985,9 +986,9 @@ void set_fen(Position &pos, const string &fen) {
 }
 // minify disable filter delete
 
-int main(
+i32 main(
     // minify enable filter delete
-    const int argc,
+    const i32 argc,
     const char **argv
     // minify disable filter delete
 ) {
@@ -1038,7 +1039,7 @@ int main(
 
         const auto start_time = now();
         for (const auto &[fen, depth] : bench_positions) {
-            int stop = false;
+            i32 stop = false;
             set_fen(pos, fen);
             iteratively_deepen(pos, hash_history, 0, depth, total_nodes, now(), 1 << 30, stop);
         }
@@ -1100,11 +1101,11 @@ int main(
         }
         // minify disable filter delete
         else if (word == "go") {
-            int wtime;
-            int btime;
+            i32 wtime;
+            i32 btime;
 
             // minify enable filter delete
-            int found = 0;
+            i32 found = 0;
             while (found < 2) {
                 cin >> word;
                 if (word == "wtime") {
@@ -1130,8 +1131,8 @@ int main(
 
             // Lazy SMP
             vector<thread> threads;
-            int stop = false;
-            for (int i = 1; i < thread_count; ++i)
+            i32 stop = false;
+            for (i32 i = 1; i < thread_count; ++i)
                 threads.emplace_back([=, &stop]() mutable {
                     iteratively_deepen(pos,
                                        hash_history,
@@ -1155,7 +1156,7 @@ int main(
                                                       allocated_time,
                                                       stop);
             stop = true;
-            for (int i = 1; i < thread_count; ++i)
+            for (i32 i = 1; i < thread_count; ++i)
                 threads[i - 1].join();
             cout << "bestmove " << move_str(best_move, pos.flipped) << "\n";
         } else if (word == "position") {
@@ -1165,7 +1166,7 @@ int main(
 
             // minify enable filter delete
             string fen;
-            int fen_size = 0;
+            i32 fen_size = 0;
 
             // Try collect FEN string
             while (fen_size < 6 && cin >> word) {
@@ -1188,7 +1189,7 @@ int main(
         }
         // minify enable filter delete
         else if (word == "perft") {
-            int depth = 0;
+            i32 depth = 0;
             cin >> depth;
             const auto t0 = std::chrono::steady_clock::now();
             const auto nodes = perft(pos, depth);
@@ -1209,8 +1210,8 @@ int main(
         // minify disable filter delete
         else {
             Move moves[256];
-            const int num_moves = movegen(pos, moves, false);
-            for (int i = 0; i < num_moves; ++i) {
+            const i32 num_moves = movegen(pos, moves, false);
+            for (i32 i = 0; i < num_moves; ++i) {
                 if (word == move_str(moves[i], pos.flipped)) {
                     if (piece_on(pos, moves[i].to) != None || piece_on(pos, moves[i].from) == Pawn)
                         hash_history.clear();
