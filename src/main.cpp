@@ -513,7 +513,7 @@ int alphabeta(Position &pos,
               int depth,
               const int ply,
               // minify enable filter delete
-              int64_t &nodes,
+              u64 &nodes,
               // minify disable filter delete
               const int64_t stop_time,
               int &stop,
@@ -822,7 +822,7 @@ auto iteratively_deepen(Position &pos,
     Stack stack[128] = {};
     int64_t hh_table[2][64][64] = {};
     // minify enable filter delete
-    int64_t nodes = 0;
+    u64 nodes = 0;
     // minify disable filter delete
 
     int score = 0;
