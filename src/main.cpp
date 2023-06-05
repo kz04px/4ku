@@ -849,9 +849,8 @@ auto iteratively_deepen(Position &pos,
             break;
 
         // minify enable filter delete
-        if (thread_id == 0) {
+        if (thread_id == 0 && bench_depth == 0) {
             const auto elapsed = now() - start_time;
-
             cout << "info";
             cout << " depth " << i;
             cout << " score cp " << newscore;
@@ -871,12 +870,12 @@ auto iteratively_deepen(Position &pos,
                 print_pv(pos, stack[0].move, hash_history);
             }
             cout << "\n";
+        }
 
-            // OpenBench compliance
-            if (bench_depth > 0 && i >= bench_depth) {
-                total_nodes += nodes;
-                break;
-            }
+        // OpenBench compliance
+        if (i >= bench_depth) {
+            total_nodes += nodes;
+            break;
         }
         // minify disable filter delete
 
@@ -983,13 +982,6 @@ void set_fen(Position &pos, const string &fen) {
 }
 // minify disable filter delete
 
-// minify enable filter delete
-[[nodiscard]] struct BenchEntry {
-    string fen;
-    int depth;
-};
-// minify disable filter delete
-
 int main(
     // minify enable filter delete
     const int argc,
@@ -1013,7 +1005,7 @@ int main(
         // Initialise the TT
         transposition_table.resize(num_tt_entries);
 
-        const BenchEntry entries[] = {
+        const pair<string, int> entries[] = {
             {"rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq", 14},         // Phase 24, startpos
             {"r1n2rk1/1pq2pp1/4bn1p/N1bpp3/4P3/3QBP2/PPP1B1PP/2KR3R w -", 13},  // Phase 23
             {"r1bq1rk1/pp2p1bp/2p3p1/1P3p2/2QPn3/6P1/PB1NPPBP/R4RK1 b -", 14},  // Phase 22
@@ -1042,10 +1034,10 @@ int main(
         };
 
         const auto start_time = now();
-        for (auto &entry : entries) {
+        for (const auto &[fen, depth] : entries) {
             int stop = false;
-            set_fen(pos, entry.fen);
-            iteratively_deepen(pos, hash_history, 0, entry.depth, total_nodes, now(), 1 << 30, stop);
+            set_fen(pos, fen);
+            iteratively_deepen(pos, hash_history, 0, depth, total_nodes, now(), 1 << 30, stop);
         }
         const auto elapsed = now() - start_time;
 
