@@ -1000,12 +1000,11 @@ int main(
 
     // minify enable filter delete
     // OpenBench compliance
-    u64 total_nodes = 0;
     if (argc > 1 && argv[1] == string("bench")) {
         // Initialise the TT
         transposition_table.resize(num_tt_entries);
 
-        const pair<string, int> entries[] = {
+        const pair<string, int> bench_positions[] = {
             {"rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", 14},         // Phase 24
             {"r1n2rk1/1pq2pp1/4bn1p/N1bpp3/4P3/3QBP2/PPP1B1PP/2KR3R w - - 0 1", 13},  // Phase 23
             {"r1bq1rk1/pp2p1bp/2p3p1/1P3p2/2QPn3/6P1/PB1NPPBP/R4RK1 b - - 0 1", 14},  // Phase 22
@@ -1033,8 +1032,9 @@ int main(
             {"8/8/p1Pk2pp/3p1p2/p4P2/6P1/5K1P/8 w - - 0 1", 16}                       // Phase 0
         };
 
+        u64 total_nodes = 0;
         const auto start_time = now();
-        for (const auto &[fen, depth] : entries) {
+        for (const auto &[fen, depth] : bench_positions) {
             int stop = false;
             set_fen(pos, fen);
             iteratively_deepen(pos, hash_history, 0, depth, total_nodes, now(), 1 << 30, stop);
