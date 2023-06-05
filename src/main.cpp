@@ -873,7 +873,7 @@ auto iteratively_deepen(Position &pos,
         }
 
         // OpenBench compliance
-        if (i >= bench_depth) {
+        if (bench_depth > 0 && i >= bench_depth) {
             total_nodes += nodes;
             break;
         }
