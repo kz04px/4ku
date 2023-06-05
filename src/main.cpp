@@ -849,7 +849,10 @@ auto iteratively_deepen(Position &pos,
             break;
 
         // minify enable filter delete
-        if (thread_id == 0 && (bench_depth == 0 || i == bench_depth && newscore < score + window && newscore > score - window)) {
+        // The main search thread prints with every iteration normally, or when the target depth has finished when
+        // benchmarking
+        if (thread_id == 0 &&
+            (bench_depth == 0 || i == bench_depth && newscore < score + window && newscore > score - window)) {
             const auto elapsed = now() - start_time;
             cout << "info";
             cout << " depth " << i;
