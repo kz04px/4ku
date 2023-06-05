@@ -50,7 +50,7 @@ enum
     None
 };
 
-[[nodiscard]] int64_t now() {
+[[nodiscard]] u64 now() {
     timespec t;
     clock_gettime(CLOCK_MONOTONIC, &t);
     return t.tv_sec * 1000 + t.tv_nsec / 1000000;
@@ -800,7 +800,7 @@ void print_pv(const Position &pos, const Move move, vector<u64> &hash_history) {
         return;
 
     // Avoid infinite recursion on a repetition
-    for (const auto old_hash : hash_history)
+    for (const u64 old_hash : hash_history)
         if (old_hash == tt_key)
             return;
 
@@ -817,7 +817,7 @@ Move iteratively_deepen(Position &pos,
                         const i32 bench_depth,
                         u64 &total_nodes,
                         // minify disable filter delete
-                        const int64_t start_time,
+                        const u64 start_time,
                         const i32 allocated_time,
                         i32 &stop) {
     Stack stack[128] = {};
@@ -854,7 +854,7 @@ Move iteratively_deepen(Position &pos,
         // benchmarking
         if (thread_id == 0 &&
             (bench_depth == 0 || i == bench_depth && newscore < score + window && newscore > score - window)) {
-            const auto elapsed = now() - start_time;
+            const u64 elapsed = now() - start_time;
             cout << "info";
             cout << " depth " << i;
             cout << " score cp " << newscore;
@@ -962,7 +962,7 @@ void set_fen(Position &pos, const string &fen) {
 // minify disable filter delete
 
 // minify enable filter delete
-[[nodiscard]] auto perft(const Position &pos, const i32 depth) -> u64 {
+[[nodiscard]] u64 perft(const Position &pos, const i32 depth) {
     if (depth == 0) {
         return 1;
     }
@@ -1037,18 +1037,18 @@ i32 main(
             {"8/8/p1Pk2pp/3p1p2/p4P2/6P1/5K1P/8 w - - 0 1", 16}                       // Phase 0
         };
 
-        const auto start_time = now();
+        const u64 start_time = now();
         for (const auto &[fen, depth] : bench_positions) {
             i32 stop = false;
             set_fen(pos, fen);
             iteratively_deepen(pos, hash_history, 0, depth, total_nodes, now(), 1 << 30, stop);
         }
-        const auto elapsed = now() - start_time;
+        const u64 elapsed = now() - start_time;
 
         cout << "Bench: ";
         cout << elapsed << " ms ";
         cout << total_nodes << " nodes ";
-        cout << total_nodes * 1000 / max(elapsed, static_cast<int64_t>(1)) << " nps\n";
+        cout << total_nodes * 1000 / max(elapsed, static_cast<u64>(1)) << " nps\n";
 
         return 0;
     }
@@ -1126,8 +1126,8 @@ i32 main(
         search_start:
             // minify disable filter delete
 
-            const auto start = now();
-            const auto allocated_time = (pos.flipped ? btime : wtime) / 3;
+            const u64 start = now();
+            const u64 allocated_time = (pos.flipped ? btime : wtime) / 3;
 
             // Lazy SMP
             vector<thread> threads;
@@ -1145,7 +1145,7 @@ i32 main(
                                        1 << 30,
                                        stop);
                 });
-            const auto best_move = iteratively_deepen(pos,
+            const Move best_move = iteratively_deepen(pos,
                                                       hash_history,
                                                       // minify enable filter delete
                                                       0,
