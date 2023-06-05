@@ -319,7 +319,7 @@ void generate_piece_moves(Move *const movelist,
     }
 }
 
-[[nodiscard]] auto movegen(const Position &pos, Move *const movelist, const bool only_captures) {
+[[nodiscard]] auto movegen(const Position &pos, Move *const movelist, const i32 only_captures) {
     i32 num_moves = 0;
     const u64 all = pos.colour[0] | pos.colour[1];
     const u64 to_mask = only_captures ? pos.colour[1] : ~pos.colour[0];
@@ -767,7 +767,7 @@ i32 alphabeta(Position &pos,
 }
 
 // minify enable filter delete
-[[nodiscard]] bool is_pseudolegal_move(const Position &pos, const Move &move) {
+[[nodiscard]] i32 is_pseudolegal_move(const Position &pos, const Move &move) {
     Move moves[256];
     const i32 num_moves = movegen(pos, moves, false);
     for (i32 i = 0; i < num_moves; ++i)
@@ -936,7 +936,7 @@ void set_fen(Position &pos, const string &fen) {
 
     // Side to move
     ss >> word;
-    const bool black_move = word == "b";
+    const i32 black_move = word == "b";
 
     // Castling permissions
     ss >> word;
