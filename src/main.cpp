@@ -972,7 +972,7 @@ void set_fen(Position &pos, const string &fen) {
     const i32 num_moves = movegen(pos, moves, false);
 
     for (i32 i = 0; i < num_moves; ++i) {
-        auto npos = pos;
+        Position npos = pos;
 
         // Check move legality
         if (!makemove(npos, moves[i])) {
@@ -996,7 +996,7 @@ i32 main(
 
     mt19937_64 r;
     // pieces from 1-12 multiplied by the square + ep squares + castling rights
-    for (auto &k : keys)
+    for (u64 &k : keys)
         k = r();
 
     Position pos;
