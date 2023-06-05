@@ -814,7 +814,7 @@ auto iteratively_deepen(Position &pos,
                         // minify enable filter delete
                         int thread_id,
                         const int bench_depth,
-                        int &total_nodes,
+                        u64 &total_nodes,
                         // minify disable filter delete
                         const int64_t start_time,
                         const int allocated_time,
@@ -1000,7 +1000,7 @@ int main(
 
     // minify enable filter delete
     // OpenBench compliance
-    int total_nodes = 0;
+    u64 total_nodes = 0;
     if (argc > 1 && argv[1] == string("bench")) {
         // Initialise the TT
         transposition_table.resize(num_tt_entries);
