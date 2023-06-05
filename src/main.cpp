@@ -104,8 +104,8 @@ struct [[nodiscard]] TT_Entry {
 u64 keys[848];
 
 // Engine options
-auto num_tt_entries = 64ULL << 15;  // The first value is the size in megabytes
-auto thread_count = 1;
+u64 num_tt_entries = 64ULL << 15;  // The first value is the size in megabytes
+i32 thread_count = 1;
 
 vector<TT_Entry> transposition_table;
 
@@ -113,19 +113,19 @@ vector<TT_Entry> transposition_table;
     return __builtin_bswap64(bb);
 }
 
-[[nodiscard]] auto lsb(const u64 bb) {
+[[nodiscard]] i32 lsb(const u64 bb) {
     return __builtin_ctzll(bb);
 }
 
-[[nodiscard]] auto count(const u64 bb) {
+[[nodiscard]] i32 count(const u64 bb) {
     return __builtin_popcountll(bb);
 }
 
-[[nodiscard]] auto east(const u64 bb) {
+[[nodiscard]] u64 east(const u64 bb) {
     return bb << 1 & ~0x0101010101010101ULL;
 }
 
-[[nodiscard]] auto west(const u64 bb) {
+[[nodiscard]] u64 west(const u64 bb) {
     return bb >> 1 & ~0x8080808080808080ULL;
 }
 
