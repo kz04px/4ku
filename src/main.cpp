@@ -153,7 +153,7 @@ vector<TT_Entry> transposition_table;
     return south(east(bb));
 }
 
-[[nodiscard]] auto operator==(const Move &lhs, const Move &rhs) {
+[[nodiscard]] i32 operator==(const Move &lhs, const Move &rhs) {
     return !memcmp(&rhs, &lhs, sizeof(Move));
 }
 
@@ -190,7 +190,7 @@ void flip(Position &pos) {
 }
 
 template <typename F>
-[[nodiscard]] auto ray(const i32 sq, const u64 blockers, F f) {
+[[nodiscard]] u64 ray(const i32 sq, const u64 blockers, F f) {
     u64 mask = f(1ULL << sq);
     mask |= f(mask & ~blockers);
     mask |= f(mask & ~blockers);
@@ -207,11 +207,11 @@ template <typename F>
            (bb << 10 | bb >> 6) & 0xFCFCFCFCFCFCFCFCULL | (bb << 6 | bb >> 10) & 0x3F3F3F3F3F3F3F3FULL;
 }
 
-[[nodiscard]] auto bishop(const i32 sq, const u64 blockers) {
+[[nodiscard]] u64 bishop(const i32 sq, const u64 blockers) {
     return ray(sq, blockers, nw) | ray(sq, blockers, ne) | ray(sq, blockers, sw) | ray(sq, blockers, se);
 }
 
-[[nodiscard]] auto rook(const i32 sq, const u64 blockers) {
+[[nodiscard]] u64 rook(const i32 sq, const u64 blockers) {
     return ray(sq, blockers, north) | ray(sq, blockers, east) | ray(sq, blockers, south) | ray(sq, blockers, west);
 }
 
@@ -319,7 +319,7 @@ void generate_piece_moves(Move *const movelist,
     }
 }
 
-[[nodiscard]] auto movegen(const Position &pos, Move *const movelist, const i32 only_captures) {
+[[nodiscard]] i32 movegen(const Position &pos, Move *const movelist, const i32 only_captures) {
     i32 num_moves = 0;
     const u64 all = pos.colour[0] | pos.colour[1];
     const u64 to_mask = only_captures ? pos.colour[1] : ~pos.colour[0];
@@ -404,7 +404,7 @@ const i32 pawn_attacked[] = {S(-64, -14), S(-155, -142)};
 
         // For each piece type
         for (i32 p = 0; p < 6; ++p) {
-            auto copy = pos.colour[0] & pos.pieces[p];
+            u64 copy = pos.colour[0] & pos.pieces[p];
             while (copy) {
                 const i32 sq = lsb(copy);
                 copy &= copy - 1;
@@ -479,7 +479,7 @@ const i32 pawn_attacked[] = {S(-64, -14), S(-155, -142)};
            24;
 }
 
-[[nodiscard]] auto get_hash(const Position &pos) {
+[[nodiscard]] u64 get_hash(const Position &pos) {
     u64 hash = pos.flipped;
 
     // Pieces
@@ -527,7 +527,7 @@ i32 alphabeta(Position &pos,
         return eval(pos);
 
     // Check extensions
-    const auto in_check = is_attacked(pos, lsb(pos.colour[0] & pos.pieces[King]));
+    const i32 in_check = is_attacked(pos, lsb(pos.colour[0] & pos.pieces[King]));
     depth += in_check;
 
     const i32 in_qsearch = depth <= 0;
@@ -558,7 +558,7 @@ i32 alphabeta(Position &pos,
 
     const i32 static_eval = eval(pos);
     stack[ply].score = static_eval;
-    const auto improving = ply > 1 && static_eval > stack[ply - 2].score;
+    const i32 improving = ply > 1 && static_eval > stack[ply - 2].score;
 
     if (in_qsearch && static_eval > alpha) {
         if (static_eval >= beta)
@@ -577,7 +577,7 @@ i32 alphabeta(Position &pos,
 
             // Null move pruning
             if (depth > 2 && static_eval >= beta && do_null && pos.colour[0] & ~(pos.pieces[Pawn] | pos.pieces[King])) {
-                auto npos = pos;
+                Position npos = pos;
                 flip(npos);
                 npos.ep = 0;
                 if (-alphabeta(npos,
@@ -616,7 +616,7 @@ i32 alphabeta(Position &pos,
         // then we'll use that first and delay sorting one iteration.
         if (i == !(no_move == tt_move)) {
             for (i32 j = 0; j < num_moves; ++j) {
-                const auto gain = max_material[moves[j].promo] + max_material[piece_on(pos, moves[j].to)];
+                const i32 gain = max_material[moves[j].promo] + max_material[piece_on(pos, moves[j].to)];
                 if (gain)
                     move_scores[j] = gain + (1LL << 54);
                 else if (moves[j] == stack[ply].killer)
@@ -640,12 +640,12 @@ i32 alphabeta(Position &pos,
                 if (move_scores[j] > move_scores[best_move_index])
                     best_move_index = j;
 
-        const auto move = moves[best_move_index];
+        const Move move = moves[best_move_index];
         moves[best_move_index] = moves[i];
         move_scores[best_move_index] = move_scores[i];
 
         // Material gain
-        const auto gain = max_material[move.promo] + max_material[piece_on(pos, move.to)];
+        const i32 gain = max_material[move.promo] + max_material[piece_on(pos, move.to)];
 
         // Delta pruning
         if (in_qsearch && !in_check && static_eval + 50 + gain < alpha) {
@@ -659,7 +659,7 @@ i32 alphabeta(Position &pos,
             break;
         }
 
-        auto npos = pos;
+        Position npos = pos;
         if (!makemove(npos, move))
             continue;
 
@@ -784,7 +784,7 @@ void print_pv(const Position &pos, const Move move, vector<u64> &hash_history) {
         return;
 
     // Check move legality
-    auto npos = pos;
+    Position npos = pos;
     if (!makemove(npos, move))
         return;
 
