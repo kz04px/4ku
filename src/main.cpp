@@ -50,7 +50,7 @@ enum
     None
 };
 
-[[nodiscard]] int64_t now() {
+[[nodiscard]] u64 now() {
     timespec t;
     clock_gettime(CLOCK_MONOTONIC, &t);
     return t.tv_sec * 1000 + t.tv_nsec / 1000000;
@@ -104,8 +104,8 @@ struct [[nodiscard]] TT_Entry {
 u64 keys[848];
 
 // Engine options
-auto num_tt_entries = 64ULL << 15;  // The first value is the size in megabytes
-auto thread_count = 1;
+u64 num_tt_entries = 64ULL << 15;  // The first value is the size in megabytes
+i32 thread_count = 1;
 
 vector<TT_Entry> transposition_table;
 
@@ -113,19 +113,19 @@ vector<TT_Entry> transposition_table;
     return __builtin_bswap64(bb);
 }
 
-[[nodiscard]] auto lsb(const u64 bb) {
+[[nodiscard]] i32 lsb(const u64 bb) {
     return __builtin_ctzll(bb);
 }
 
-[[nodiscard]] auto count(const u64 bb) {
+[[nodiscard]] i32 count(const u64 bb) {
     return __builtin_popcountll(bb);
 }
 
-[[nodiscard]] auto east(const u64 bb) {
+[[nodiscard]] u64 east(const u64 bb) {
     return bb << 1 & ~0x0101010101010101ULL;
 }
 
-[[nodiscard]] auto west(const u64 bb) {
+[[nodiscard]] u64 west(const u64 bb) {
     return bb >> 1 & ~0x8080808080808080ULL;
 }
 
@@ -153,7 +153,7 @@ vector<TT_Entry> transposition_table;
     return south(east(bb));
 }
 
-[[nodiscard]] auto operator==(const Move &lhs, const Move &rhs) {
+[[nodiscard]] i32 operator==(const Move &lhs, const Move &rhs) {
     return !memcmp(&rhs, &lhs, sizeof(Move));
 }
 
@@ -190,7 +190,7 @@ void flip(Position &pos) {
 }
 
 template <typename F>
-[[nodiscard]] auto ray(const i32 sq, const u64 blockers, F f) {
+[[nodiscard]] u64 ray(const i32 sq, const u64 blockers, F f) {
     u64 mask = f(1ULL << sq);
     mask |= f(mask & ~blockers);
     mask |= f(mask & ~blockers);
@@ -207,11 +207,11 @@ template <typename F>
            (bb << 10 | bb >> 6) & 0xFCFCFCFCFCFCFCFCULL | (bb << 6 | bb >> 10) & 0x3F3F3F3F3F3F3F3FULL;
 }
 
-[[nodiscard]] auto bishop(const i32 sq, const u64 blockers) {
+[[nodiscard]] u64 bishop(const i32 sq, const u64 blockers) {
     return ray(sq, blockers, nw) | ray(sq, blockers, ne) | ray(sq, blockers, sw) | ray(sq, blockers, se);
 }
 
-[[nodiscard]] auto rook(const i32 sq, const u64 blockers) {
+[[nodiscard]] u64 rook(const i32 sq, const u64 blockers) {
     return ray(sq, blockers, north) | ray(sq, blockers, east) | ray(sq, blockers, south) | ray(sq, blockers, west);
 }
 
@@ -318,7 +318,7 @@ void generate_piece_moves(Move *const movelist,
     }
 }
 
-[[nodiscard]] auto movegen(const Position &pos, Move *const movelist, const i32 only_captures) {
+[[nodiscard]] i32 movegen(const Position &pos, Move *const movelist, const i32 only_captures) {
     i32 num_moves = 0;
     const u64 all = pos.colour[0] | pos.colour[1];
     const u64 to_mask = only_captures ? pos.colour[1] : ~pos.colour[0];
@@ -403,7 +403,7 @@ const i32 pawn_attacked[] = {S(-64, -14), S(-155, -142)};
 
         // For each piece type
         for (i32 p = 0; p < 6; ++p) {
-            auto copy = pos.colour[0] & pos.pieces[p];
+            u64 copy = pos.colour[0] & pos.pieces[p];
             while (copy) {
                 const i32 sq = lsb(copy);
                 copy &= copy - 1;
@@ -478,7 +478,7 @@ const i32 pawn_attacked[] = {S(-64, -14), S(-155, -142)};
            24;
 }
 
-[[nodiscard]] auto get_hash(const Position &pos) {
+[[nodiscard]] u64 get_hash(const Position &pos) {
     u64 hash = pos.flipped;
 
     // Pieces
@@ -526,7 +526,7 @@ i32 alphabeta(Position &pos,
         return eval(pos);
 
     // Check extensions
-    const auto in_check = is_attacked(pos, lsb(pos.colour[0] & pos.pieces[King]));
+    const i32 in_check = is_attacked(pos, lsb(pos.colour[0] & pos.pieces[King]));
     depth += in_check;
 
     const i32 in_qsearch = depth <= 0;
@@ -534,7 +534,7 @@ i32 alphabeta(Position &pos,
 
     if (ply > 0 && !in_qsearch) {
         // Repetition detection
-        for (const auto old_hash : hash_history)
+        for (const u64 old_hash : hash_history)
             if (old_hash == tt_key)
                 return 0;
     }
@@ -557,7 +557,7 @@ i32 alphabeta(Position &pos,
 
     const i32 static_eval = eval(pos);
     stack[ply].score = static_eval;
-    const auto improving = ply > 1 && static_eval > stack[ply - 2].score;
+    const i32 improving = ply > 1 && static_eval > stack[ply - 2].score;
 
     if (in_qsearch && static_eval > alpha) {
         if (static_eval >= beta)
@@ -576,7 +576,7 @@ i32 alphabeta(Position &pos,
 
             // Null move pruning
             if (depth > 2 && static_eval >= beta && do_null && pos.colour[0] & ~(pos.pieces[Pawn] | pos.pieces[King])) {
-                auto npos = pos;
+                Position npos = pos;
                 flip(npos);
                 npos.ep = 0;
                 if (-alphabeta(npos,
@@ -615,7 +615,7 @@ i32 alphabeta(Position &pos,
         // then we'll use that first and delay sorting one iteration.
         if (i == !(no_move == tt_move)) {
             for (i32 j = 0; j < num_moves; ++j) {
-                const auto gain = max_material[moves[j].promo] + max_material[piece_on(pos, moves[j].to)];
+                const i32 gain = max_material[moves[j].promo] + max_material[piece_on(pos, moves[j].to)];
                 if (gain)
                     move_scores[j] = gain + (1LL << 54);
                 else if (moves[j] == stack[ply].killer)
@@ -639,12 +639,12 @@ i32 alphabeta(Position &pos,
                 if (move_scores[j] > move_scores[best_move_index])
                     best_move_index = j;
 
-        const auto move = moves[best_move_index];
+        const Move move = moves[best_move_index];
         moves[best_move_index] = moves[i];
         move_scores[best_move_index] = move_scores[i];
 
         // Material gain
-        const auto gain = max_material[move.promo] + max_material[piece_on(pos, move.to)];
+        const i32 gain = max_material[move.promo] + max_material[piece_on(pos, move.to)];
 
         // Delta pruning
         if (in_qsearch && !in_check && static_eval + 50 + gain < alpha) {
@@ -658,7 +658,7 @@ i32 alphabeta(Position &pos,
             break;
         }
 
-        auto npos = pos;
+        Position npos = pos;
         if (!makemove(npos, move))
             continue;
 
@@ -783,7 +783,7 @@ void print_pv(const Position &pos, const Move move, vector<u64> &hash_history) {
         return;
 
     // Check move legality
-    auto npos = pos;
+    Position npos = pos;
     if (!makemove(npos, move))
         return;
 
@@ -799,7 +799,7 @@ void print_pv(const Position &pos, const Move move, vector<u64> &hash_history) {
         return;
 
     // Avoid infinite recursion on a repetition
-    for (const auto old_hash : hash_history)
+    for (const u64 old_hash : hash_history)
         if (old_hash == tt_key)
             return;
 
@@ -809,14 +809,14 @@ void print_pv(const Position &pos, const Move move, vector<u64> &hash_history) {
 }
 // minify disable filter delete
 
-auto iteratively_deepen(Position &pos,
+Move iteratively_deepen(Position &pos,
                         vector<u64> &hash_history,
                         // minify enable filter delete
                         i32 thread_id,
                         const i32 bench_depth,
                         u64 &total_nodes,
                         // minify disable filter delete
-                        const int64_t start_time,
+                        const u64 start_time,
                         const i32 allocated_time,
                         i32 &stop) {
     Stack stack[128] = {};
@@ -828,21 +828,21 @@ auto iteratively_deepen(Position &pos,
     i32 score = 0;
     for (i32 i = 1; i < 128; ++i) {
         i32 window = 32 + score * score / 16384;
-        auto research = 0;
+        i32 research = 0;
     research:
-        const auto newscore = alphabeta(pos,
-                                        score - window,
-                                        score + window,
-                                        i,
-                                        0,
-                                        // minify enable filter delete
-                                        nodes,
-                                        // minify disable filter delete
-                                        start_time + allocated_time,
-                                        stop,
-                                        stack,
-                                        hh_table,
-                                        hash_history);
+        const i32 newscore = alphabeta(pos,
+                                       score - window,
+                                       score + window,
+                                       i,
+                                       0,
+                                       // minify enable filter delete
+                                       nodes,
+                                       // minify disable filter delete
+                                       start_time + allocated_time,
+                                       stop,
+                                       stack,
+                                       hh_table,
+                                       hash_history);
 
         // Hard time limit exceeded
         if (now() >= start_time + allocated_time || stop)
@@ -853,7 +853,7 @@ auto iteratively_deepen(Position &pos,
         // benchmarking
         if (thread_id == 0 &&
             (bench_depth == 0 || i == bench_depth && newscore < score + window && newscore > score - window)) {
-            const auto elapsed = now() - start_time;
+            const u64 elapsed = now() - start_time;
             cout << "info";
             cout << " depth " << i;
             cout << " score cp " << newscore;
@@ -961,7 +961,7 @@ void set_fen(Position &pos, const string &fen) {
 // minify disable filter delete
 
 // minify enable filter delete
-[[nodiscard]] auto perft(const Position &pos, const i32 depth) -> u64 {
+[[nodiscard]] u64 perft(const Position &pos, const i32 depth) {
     if (depth == 0) {
         return 1;
     }
@@ -971,7 +971,7 @@ void set_fen(Position &pos, const string &fen) {
     const i32 num_moves = movegen(pos, moves, false);
 
     for (i32 i = 0; i < num_moves; ++i) {
-        auto npos = pos;
+        Position npos = pos;
 
         // Check move legality
         if (!makemove(npos, moves[i])) {
@@ -995,7 +995,7 @@ i32 main(
 
     mt19937_64 r;
     // pieces from 1-12 multiplied by the square + ep squares + castling rights
-    for (auto &k : keys)
+    for (u64 &k : keys)
         k = r();
 
     Position pos;
@@ -1036,18 +1036,18 @@ i32 main(
             {"8/8/p1Pk2pp/3p1p2/p4P2/6P1/5K1P/8 w - - 0 1", 16}                       // Phase 0
         };
 
-        const auto start_time = now();
+        const u64 start_time = now();
         for (const auto &[fen, depth] : bench_positions) {
             i32 stop = false;
             set_fen(pos, fen);
             iteratively_deepen(pos, hash_history, 0, depth, total_nodes, now(), 1 << 30, stop);
         }
-        const auto elapsed = now() - start_time;
+        const u64 elapsed = now() - start_time;
 
         cout << "Bench: ";
         cout << elapsed << " ms ";
         cout << total_nodes << " nodes ";
-        cout << total_nodes * 1000 / max(elapsed, static_cast<int64_t>(1)) << " nps\n";
+        cout << total_nodes * 1000 / max(elapsed, static_cast<u64>(1)) << " nps\n";
 
         return 0;
     }
@@ -1125,8 +1125,8 @@ i32 main(
         search_start:
             // minify disable filter delete
 
-            const auto start = now();
-            const auto allocated_time = (pos.flipped ? btime : wtime) / 3;
+            const u64 start = now();
+            const u64 allocated_time = (pos.flipped ? btime : wtime) / 3;
 
             // Lazy SMP
             vector<thread> threads;
@@ -1144,7 +1144,7 @@ i32 main(
                                        1 << 30,
                                        stop);
                 });
-            const auto best_move = iteratively_deepen(pos,
+            const Move best_move = iteratively_deepen(pos,
                                                       hash_history,
                                                       // minify enable filter delete
                                                       0,
