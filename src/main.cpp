@@ -1092,7 +1092,7 @@ i32 main(
             } else if (word == "Hash") {
                 cin >> word;
                 cin >> num_tt_entries;
-                num_tt_entries = min(max(num_tt_entries, 1ULL), 65536ULL) * 1048576 / sizeof(TT_Entry);
+                num_tt_entries = min(max(num_tt_entries, 1ULL), 65536ULL) * 1024 * 1024 / sizeof(TT_Entry);
                 transposition_table.clear();
                 transposition_table.resize(num_tt_entries);
             }
