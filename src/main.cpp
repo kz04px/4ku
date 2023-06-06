@@ -494,6 +494,7 @@ const i32 pawn_attacked[] = {S(-64, -14), S(-155, -142)};
             const i32 sq = lsb(copy);
             copy &= copy - 1;
             hash ^= keys[(p + 6) * 64 + sq];
+        }
     }
 
     // En passant square
