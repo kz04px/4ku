@@ -57,7 +57,7 @@ enum
 }
 
 struct [[nodiscard]] Position {
-    array<int, 4> castling = {true, true, true, true};
+    array<i32, 4> castling = {true, true, true, true};
     array<u64, 2> colour = {0xFFFFULL, 0xFFFF000000000000ULL};
     array<u64, 6> pieces = {0xFF00000000FF00ULL,
                             0x4200000000000042ULL,
@@ -293,9 +293,8 @@ void generate_pawn_moves(Move *const movelist, i32 &num_moves, u64 to_mask, cons
             movelist[num_moves++] = Move{to + offset, to, Rook};
             movelist[num_moves++] = Move{to + offset, to, Bishop};
             movelist[num_moves++] = Move{to + offset, to, Knight};
-        } else {
+        } else
             movelist[num_moves++] = Move{to + offset, to, None};
-        }
     }
 }
 
@@ -484,17 +483,13 @@ const i32 pawn_attacked[] = {S(-64, -14), S(-155, -142)};
 
     // Pieces
     for (i32 p = Pawn; p < None; p++) {
-        u64 copy = pos.pieces[p] & pos.colour[0];
-        while (copy) {
-            const i32 sq = lsb(copy);
-            copy &= copy - 1;
-            hash ^= keys[p * 64 + sq];
-        }
-        copy = pos.pieces[p] & pos.colour[1];
-        while (copy) {
-            const i32 sq = lsb(copy);
-            copy &= copy - 1;
-            hash ^= keys[(p + 6) * 64 + sq];
+        for (i32 i = 0; i < 2; ++i) {
+            u64 copy = pos.pieces[p] & pos.colour[i];
+            while (copy) {
+                const i32 sq = lsb(copy);
+                copy &= copy - 1;
+                hash ^= keys[(p + 6 * i) * 64 + sq];
+            }
         }
     }
 
@@ -916,11 +911,11 @@ void set_fen(Position &pos, const string &fen) {
     ss >> word;
     i32 i = 56;
     for (const auto c : word) {
-        if (c >= '1' && c <= '8') {
+        if (c >= '1' && c <= '8')
             i += c - '1' + 1;
-        } else if (c == '/') {
+        else if (c == '/')
             i -= 16;
-        } else {
+        else {
             const i32 side = c == 'p' || c == 'n' || c == 'b' || c == 'r' || c == 'q' || c == 'k';
             const i32 piece = c == 'p' || c == 'P'   ? Pawn
                               : c == 'n' || c == 'N' ? Knight
@@ -1094,7 +1089,7 @@ i32 main(
             } else if (word == "Hash") {
                 cin >> word;
                 cin >> num_tt_entries;
-                num_tt_entries = min(max(num_tt_entries, 1ULL), 65536ULL) * 1024 * 1024 / sizeof(TT_Entry);
+                num_tt_entries = min(max(num_tt_entries, 1ULL), 65536ULL) * 1048576 / sizeof(TT_Entry);
                 transposition_table.clear();
                 transposition_table.resize(num_tt_entries);
             }
