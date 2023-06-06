@@ -750,7 +750,7 @@ i32 alphabeta(Position &pos,
         }
 
         // Late move pruning based on quiet move count
-        if (!in_check && alpha == beta - 1 && num_quiets_evaluated > (3 + depth * depth) >> !improving)
+        if (!in_check && alpha == beta - 1 && num_quiets_evaluated > 3 + depth * depth >> !improving)
             break;
     }
     hash_history.pop_back();
