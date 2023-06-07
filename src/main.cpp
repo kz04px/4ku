@@ -1091,9 +1091,10 @@ i32 main(
                 cin >> thread_count;
                 thread_count = max(1, min(256, thread_count));
             } else if (word == "Hash") {
+                i32 megabytes = 1;
                 cin >> word;
-                cin >> num_tt_entries;
-                num_tt_entries = min(max(num_tt_entries, 1ULL), 65536ULL) * 1024 * 1024 / sizeof(TT_Entry);
+                cin >> megabytes;
+                num_tt_entries = static_cast<u64>(min(max(megabytes, 1), 65536)) * 1024 * 1024 / sizeof(TT_Entry);
                 transposition_table.clear();
                 transposition_table.resize(num_tt_entries);
             }
