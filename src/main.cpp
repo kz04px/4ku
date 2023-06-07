@@ -733,9 +733,8 @@ i32 alphabeta(Position &pos,
                 tt_flag = Exact;
                 alpha = score;
                 stack[ply].move = move;
-                if (score < beta) {
-                    if (depth > 1 && beta < 16384 && score > -16384)
-                        depth -= 1;
+                if (depth > 1 && score < beta && beta < 16384 && score > -16384) {
+                    depth -= 1;
                     alpha = score;
                 }
             }
