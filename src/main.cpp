@@ -729,12 +729,10 @@ i32 alphabeta(Position &pos,
         if (score > best_score) {
             best_score = score;
             if (score > alpha) {
-                best_move = move;
+                best_move = stack[ply].move = move;
                 tt_flag = Exact;
                 alpha = score;
-                stack[ply].move = move;
-                if (score < beta && depth > 1 && beta < 16384 && score > -16384)
-                    depth -= 1;
+                depth -= (score < beta && depth > 1 && beta < 16384 && score > -16384);
             }
         }
 
@@ -742,10 +740,9 @@ i32 alphabeta(Position &pos,
             tt_flag = Lower;
             if (!gain) {
                 hh_table[pos.flipped][move.from][move.to] += depth * depth;
-                for (i32 j = 0; j < num_quiets_evaluated - 1; ++j) {
+                for (i32 j = 0; j < num_quiets_evaluated - 1; ++j)
                     hh_table[pos.flipped][stack[ply].quiets_evaluated[j].from][stack[ply].quiets_evaluated[j].to] -=
                         depth * depth;
-                }
                 stack[ply].killer = move;
             }
             break;
