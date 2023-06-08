@@ -784,7 +784,7 @@ void print_pv(const Position &pos, const Move move, vector<u64> &hash_history) {
     if (!makemove(npos, move))
         return;
 
-    // Pri32 current move
+    // Print current move
     cout << " " << move_str(move, pos.flipped);
 
     // Probe the TT in the resulting position
