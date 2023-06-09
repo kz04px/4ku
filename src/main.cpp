@@ -889,7 +889,7 @@ Move iteratively_deepen(Position &pos,
                 break;
             }
 
-            window <<= 1;
+            window *= 2;
             score = newscore;
         }
     }
