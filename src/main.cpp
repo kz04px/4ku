@@ -881,15 +881,17 @@ Move iteratively_deepen(Position &pos,
             }
             // minify disable filter delete
 
-            if (score - window < newscore && newscore < score + window)
+            if (score - window < newscore && newscore < score + window) {
+                // Early exit after completed ply
+                if (window == 32 + score * score / 16384 && now() >= start_time + allocated_time / 10)
+                    return stack[0].move;
+                score = newscore;
                 break;
+            }
+
             window *= 2;
             score = newscore;
         }
-        // Early exit after completed ply
-        if (window == 32 + score * score / 16384 && now() >= start_time + allocated_time / 10)
-            break;
-        score = newscore;
     }
     return stack[0].move;
 }
