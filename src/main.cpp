@@ -725,11 +725,13 @@ i32 alphabeta(Position &pos,
 
         if (score > best_score) {
             best_score = score;
-            best_move = move;
             if (score > alpha) {
+                best_move = move;
                 tt_flag = Exact;
                 alpha = score;
                 stack[ply].move = move;
+                if (score < beta && depth > 1 && beta < 16384 && score > -16384)
+                    depth--;
             }
         }
 
