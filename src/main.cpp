@@ -201,18 +201,25 @@ template <typename F>
     return mask;
 }
 
-[[nodiscard]] u64 knight(const i32 sq, const u64) {
+u64 diag_mask[64];
+
+[[nodiscard]] u64 xattack(const int sq, const u64 blockers, const u64 dir_mask) {
+    return dir_mask & ((blockers & dir_mask) - (1ULL << sq) ^ flip(flip(blockers & dir_mask) - flip(1ULL << sq)));
+}
+
+[[nodiscard]] u64 bishop(const int sq, const u64 blockers) {
+    return xattack(sq, blockers, diag_mask[sq]) | xattack(sq, blockers, flip(diag_mask[sq ^ 56]));
+}
+
+[[nodiscard]] u64 rook(const int sq, const u64 blockers) {
+    return xattack(sq, blockers, (1ULL << sq) ^ (0x101010101010101ULL << (sq % 8))) | ray(sq, blockers, east) |
+           ray(sq, blockers, west);
+}
+
+[[nodiscard]] u64 knight(const int sq, const u64) {
     const u64 bb = 1ULL << sq;
     return (bb << 15 | bb >> 17) & 0x7F7F7F7F7F7F7F7FULL | (bb << 17 | bb >> 15) & 0xFEFEFEFEFEFEFEFEULL |
            (bb << 10 | bb >> 6) & 0xFCFCFCFCFCFCFCFCULL | (bb << 6 | bb >> 10) & 0x3F3F3F3F3F3F3F3FULL;
-}
-
-[[nodiscard]] u64 bishop(const i32 sq, const u64 blockers) {
-    return ray(sq, blockers, nw) | ray(sq, blockers, ne) | ray(sq, blockers, sw) | ray(sq, blockers, se);
-}
-
-[[nodiscard]] u64 rook(const i32 sq, const u64 blockers) {
-    return ray(sq, blockers, north) | ray(sq, blockers, east) | ray(sq, blockers, south) | ray(sq, blockers, west);
 }
 
 [[nodiscard]] u64 king(const i32 sq, const u64) {
@@ -346,37 +353,39 @@ void generate_piece_moves(Move *const movelist,
 }
 
 const i32 phases[] = {0, 1, 1, 2, 4, 0};
-const i32 max_material[] = {121, 395, 422, 737, 1455, 0, 0};
-const i32 material[] = {S(121, 116), S(389, 395), S(406, 422), S(512, 737), S(925, 1455), 0};
+const i32 max_material[] = {126, 393, 382, 723, 1439, 0, 0};
+const i32 material[] = {S(126, 117), S(391, 393), S(374, 382), S(495, 723), S(892, 1439), 0};
 const i32 pst_rank[][8] = {
-    {0, S(-4, 0), S(-4, 0), S(-1, -1), S(2, 0), S(7, 1), 0, 0},
-    {S(-7, -5), S(-4, -1), S(-1, 0), S(2, 3), S(6, 3), S(12, 1), S(6, -1), S(-13, 0)},
-    {S(-5, -3), S(-1, -1), S(1, 0), S(2, 1), S(3, 2), S(8, 0), S(2, 0), S(-10, 1)},
-    {S(-3, -2), S(-4, -3), S(-5, -2), S(-5, 0), S(-1, 2), S(3, 2), S(5, 3), S(8, 1)},
-    {S(-3, -9), S(0, -9), S(0, -6), S(-2, 2), S(-1, 6), S(3, 4), S(-1, 7), S(4, 4)},
-    {S(1, -6), S(0, -2), S(-3, 0), S(-7, 3), S(-4, 4), S(2, 4), S(2, 3), S(2, -3)},
+    {0, S(-3, 0), S(-4, 0), S(-1, -1), S(2, 0), S(6, 1), 0, 0},
+    {S(-6, -5), S(-4, -2), S(-1, 0), S(2, 3), S(5, 4), S(11, 1), S(6, -1), S(-14, 0)},
+    {S(-2, -1), S(1, -1), S(1, -1), S(1, 0), S(2, 1), S(5, 0), S(1, 0), S(-10, 2)},
+    {S(0, -3), S(-2, -3), S(-3, -2), S(-4, 0), S(-1, 2), S(3, 2), S(3, 3), S(5, 1)},
+    {S(1, -9), S(2, -9), S(1, -6), S(-2, 2), S(-2, 6), S(1, 5), S(-2, 7), S(1, 4)},
+    {S(0, -5), S(1, -2), S(-2, 0), S(-6, 2), S(-3, 4), S(3, 4), S(3, 2), S(3, -3)},
 };
 const i32 pst_file[][8] = {
     {S(-2, 1), S(-1, 1), S(-1, 0), S(0, -1), S(1, 0), S(2, 0), S(3, 0), S(-2, 0)},
-    {S(-7, -3), S(-2, 0), S(1, 2), S(3, 3), S(3, 2), S(3, 1), S(1, -1), S(-2, -4)},
-    {S(-3, -1), S(-1, 0), S(1, 0), S(1, 1), S(1, 2), S(0, 1), S(3, -1), S(-1, -2)},
-    {S(-2, 0), S(-2, 1), S(-1, 1), 0, S(2, -1), S(2, 0), S(3, -1), S(-2, 0)},
-    {S(-4, -4), S(-2, -1), S(-1, 1), S(0, 2), S(0, 3), S(1, 3), S(3, 0), S(3, -2)},
-    {S(-1, -3), S(2, -1), S(-3, 1), S(-3, 2), S(-5, 2), S(-1, 1), S(2, 0), S(1, -3)},
+    {S(-7, -3), S(-2, 0), S(1, 1), S(3, 2), S(3, 2), S(3, 1), S(1, -1), S(-3, -3)},
+    {S(-3, 0), 0, S(1, 0), 0, S(1, 0), 0, S(2, 0), S(-1, -1)},
+    {S(-2, 1), S(-2, 1), S(-1, 1), S(1, 0), S(2, -1), S(2, 0), S(2, 0), S(-2, 0)},
+    {S(-3, -3), S(-2, -1), S(-1, 1), S(0, 1), S(0, 2), S(1, 2), S(3, 0), S(2, -2)},
+    {S(-2, -3), S(2, -1), S(-2, 1), S(-2, 1), S(-4, 2), S(0, 1), S(2, 0), S(0, -3)},
 };
 const i32 open_files[][3] = {
-    {S(30, 17), S(9, 14), S(-31, 10)},
-    {S(63, 8), S(-11, 42), S(-84, 1)},
+    {S(22, 14), S(8, 13), S(-30, 10)},
+    {S(50, 2), S(-15, 38), S(-81, 0)},
 };
-const i32 pawn_protection[] = {S(30, 13), S(6, 12), S(4, 6), S(11, 2), S(-9, 11), S(-31, 21)};
-const i32 passers[] = {S(4, 11), S(40, 38), S(80, 95), S(269, 162)};
-const i32 pawn_passed_protected = S(15, 19);
-const i32 pawn_doubled = S(-18, -30);
-const i32 pawn_phalanx = S(13, 12);
-const i32 pawn_passed_blocked[] = {S(-10, -18), S(7, -42), S(13, -75), S(-12, -85)};
-const i32 pawn_passed_king_distance[] = {S(0, -5), S(-4, 9)};
-const i32 bishop_pair = S(39, 61);
-const i32 king_shield[] = {S(49, -11), S(37, -10)};
+const i32 mobilities[] = {S(0, 1), S(6, 6), S(3, 2), S(3, 1), 0};
+const i32 king_zone_mobilities[] = {S(7, -5), S(18, -2), S(23, -7), S(19, 3), 0};
+const i32 pawn_protection[] = {S(29, 12), S(3, 10), S(5, 17), S(7, 3), S(-10, 14), S(-33, 21)};
+const i32 passers[] = {S(11, 10), S(51, 37), S(95, 95), S(284, 158)};
+const i32 pawn_passed_protected = S(13, 19);
+const i32 pawn_doubled = S(-20, -29);
+const i32 pawn_phalanx = S(15, 11);
+const i32 pawn_passed_blocked[] = {S(-15, -17), S(3, -41), S(10, -75), S(-18, -86)};
+const i32 pawn_passed_king_distance[] = {S(0, -5), S(-3, 9)};
+const i32 bishop_pair = S(39, 60);
+const i32 king_shield[] = {S(46, -11), S(35, -9)};
 const i32 pawn_attacked[] = {S(-64, -14), S(-155, -142)};
 
 [[nodiscard]] i32 eval(Position &pos) {
@@ -390,6 +399,7 @@ const i32 pawn_attacked[] = {S(-64, -14), S(-155, -142)};
         const u64 protected_by_pawns = nw(pawns[0]) | ne(pawns[0]);
         const u64 attacked_by_pawns = se(pawns[1]) | sw(pawns[1]);
         const i32 kings[] = {lsb(pos.colour[0] & pos.pieces[King]), lsb(pos.colour[1] & pos.pieces[King])};
+        const u64 all_pieces = pos.colour[0] | pos.colour[1];
 
         // Bishop pair
         if (count(pos.colour[0] & pos.pieces[Bishop]) == 2)
@@ -454,6 +464,20 @@ const i32 pawn_attacked[] = {S(-64, -14), S(-155, -142)};
                     const u64 file_bb = 0x101010101010101ULL << file;
                     if (p > Bishop && !(file_bb & pawns[0]))
                         score += open_files[!(file_bb & pawns[1])][p - 3];
+
+                    u64 mobility = 0;
+                    if (p == Knight) {
+                        mobility = knight(sq, all_pieces);
+                    } else if (p == Bishop) {
+                        mobility = bishop(sq, all_pieces);
+                    } else if (p == Rook) {
+                        mobility = rook(sq, all_pieces);
+                    } else if (p == Queen) {
+                        mobility = bishop(sq, all_pieces) | rook(sq, all_pieces);
+                    }
+                    mobility &= ~pos.colour[0];
+                    score += mobilities[p - 1] * count(mobility);
+                    score += king_zone_mobilities[p - 1] * count(mobility & king(kings[1], all_pieces));
 
                     if (p == King && piece_bb & 0xC3D7) {
                         // C3D7 = Reasonable king squares
@@ -990,6 +1014,10 @@ i32 main(
 ) {
     setbuf(stdout, 0);
 
+    // Generate used attack masks
+    for (int i = 0; i < 64; ++i) {
+        diag_mask[i] = ray(i, 0, ne) | ray(i, 0, sw);
+    }
     mt19937_64 r;
     // pieces from 1-12 multiplied by the square + ep squares + castling rights
     for (u64 &k : keys)
@@ -1056,7 +1084,7 @@ i32 main(
     cin >> word;
 
     // Send UCI info
-    cout << "id name 4ku\n";
+    cout << "id name 4ku 3.1\n";
     cout << "id author kz04px\n";
     // minify enable filter delete
     cout << "option name Threads type spin default " << thread_count << " min 1 max 256\n";
