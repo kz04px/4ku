@@ -737,10 +737,9 @@ i32 alphabeta(Position &pos,
             tt_flag = Lower;
             if (!gain) {
                 hh_table[pos.flipped][move.from][move.to] += depth * depth;
-                for (i32 j = 0; j < num_quiets_evaluated - 1; ++j) {
+                for (i32 j = 0; j < num_quiets_evaluated - 1; ++j)
                     hh_table[pos.flipped][stack[ply].quiets_evaluated[j].from][stack[ply].quiets_evaluated[j].to] -=
                         depth * depth;
-                }
                 stack[ply].killer = move;
             }
             break;
@@ -824,7 +823,7 @@ Move iteratively_deepen(Position &pos,
 
     i32 score = 0;
     for (i32 i = 1; i < 128; ++i) {
-        i32 window = 32 + score * score / 16384;
+        i32 window = 32 + (score * score >> 14);
         i32 research = 0;
     research:
         const i32 newscore = alphabeta(pos,
@@ -854,16 +853,14 @@ Move iteratively_deepen(Position &pos,
             cout << "info";
             cout << " depth " << i;
             cout << " score cp " << newscore;
-            if (newscore >= score + window) {
+            if (newscore >= score + window)
                 cout << " lowerbound";
-            } else if (newscore <= score - window) {
+            else if (newscore <= score - window)
                 cout << " upperbound";
-            }
             cout << " time " << elapsed;
             cout << " nodes " << nodes;
-            if (elapsed > 0) {
+            if (elapsed > 0)
                 cout << " nps " << nodes * 1000 / elapsed;
-            }
             // Not a lowerbound - a fail low won't have a meaningful PV.
             if (newscore > score - window) {
                 cout << " pv";
@@ -951,17 +948,15 @@ void set_fen(Position &pos, const string &fen) {
     }
 
     // Flip the board if necessary
-    if (black_move) {
+    if (black_move)
         flip(pos);
-    }
 }
 // minify disable filter delete
 
 // minify enable filter delete
 [[nodiscard]] u64 perft(const Position &pos, const i32 depth) {
-    if (depth == 0) {
+    if (depth == 0)
         return 1;
-    }
 
     u64 nodes = 0;
     Move moves[256];
@@ -971,9 +966,8 @@ void set_fen(Position &pos, const string &fen) {
         Position npos = pos;
 
         // Check move legality
-        if (!makemove(npos, moves[i])) {
+        if (!makemove(npos, moves[i]))
             continue;
-        }
 
         nodes += perft(npos, depth - 1);
     }
@@ -1170,18 +1164,16 @@ i32 main(
                 if (word == "moves" || word == "startpos") {
                     break;
                 } else if (word != "fen") {
-                    if (fen.empty()) {
+                    if (fen.empty())
                         fen = word;
-                    } else {
+                    else
                         fen += " " + word;
-                    }
                     fen_size++;
                 }
             }
 
-            if (!fen.empty()) {
+            if (!fen.empty())
                 set_fen(pos, fen);
-            }
             // minify disable filter delete
         }
         // minify enable filter delete
@@ -1198,9 +1190,8 @@ i32 main(
             std::cout << " depth " << depth;
             std::cout << " nodes " << nodes;
             std::cout << " time " << dt.count();
-            if (nps > 0) {
+            if (nps > 0)
                 std::cout << " nps " << nps;
-            }
             std::cout << std::endl;
             std::cout << "nodes " << nodes << "\n";
         }
