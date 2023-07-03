@@ -482,7 +482,7 @@ const i32 pawn_attacked[] = {S(-64, -14), S(-155, -142)};
     u64 hash = pos.flipped;
 
     // Pieces
-    for (i32 p = Pawn; p < None + 6; p++) {
+    for (i32 p = Pawn; p < None + 6; ++p) {
         u64 copy = pos.pieces[p % 6] & pos.colour[p > 5];
         while (copy) {
             const i32 sq = lsb(copy);
