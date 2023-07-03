@@ -556,14 +556,11 @@ i32 alphabeta(Position &pos,
     i32 static_eval = eval(pos);
     stack[ply].score = static_eval;
     const i32 improving = ply > 1 && static_eval > stack[ply - 2].score;
-    
 
     if (tt_entry.key == tt_key && (tt_entry.flag == Exact || tt_entry.flag == Lower && static_eval < tt_entry.score ||
                                    tt_entry.flag == Upper && static_eval > tt_entry.score)) {
         static_eval = tt_entry.score;
     }
-
-
 
     if (in_qsearch && static_eval > alpha) {
         if (static_eval >= beta)
