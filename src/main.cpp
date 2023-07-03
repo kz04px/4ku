@@ -482,18 +482,12 @@ const i32 pawn_attacked[] = {S(-64, -14), S(-155, -142)};
     u64 hash = pos.flipped;
 
     // Pieces
-    for (i32 p = Pawn; p < None; p++) {
-        u64 copy = pos.pieces[p] & pos.colour[0];
+    for (i32 p = Pawn; p < None + 6; ++p) {
+        u64 copy = pos.pieces[p % 6] & pos.colour[p > 5];
         while (copy) {
             const i32 sq = lsb(copy);
             copy &= copy - 1;
             hash ^= keys[p * 64 + sq];
-        }
-        copy = pos.pieces[p] & pos.colour[1];
-        while (copy) {
-            const i32 sq = lsb(copy);
-            copy &= copy - 1;
-            hash ^= keys[(p + 6) * 64 + sq];
         }
     }
 
@@ -682,9 +676,9 @@ i32 alphabeta(Position &pos,
         } else {
             // Late move reduction
             i32 reduction = depth > 2 && num_moves_evaluated > 4 && !gain
-                                ? 1 + num_moves_evaluated / 14 + depth / 17 + (alpha == beta - 1) - improving +
-                                      (hh_table[pos.flipped][move.from][move.to] < 0) -
-                                      (hh_table[pos.flipped][move.from][move.to] > 0)
+                                ? num_moves_evaluated / 14 + depth / 17 + (alpha == beta - 1) + !improving +
+                                  (hh_table[pos.flipped][move.from][move.to] < 0) -
+                                  (hh_table[pos.flipped][move.from][move.to] > 0)
                                 : 0;
 
         zero_window:
