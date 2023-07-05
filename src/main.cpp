@@ -482,12 +482,18 @@ const i32 pawn_attacked[] = {S(-64, -14), S(-155, -142)};
     u64 hash = pos.flipped;
 
     // Pieces
-    for (i32 p = Pawn; p < None + 6; ++p) {
-        u64 copy = pos.pieces[p % 6] & pos.colour[p > 5];
+    for (i32 p = Pawn; p < None; ++p) {
+        u64 copy = pos.pieces[p] & pos.colour[0];
         while (copy) {
             const i32 sq = lsb(copy);
             copy &= copy - 1;
             hash ^= keys[p * 64 + sq];
+        }
+        copy = pos.pieces[p] & pos.colour[1];
+        while (copy) {
+            const i32 sq = lsb(copy);
+            copy &= copy - 1;
+            hash ^= keys[(p + 6) * 64 + sq];
         }
     }
 
@@ -596,7 +602,7 @@ i32 alphabeta(Position &pos,
     i32 num_moves_evaluated = 0;
     i32 num_quiets_evaluated = 0;
     i32 best_score = -inf;
-    auto best_move = tt_move;
+    Move best_move{};
 
     auto &moves = stack[ply].moves;
     auto &move_scores = stack[ply].move_scores;
@@ -676,7 +682,7 @@ i32 alphabeta(Position &pos,
         } else {
             // Late move reduction
             i32 reduction = depth > 2 && num_moves_evaluated > 4 && !gain
-                                ? num_moves_evaluated / 14 + depth / 17 + (alpha == beta - 1) + !improving +
+                                ? 1 + num_moves_evaluated / 14 + depth / 17 + (alpha == beta - 1) - improving +
                                       (hh_table[pos.flipped][move.from][move.to] < 0) -
                                       (hh_table[pos.flipped][move.from][move.to] > 0)
                                 : 0;
@@ -750,7 +756,7 @@ i32 alphabeta(Position &pos,
         return in_qsearch ? alpha : in_check ? ply - mate_score : 0;
 
     // Save to TT
-    tt_entry = {tt_key, best_move, best_score, in_qsearch ? 0 : depth, tt_flag};
+    tt_entry = {tt_key, best_move == no_move ? tt_move : best_move, best_score, in_qsearch ? 0 : depth, tt_flag};
 
     return alpha;
 }
