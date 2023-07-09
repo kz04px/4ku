@@ -608,7 +608,7 @@ i32 alphabeta(Position &pos,
     i32 num_moves_evaluated = 0;
     i32 num_quiets_evaluated = 0;
     i32 best_score = -inf;
-    Move best_move{};
+    auto best_move = tt_move;
 
     auto &moves = stack[ply].moves;
     auto &move_scores = stack[ply].move_scores;
@@ -762,7 +762,7 @@ i32 alphabeta(Position &pos,
         return in_qsearch ? alpha : in_check ? ply - mate_score : 0;
 
     // Save to TT
-    tt_entry = {tt_key, best_move == no_move ? tt_move : best_move, best_score, in_qsearch ? 0 : depth, tt_flag};
+    tt_entry = {tt_key, best_move, best_score, in_qsearch ? 0 : depth, tt_flag};
 
     return alpha;
 }
