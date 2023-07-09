@@ -86,6 +86,7 @@ struct [[nodiscard]] Stack {
     i32 score;
 };
 
+// Static eval using the TT relies on this specific ordering, do not change it.
 enum
 {
     Upper,
@@ -553,9 +554,14 @@ i32 alphabeta(Position &pos,
     else if (depth > 3)
         depth--;
 
-    const i32 static_eval = eval(pos);
+    i32 static_eval = eval(pos);
     stack[ply].score = static_eval;
     const i32 improving = ply > 1 && static_eval > stack[ply - 2].score;
+
+    // If static_eval <= tt_entry.score, tt_entry.flag has to be lower or exact for the condition to be true.
+    // Otherwise, tt_entry.flag has to be upper or exact.
+    if (tt_entry.key == tt_key && tt_entry.flag + 1 & (static_eval <= tt_entry.score) + 1)
+        static_eval = tt_entry.score;
 
     if (in_qsearch && static_eval > alpha) {
         if (static_eval >= beta)

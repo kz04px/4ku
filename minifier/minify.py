@@ -206,7 +206,7 @@ def get_source(path: str) -> str:
 
 
 def get_tokens(src: str) -> list:
-    return [n for n in re.split("([^a-zA-Z0-9_])", src) if n]
+    return [n for n in re.split("([^\w])", src) if n]
 
 
 assert get_tokens("test case") == ["test", " ", "case"]
@@ -218,9 +218,7 @@ assert get_tokens("x = 1+2;") == ["x", " ", "=", " ", "1", "+", "2", ";"]
 
 
 def is_name(text: str) -> bool:
-    return text and (
-        (text[0] == "_" or text[0].isalpha()) and re.match(r"^[A-Za-z0-9_]+$", text)
-    )
+    return text and (text.startswith("_") or text[0].isalpha())
 
 
 assert is_name("test")
