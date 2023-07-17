@@ -164,9 +164,8 @@ vector<TT_Entry> transposition_table;
     str += '1' + (move.from / 8 ^ 7 * flip);
     str += 'a' + move.to % 8;
     str += '1' + (move.to / 8 ^ 7 * flip);
-    if (move.promo != None) {
+    if (move.promo != None)
         str += "nbrq"[move.promo - Knight];
-    }
     return str;
 }
 
@@ -670,7 +669,7 @@ i32 alphabeta(Position &pos,
         // minify disable filter delete
 
         i32 score;
-        if (!num_moves_evaluated) {
+        if (!num_moves_evaluated)
         full_window:
             score = -alphabeta(npos,
                                -beta,
@@ -685,7 +684,7 @@ i32 alphabeta(Position &pos,
                                stack,
                                hh_table,
                                hash_history);
-        } else {
+        else {
             // Late move reduction
             i32 reduction = depth > 2 && num_moves_evaluated > 4 && !gain
                                 ? num_moves_evaluated / 14 + depth / 17 + (alpha == beta - 1) + !improving +
@@ -914,7 +913,7 @@ void set_fen(Position &pos, const string &fen) {
 
     ss >> word;
     i32 i = 56;
-    for (const auto c : word) {
+    for (const auto c : word)
         if (c >= '1' && c <= '8')
             i += c - '1' + 1;
         else if (c == '/')
@@ -931,7 +930,6 @@ void set_fen(Position &pos, const string &fen) {
             pos.pieces.at(piece) ^= 1ULL << i;
             i++;
         }
-    }
 
     // Side to move
     ss >> word;
@@ -1073,9 +1071,9 @@ i32 main(
             // minify enable filter delete
             || !cin.good()
             // minify disable filter delete
-        ) {
+        )
             break;
-        } else if (word == "ucinewgame")
+        else if (word == "ucinewgame")
             memset(transposition_table.data(), 0, sizeof(TT_Entry) * transposition_table.size());
         else if (word == "isready")
             cout << "readyok\n";
@@ -1167,9 +1165,9 @@ i32 main(
 
             // Try collect FEN string
             while (fen_size < 6 && cin >> word) {
-                if (word == "moves" || word == "startpos") {
+                if (word == "moves" || word == "startpos")
                     break;
-                } else if (word != "fen") {
+                else if (word != "fen") {
                     if (fen.empty())
                         fen = word;
                     else
