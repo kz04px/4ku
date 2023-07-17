@@ -164,9 +164,8 @@ vector<TT_Entry> transposition_table;
     str += '1' + (move.from / 8 ^ 7 * flip);
     str += 'a' + move.to % 8;
     str += '1' + (move.to / 8 ^ 7 * flip);
-    if (move.promo != None) {
+    if (move.promo != None)
         str += "nbrq"[move.promo - Knight];
-    }
     return str;
 }
 
