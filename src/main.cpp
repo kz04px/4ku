@@ -1099,7 +1099,6 @@ i32 main(
             i32 time_left;
 
             // minify enable filter delete
-            i32 found = 0;
             while (true) {
                 cin >> word;
                 if (word == (pos.flipped ? "btime" : "wtime")) {
