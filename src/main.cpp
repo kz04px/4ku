@@ -1113,7 +1113,7 @@ i32 main(
             if (pos.flipped)
                 cin >> word >> word >> word >> time_left;
             else
-                cin >> word >> time_left >> word >> word;
+                cin >> word >> time_left;
 
         // minify enable filter delete
         search_start:
