@@ -1096,14 +1096,14 @@ i32 main(
         }
         // minify disable filter delete
         else if (word == "go") {
-            i32 time;
+            i32 time_left;
 
             // minify enable filter delete
             i32 found = 0;
             while (true) {
                 cin >> word;
                 if (word == (pos.flipped ? "btime" : "wtime")) {
-                    cin >> time;
+                    cin >> time_left;
                     break;
                 }
             }
@@ -1112,16 +1112,16 @@ i32 main(
             // minify disable filter delete
 
             if (pos.flipped)
-                cin >> word >> word >> word >> time;
+                cin >> word >> word >> word >> time_left;
             else
-                cin >> word >> time >> word >> word;
+                cin >> word >> time_left >> word >> word;
 
         // minify enable filter delete
         search_start:
             // minify disable filter delete
 
             const u64 start = now();
-            const u64 allocated_time = time / 3;
+            const u64 allocated_time = time_left / 3;
 
             // Lazy SMP
             vector<thread> threads;
