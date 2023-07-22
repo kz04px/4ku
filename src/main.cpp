@@ -1120,7 +1120,6 @@ i32 main(
             // minify disable filter delete
 
             const u64 start = now();
-            const u64 allocated_time = time_left / 3;
 
             // Lazy SMP
             vector<thread> threads;
@@ -1146,7 +1145,7 @@ i32 main(
                                                       total_nodes,
                                                       // minify disable filter delete
                                                       start,
-                                                      allocated_time,
+                                                      time_left / 3,
                                                       stop);
             stop = true;
             for (i32 i = 1; i < thread_count; ++i)
