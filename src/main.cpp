@@ -86,7 +86,7 @@ struct [[nodiscard]] Stack {
     i32 score;
 };
 
-// Static eval using the TT (as well as TT cutoffs) relies on this specific ordering, do not change it.
+// Static eval using the TT and TT cutoffs rely on this specific ordering, do not change it.
 enum
 {
     Upper,
