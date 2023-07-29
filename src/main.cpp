@@ -459,7 +459,7 @@ const i32 pawn_attacked[] = {S(-64, -14), S(-155, -142)};
                         // C3D7 = Reasonable king squares
                         // Pawn cover is fixed in position, so it won't
                         // walk around with the king.
-                        const u64 shield = file < 3 ? 0x700 : 0xE000;
+                        const u64 shield = 0x700 << 5 * (file >= 3);
                         score += count(shield & pawns[0]) * king_shield[0];
                         score += count(north(shield) & pawns[0]) * king_shield[1];
                     }
