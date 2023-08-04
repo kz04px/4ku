@@ -575,7 +575,7 @@ i32 alphabeta(Position &pos,
             if (depth < 7) {
                 const i32 margins[] = {0, 50, 100, 200, 300, 500, 800};
                 if (static_eval - margins[depth - improving] >= beta)
-                    return beta;
+                    return static_eval;
             }
 
             // Null move pruning
@@ -759,12 +759,12 @@ i32 alphabeta(Position &pos,
 
     // Return mate or draw scores if no moves found
     if (best_score == -inf)
-        return in_qsearch ? alpha : in_check ? ply - mate_score : 0;
+        return in_qsearch ? best_score : in_check ? ply - mate_score : 0;
 
     // Save to TT
     tt_entry = {tt_key, best_move, best_score, in_qsearch ? 0 : depth, tt_flag};
 
-    return alpha;
+    return best_score;
 }
 
 // minify enable filter delete
