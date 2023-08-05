@@ -544,11 +544,10 @@ i32 alphabeta(Position &pos,
     Move tt_move{};
     if (tt_entry.key == tt_key) {
         tt_move = tt_entry.move;
-        if (ply > 0 && alpha == beta - 1 && tt_entry.depth >= depth)
+        if (ply > 0 && alpha == beta - 1 && tt_entry.depth >= depth && tt_entry.flag + 1 & (tt_entry.score >= beta) + 1)
             // If tt_entry.score >= beta, tt_entry.flag has to be lower or exact for the condition to be true.
             // Otherwise, tt_entry.flag has to be upper or exact.
-            if (tt_entry.flag + 1 & (tt_entry.score >= beta) + 1)
-                return tt_entry.score;
+            return tt_entry.score;
     }
     // Internal iterative reduction
     else if (depth > 3)
@@ -569,36 +568,34 @@ i32 alphabeta(Position &pos,
         alpha = static_eval;
     }
 
-    if (ply > 0 && !in_qsearch) {
-        if (!in_check && alpha == beta - 1) {
-            // Reverse futility pruning
-            if (depth < 7) {
-                const i32 margins[] = {0, 50, 100, 200, 300, 500, 800};
-                if (static_eval - margins[depth - improving] >= beta)
-                    return static_eval;
-            }
+    if (ply > 0 && !in_qsearch && !in_check && alpha == beta - 1) {
+        // Reverse futility pruning
+        if (depth < 7) {
+            const i32 margins[] = {0, 50, 100, 200, 300, 500, 800};
+            if (static_eval - margins[depth - improving] >= beta)
+                return static_eval;
+        }
 
-            // Null move pruning
-            if (depth > 2 && static_eval >= beta && do_null && pos.colour[0] & ~(pos.pieces[Pawn] | pos.pieces[King])) {
-                Position npos = pos;
-                flip(npos);
-                npos.ep = 0;
-                if (-alphabeta(npos,
-                               -beta,
-                               -beta + 1,
-                               depth - 4 - depth / 6 - min((static_eval - beta) / 200, 3),
-                               ply + 1,
-                               // minify enable filter delete
-                               nodes,
-                               // minify disable filter delete
-                               stop_time,
-                               stop,
-                               stack,
-                               hh_table,
-                               hash_history,
-                               false) >= beta)
-                    return beta;
-            }
+        // Null move pruning
+        if (depth > 2 && static_eval >= beta && do_null && pos.colour[0] & ~(pos.pieces[Pawn] | pos.pieces[King])) {
+            Position npos = pos;
+            flip(npos);
+            npos.ep = 0;
+            if (-alphabeta(npos,
+                           -beta,
+                           -beta + 1,
+                           depth - 4 - depth / 6 - min((static_eval - beta) / 200, 3),
+                           ply + 1,
+                           // minify enable filter delete
+                           nodes,
+                           // minify disable filter delete
+                           stop_time,
+                           stop,
+                           stack,
+                           hh_table,
+                           hash_history,
+                           false) >= beta)
+                return beta;
         }
     }
 
@@ -617,7 +614,7 @@ i32 alphabeta(Position &pos,
     for (i32 i = 0; i < num_moves; ++i) {
         // Score moves at the first loop, except if we have a hash move,
         // then we'll use that first and delay sorting one iteration.
-        if (i == !(no_move == tt_move)) {
+        if (i == !(no_move == tt_move))
             for (i32 j = 0; j < num_moves; ++j) {
                 const i32 gain = max_material[moves[j].promo] + max_material[piece_on(pos, moves[j].to)];
                 if (gain)
@@ -627,7 +624,6 @@ i32 alphabeta(Position &pos,
                 else
                     move_scores[j] = hh_table[pos.flipped][moves[j].from][moves[j].to];
             }
-        }
 
         // Find best move remaining
         i32 best_move_index = i;
