@@ -1106,9 +1106,8 @@ i32 main(
             goto search_start;
             // minify disable filter delete
 
+            cin >> word >> time_left;
             if (pos.flipped)
-                cin >> word >> word >> word >> time_left;
-            else
                 cin >> word >> time_left;
 
         // minify enable filter delete
