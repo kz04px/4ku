@@ -806,7 +806,7 @@ void print_pv(const Position &pos, const Move move, vector<u64> &hash_history) {
 }
 // minify disable filter delete
 
-Move iteratively_deepen(Position &pos,
+auto iteratively_deepen(Position &pos,
                         vector<u64> &hash_history,
                         // minify enable filter delete
                         i32 thread_id,
