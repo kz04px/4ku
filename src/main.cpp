@@ -544,7 +544,7 @@ i32 alphabeta(Position &pos,
     Move tt_move{};
     if (tt_entry.key == tt_key) {
         tt_move = tt_entry.move;
-        if (ply > 0 && alpha == beta - 1 && tt_entry.depth >= depth && tt_entry.flag + 1 & (tt_entry.score >= beta) + 1)
+        if (alpha == beta - 1 && tt_entry.depth >= depth && tt_entry.flag + 1 & (tt_entry.score >= beta) + 1)
             // If tt_entry.score >= beta, tt_entry.flag has to be lower or exact for the condition to be true.
             // Otherwise, tt_entry.flag has to be upper or exact.
             return tt_entry.score;
@@ -553,8 +553,7 @@ i32 alphabeta(Position &pos,
     else if (depth > 3)
         depth--;
 
-    i32 static_eval = eval(pos);
-    stack[ply].score = static_eval;
+    i32 static_eval = stack[ply].score = eval(pos);
     const i32 improving = ply > 1 && static_eval > stack[ply - 2].score;
 
     // If static_eval <= tt_entry.score, tt_entry.flag has to be lower or exact for the condition to be true.
