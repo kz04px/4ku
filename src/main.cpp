@@ -553,8 +553,7 @@ i32 alphabeta(Position &pos,
     else if (depth > 3)
         depth--;
 
-    i32 static_eval = eval(pos);
-    stack[ply].score = static_eval;
+    i32 static_eval = stack[ply].score = eval(pos);
     const i32 improving = ply > 1 && static_eval > stack[ply - 2].score;
 
     // If static_eval <= tt_entry.score, tt_entry.flag has to be lower or exact for the condition to be true.
