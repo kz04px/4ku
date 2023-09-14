@@ -236,10 +236,11 @@ auto makemove(Position &pos, const Move &move) {
     const i32 captured = piece_on(pos, move.to);
     const u64 to = 1ULL << move.to;
     const u64 from = 1ULL << move.from;
+    const u64 mask = from | to;
 
     // Move the piece
-    pos.colour[0] ^= from | to;
-    pos.pieces[piece] ^= from | to;
+    pos.colour[0] ^= mask;
+    pos.pieces[piece] ^= mask;
 
     // En passant
     if (piece == Pawn && to == pos.ep) {
@@ -273,10 +274,10 @@ auto makemove(Position &pos, const Move &move) {
     }
 
     // Update castling permissions
-    pos.castling[0] &= !((from | to) & 0x90ULL);
-    pos.castling[1] &= !((from | to) & 0x11ULL);
-    pos.castling[2] &= !((from | to) & 0x9000000000000000ULL);
-    pos.castling[3] &= !((from | to) & 0x1100000000000000ULL);
+    pos.castling[0] &= !(mask & 0x90ULL);
+    pos.castling[1] &= !(mask & 0x11ULL);
+    pos.castling[2] &= !(mask & 0x9000000000000000ULL);
+    pos.castling[3] &= !(mask & 0x1100000000000000ULL);
 
     flip(pos);
 
