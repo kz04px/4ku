@@ -753,7 +753,7 @@ i32 alphabeta(Position &pos,
 
     // Return mate or draw scores if no moves found
     if (best_score == -inf)
-        return in_qsearch ? best_score : in_check ? ply - mate_score : 0;
+        return in_check ? ply - mate_score : 0;
 
     // Save to TT
     tt_entry = {tt_key, best_move, best_score, in_qsearch ? 0 : depth, tt_flag};
