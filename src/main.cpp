@@ -656,10 +656,9 @@ i32 alphabeta(Position &pos,
             break;
 
         // Forward futility pruning
-        if (depth < 8 && !in_qsearch && !in_check && !(move == tt_move) && static_eval + 100 * depth + gain < alpha) {
-            best_score = alpha;
+        if (ply > 0 && depth < 8 && !in_qsearch && !in_check && num_moves_evaluated &&
+            static_eval + 100 * depth + gain < alpha)
             break;
-        }
 
         Position npos = pos;
         if (!makemove(npos, move))
