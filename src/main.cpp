@@ -19,7 +19,6 @@
 #include <array>
 #include <cstdio>
 #include <cstring>
-#include <ctime>
 #include <iostream>
 #include <random>
 #include <thread>
