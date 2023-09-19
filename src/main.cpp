@@ -17,7 +17,6 @@
 // minify replace NULL 0
 
 #include <array>
-#include <cstdint>
 #include <cstdio>
 #include <cstring>
 #include <ctime>
