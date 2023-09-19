@@ -17,7 +17,6 @@
 // minify replace NULL 0
 
 #include <array>
-#include <cstdio>
 #include <cstring>
 #include <iostream>
 #include <random>
