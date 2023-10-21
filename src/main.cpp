@@ -158,7 +158,7 @@ vector<TT_Entry> transposition_table;
     return !memcmp(&rhs, &lhs, sizeof(Move));
 }
 
-[[nodiscard]] auto move_str(const Move &move, const i32 flip) {
+[[nodiscard]] string move_str(const Move &move, const i32 flip) {
     string str;
     str += 'a' + move.from % 8;
     str += '1' + (move.from / 8 ^ 7 * flip);
@@ -218,8 +218,8 @@ u64 diag_mask[64];
 
 [[nodiscard]] u64 knight(const i32 sq, const u64) {
     const u64 bb = 1ULL << sq;
-    return (((bb << 15) | (bb >> 17)) & 0x7F7F7F7F7F7F7F7FULL) | (((bb << 17) | (bb >> 15)) & 0xFEFEFEFEFEFEFEFEULL) |
-           (((bb << 10) | (bb >> 6)) & 0xFCFCFCFCFCFCFCFCULL) | (((bb << 6) | (bb >> 10)) & 0x3F3F3F3F3F3F3F3FULL);
+    return ((bb << 15 | bb >> 17) & 0x7F7F7F7F7F7F7F7FULL) | ((bb << 17 | bb >> 15) & 0xFEFEFEFEFEFEFEFEULL) |
+           ((bb << 10 | bb >> 6) & 0xFCFCFCFCFCFCFCFCULL) | ((bb << 6 | bb >> 10) & 0x3F3F3F3F3F3F3F3FULL);
 }
 
 [[nodiscard]] u64 king(const i32 sq, const u64) {
@@ -589,7 +589,7 @@ i32 alphabeta(Position &pos,
             npos.ep = 0;
             if (-alphabeta(npos,
                            -beta,
-                           -beta + 1,
+                           -alpha,
                            depth - 4 - depth / 6 - min((static_eval - beta) / 200, 3),
                            ply + 1,
                            // minify enable filter delete
@@ -723,10 +723,8 @@ i32 alphabeta(Position &pos,
         }
 
         num_moves_evaluated++;
-        if (!gain) {
-            stack[ply].quiets_evaluated[num_quiets_evaluated] = move;
-            num_quiets_evaluated++;
-        }
+        if (!gain)
+            stack[ply].quiets_evaluated[num_quiets_evaluated++] = move;
 
         if (score > best_score) {
             best_score = score;
