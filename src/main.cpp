@@ -723,10 +723,8 @@ i32 alphabeta(Position &pos,
         }
 
         num_moves_evaluated++;
-        if (!gain) {
-            stack[ply].quiets_evaluated[num_quiets_evaluated] = move;
-            num_quiets_evaluated++;
-        }
+        if (!gain)
+            stack[ply].quiets_evaluated[num_quiets_evaluated++] = move;
 
         if (score > best_score) {
             best_score = score;
