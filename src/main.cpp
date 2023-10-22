@@ -733,17 +733,17 @@ i32 alphabeta(Position &pos,
                 tt_flag = Exact;
                 alpha = score;
                 stack[ply].move = move;
-            }
-            if (score >= beta) {
-                tt_flag = Lower;
-                if (!gain) {
-                    hh_table[pos.flipped][move.from][move.to] += depth * depth;
-                    for (i32 j = 0; j < num_quiets_evaluated - 1; ++j)
-                        hh_table[pos.flipped][stack[ply].quiets_evaluated[j].from][stack[ply].quiets_evaluated[j].to] -=
-                            depth * depth;
-                    stack[ply].killer = move;
+                if (score >= beta) {
+                    tt_flag = Lower;
+                    if (!gain) {
+                        hh_table[pos.flipped][move.from][move.to] += depth * depth;
+                        for (i32 j = 0; j < num_quiets_evaluated - 1; ++j)
+                            hh_table[pos.flipped][stack[ply].quiets_evaluated[j].from]
+                                    [stack[ply].quiets_evaluated[j].to] -= depth * depth;
+                        stack[ply].killer = move;
+                    }
+                    break;
                 }
-                break;
             }
         }
         // Late move pruning based on quiet move count
