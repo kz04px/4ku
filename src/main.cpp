@@ -552,9 +552,10 @@ i32 alphabeta(Position &pos,
     Move tt_move{};
     if (tt_entry.key == tt_key) {
         tt_move = tt_entry.move;
-        if (alpha == beta - 1 && tt_entry.depth >= depth && tt_entry.flag + 1 & (tt_entry.score >= beta) + 1)
-            // If tt_entry.score >= beta, tt_entry.flag has to be lower or exact for the condition to be true.
-            // Otherwise, tt_entry.flag has to be upper or exact.
+        if (alpha == beta - 1 && tt_entry.depth >= depth && tt_entry.flag != tt_entry.score <= alpha)
+            // If tt_entry.score <= alpha, tt_entry.flag cannot be Lower (ie must be Upper or Exact).
+            // Otherwise, tt_entry.flag cannot be
+            // Upper (ie must be Lower or Exact).
             return tt_entry.score;
     }
     // Internal iterative reduction
@@ -564,9 +565,9 @@ i32 alphabeta(Position &pos,
     i32 static_eval = stack[ply].score = eval(pos);
     const i32 improving = ply > 1 && static_eval > stack[ply - 2].score;
 
-    // If static_eval <= tt_entry.score, tt_entry.flag has to be lower or exact for the condition to be true.
-    // Otherwise, tt_entry.flag has to be upper or exact.
-    if (tt_entry.key == tt_key && tt_entry.flag + 1 & (static_eval <= tt_entry.score) + 1)
+    // If static_eval > tt_entry.score, tt_entry.flag cannot be Lower (ie must be Upper or Exact).
+    // Otherwise, tt_entry.flag cannot be Upper (ie must be Lower or Exact).
+    if (tt_entry.key == tt_key && tt_entry.flag != static_eval > tt_entry.score)
         static_eval = tt_entry.score;
 
     if (in_qsearch && static_eval > alpha) {
@@ -624,12 +625,9 @@ i32 alphabeta(Position &pos,
         if (i == !(no_move == tt_move))
             for (i32 j = 0; j < num_moves; ++j) {
                 const i32 gain = max_material[moves[j].promo] + max_material[piece_on(pos, moves[j].to)];
-                if (gain)
-                    move_scores[j] = gain + (1LL << 54);
-                else if (moves[j] == stack[ply].killer)
-                    move_scores[j] = 1LL << 50;
-                else
-                    move_scores[j] = hh_table[pos.flipped][moves[j].from][moves[j].to];
+                move_scores[j] = gain                            ? gain + (1LL << 54)
+                                 : moves[j] == stack[ply].killer ? 1LL << 50
+                                                                 : hh_table[pos.flipped][moves[j].from][moves[j].to];
             }
 
         // Find best move remaining
