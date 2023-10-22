@@ -631,16 +631,14 @@ i32 alphabeta(Position &pos,
 
         // Find best move remaining
         i32 best_move_index = i;
-        if (i == 0 && !(no_move == tt_move)) {
-            for (i32 j = i; j < num_moves; ++j)
-                if (moves[j] == tt_move) {
-                    best_move_index = j;
-                    break;
-                }
-        } else
-            for (i32 j = i; j < num_moves; ++j)
-                if (move_scores[j] > move_scores[best_move_index])
-                    best_move_index = j;
+        for (i32 j = i; j < num_moves; ++j) {
+            if (moves[j] == tt_move) {
+                best_move_index = j;
+                break;
+            }
+            if (move_scores[j] > move_scores[best_move_index])
+                best_move_index = j;
+        }
 
         const Move move = moves[best_move_index];
         moves[best_move_index] = moves[i];
