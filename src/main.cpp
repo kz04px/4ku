@@ -615,6 +615,7 @@ i32 alphabeta(Position &pos,
 
     auto &moves = stack[ply].moves;
     auto &move_scores = stack[ply].move_scores;
+    auto &quiets_evaluated = stack[ply].quiets_evaluated;
     const i32 num_moves = movegen(pos, moves, in_qsearch);
 
     for (i32 i = 0; i < num_moves; ++i) {
@@ -724,7 +725,7 @@ i32 alphabeta(Position &pos,
 
         num_moves_evaluated++;
         if (!gain)
-            stack[ply].quiets_evaluated[num_quiets_evaluated++] = move;
+            quiets_evaluated[num_quiets_evaluated++] = move;
 
         if (score > best_score) {
             best_score = score;
@@ -738,8 +739,7 @@ i32 alphabeta(Position &pos,
                     if (!gain) {
                         hh_table[pos.flipped][move.from][move.to] += depth * depth;
                         for (i32 j = 0; j < num_quiets_evaluated - 1; ++j)
-                            hh_table[pos.flipped][stack[ply].quiets_evaluated[j].from]
-                                    [stack[ply].quiets_evaluated[j].to] -= depth * depth;
+                            hh_table[pos.flipped][quiets_evaluated[j].from][quiets_evaluated[j].to] -= depth * depth;
                         stack[ply].killer = move;
                     }
                     break;
