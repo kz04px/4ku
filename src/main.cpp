@@ -537,7 +537,7 @@ i32 alphabeta(Position &pos,
     const i32 in_check = is_attacked(pos, lsb(pos.colour[0] & pos.pieces[King]));
     depth += in_check;
 
-    const i32 in_qsearch = depth <= 0;
+    i32 in_qsearch = depth <= 0;
     const u64 tt_key = get_hash(pos);
 
     if (ply > 0 && !in_qsearch) {
@@ -580,6 +580,8 @@ i32 alphabeta(Position &pos,
         if (depth < 7) {
             if (static_eval - 66 * (depth - improving) >= beta)
                 return static_eval;
+
+            in_qsearch = static_eval + 256 * depth < alpha;
         }
 
         // Null move pruning
