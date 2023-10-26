@@ -380,13 +380,13 @@ const i32 mobilities[] = {S(9, 5), S(8, 7), S(4, 4), S(4, 3), S(-5, -1)};
 const i32 pawn_protection[] = {S(24, 14), S(2, 16), S(8, 17), S(9, 8), S(-5, 23), S(-34, 26)};
 const i32 passers[] = {S(0, 15), S(29, 52), S(63, 126), S(209, 210)};
 const i32 pawn_passed_protected = S(13, 20);
-const i32 pawn_doubled = S(14, 38);
+const i32 pawn_doubled_malus = S(14, 38);
 const i32 pawn_phalanx = S(13, 12);
-const i32 pawn_passed_blocked[] = {S(10, 14), S(-5, 43), S(-9, 86), S(3, 101)};
+const i32 pawn_passed_blocked_malus[] = {S(10, 14), S(-5, 43), S(-9, 86), S(3, 101)};
 const i32 pawn_passed_king_distance[] = {S(1, -6), S(-4, 11)};
 const i32 bishop_pair = S(31, 72);
 const i32 king_shield[] = {S(35, -12), S(28, -8)};
-const i32 pawn_attacked[] = {S(64, 14), S(155, 142)};
+const i32 pawn_attacked_malus[] = {S(64, 14), S(155, 142)};
 
 [[nodiscard]] i32 eval(Position &pos) {
     // Include side to move bonus
@@ -405,7 +405,7 @@ const i32 pawn_attacked[] = {S(64, 14), S(155, 142)};
             score += bishop_pair;
 
         // Doubled pawns
-        score -= pawn_doubled * count((north(pawns[0]) | north(north(pawns[0]))) & pawns[0]);
+        score -= pawn_doubled_malus * count((north(pawns[0]) | north(north(pawns[0]))) & pawns[0]);
 
         // Phalanx pawns
         score += pawn_phalanx * count(west(pawns[0]) & pawns[0]);
@@ -444,7 +444,7 @@ const i32 pawn_attacked[] = {S(64, 14), S(155, 142)};
 
                         // Blocked passed pawns
                         if (north(piece_bb) & pos.colour[1])
-                            score -= pawn_passed_blocked[rank - 3];
+                            score -= pawn_passed_blocked_malus[rank - 3];
 
                         // King defense/attack
                         // king distance to square in front of passer
@@ -457,7 +457,7 @@ const i32 pawn_attacked[] = {S(64, 14), S(155, 142)};
                     if (piece_bb & attacked_by_pawns)
                         // If we're to move, we'll just lose some options and our tempo.
                         // If we're not to move, we lose a piece?
-                        score -= pawn_attacked[c];
+                        score -= pawn_attacked_malus[c];
 
                     u64 mobility = 0;
 
