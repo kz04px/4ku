@@ -382,7 +382,7 @@ const i32 passers[] = {S(0, 15), S(29, 52), S(63, 126), S(209, 210)};
 const i32 pawn_passed_protected = S(13, 20);
 const i32 pawn_doubled = S(14, 38);
 const i32 pawn_phalanx = S(13, 12);
-const i32 pawn_passed_blocked[] = {S(-10, -14), S(5, -43), S(9, -86), S(-3, -101)};
+const i32 pawn_passed_blocked[] = {S(10, 14), S(-5, 43), S(-9, 86), S(3, 101)};
 const i32 pawn_passed_king_distance[] = {S(1, -6), S(-4, 11)};
 const i32 bishop_pair = S(31, 72);
 const i32 king_shield[] = {S(35, -12), S(28, -8)};
@@ -444,7 +444,7 @@ const i32 pawn_attacked[] = {S(-64, -14), S(-155, -142)};
 
                         // Blocked passed pawns
                         if (north(piece_bb) & pos.colour[1])
-                            score += pawn_passed_blocked[rank - 3];
+                            score -= pawn_passed_blocked[rank - 3];
 
                         // King defense/attack
                         // king distance to square in front of passer
