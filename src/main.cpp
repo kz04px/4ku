@@ -212,7 +212,7 @@ u64 diag_mask[64];
 }
 
 [[nodiscard]] u64 rook(const i32 sq, const u64 blockers) {
-    return xattack(sq, blockers, (1ULL << sq) ^ (0x101010101010101ULL << sq % 8)) | ray(sq, blockers, east) |
+    return xattack(sq, blockers, 1ULL << sq ^ 0x101010101010101ULL << sq % 8) | ray(sq, blockers, east) |
            ray(sq, blockers, west);
 }
 
