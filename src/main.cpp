@@ -1001,9 +1001,9 @@ i32 main(
     setbuf(stdout, 0);
 
     // Generate used attack masks
-    for (i32 i = 0; i < 64; ++i) {
+    for (i32 i = 0; i < 64; ++i)
         diag_mask[i] = ray(i, 0, ne) | ray(i, 0, sw);
-    }
+
     mt19937_64 r;
     // pieces from 1-12 multiplied by the square + ep squares + castling rights
     for (u64 &k : keys)
