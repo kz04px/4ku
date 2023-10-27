@@ -1217,10 +1217,10 @@ i32 main(
             const i32 num_moves = movegen(pos, moves, false);
             for (i32 i = 0; i < num_moves; ++i) {
                 if (word == move_str(moves[i], pos.flipped)) {
-                    if (piece_on(pos, moves[i].to) != None || piece_on(pos, moves[i].from) == Pawn)
-                        hash_history.clear();
-                    else
+                    if (piece_on(pos, moves[i].to) == None && piece_on(pos, moves[i].from))
                         hash_history.emplace_back(get_hash(pos));
+                    else
+                        hash_history.clear();
 
                     makemove(pos, moves[i]);
                     break;
