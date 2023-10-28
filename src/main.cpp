@@ -378,7 +378,7 @@ const i32 open_files[][5] = {
 };
 const i32 mobilities[] = {S(8, 5), S(8, 7), S(4, 4), S(4, 3), S(-5, -1)};
 const i32 pawn_protection[] = {S(22, 14), S(2, 15), S(8, 17), S(8, 9), S(-5, 23), S(-32, 25)};
-const i32 pawn_threat[] = {S(4, -1), S(-18, -2), S(-12, -5), S(-9, -16), S(-8, -17), S(-2, -6)};
+const i32 pawn_threat_penalty[] = {S(-4, 1), S(18, 2), S(12, 5), S(9, 16), S(8, 17), S(2, 6)};
 const i32 passers[] = {S(4, 14), S(34, 50), S(66, 124), S(214, 209)};
 const i32 pawn_passed_protected = S(10, 20);
 const i32 pawn_doubled_penalty = S(10, 37);
@@ -436,7 +436,7 @@ const i32 pawn_attacked_penalty[] = {S(64, 14), S(155, 142)};
 
                 // Pawn threat
                 if (0x101010101010101ULL << sq & ~piece_bb & attacked_by_pawns)
-                    score += pawn_threat[p];
+                    score -= pawn_threat_penalty[p];
 
                 if (p == Pawn) {
                     // Passed pawns
