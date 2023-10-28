@@ -212,14 +212,14 @@ u64 diag_mask[64];
 }
 
 [[nodiscard]] u64 rook(const i32 sq, const u64 blockers) {
-    return xattack(sq, blockers, (1ULL << sq) ^ (0x101010101010101ULL << (sq % 8))) | ray(sq, blockers, east) |
+    return xattack(sq, blockers, 1ULL << sq ^ 0x101010101010101ULL << sq % 8) | ray(sq, blockers, east) |
            ray(sq, blockers, west);
 }
 
 [[nodiscard]] u64 knight(const i32 sq, const u64) {
     const u64 bb = 1ULL << sq;
-    return ((bb << 15 | bb >> 17) & 0x7F7F7F7F7F7F7F7FULL) | ((bb << 17 | bb >> 15) & 0xFEFEFEFEFEFEFEFEULL) |
-           ((bb << 10 | bb >> 6) & 0xFCFCFCFCFCFCFCFCULL) | ((bb << 6 | bb >> 10) & 0x3F3F3F3F3F3F3F3FULL);
+    return (bb << 15 | bb >> 17) & 0x7F7F7F7F7F7F7F7FULL | (bb << 17 | bb >> 15) & 0xFEFEFEFEFEFEFEFEULL |
+           (bb << 10 | bb >> 6) & 0xFCFCFCFCFCFCFCFCULL | (bb << 6 | bb >> 10) & 0x3F3F3F3F3F3F3F3FULL;
 }
 
 [[nodiscard]] u64 king(const i32 sq, const u64) {
@@ -380,13 +380,13 @@ const i32 mobilities[] = {S(9, 5), S(8, 7), S(4, 4), S(4, 3), S(-5, -1)};
 const i32 pawn_protection[] = {S(24, 14), S(2, 16), S(8, 17), S(9, 8), S(-5, 23), S(-34, 26)};
 const i32 passers[] = {S(0, 15), S(29, 52), S(63, 126), S(209, 210)};
 const i32 pawn_passed_protected = S(13, 20);
-const i32 pawn_doubled = S(-14, -38);
+const i32 pawn_doubled_penalty = S(14, 38);
 const i32 pawn_phalanx = S(13, 12);
-const i32 pawn_passed_blocked[] = {S(-10, -14), S(5, -43), S(9, -86), S(-3, -101)};
+const i32 pawn_passed_blocked_penalty[] = {S(10, 14), S(-5, 43), S(-9, 86), S(3, 101)};
 const i32 pawn_passed_king_distance[] = {S(1, -6), S(-4, 11)};
 const i32 bishop_pair = S(31, 72);
 const i32 king_shield[] = {S(35, -12), S(28, -8)};
-const i32 pawn_attacked[] = {S(-64, -14), S(-155, -142)};
+const i32 pawn_attacked_penalty[] = {S(64, 14), S(155, 142)};
 
 [[nodiscard]] i32 eval(Position &pos) {
     // Include side to move bonus
@@ -405,7 +405,7 @@ const i32 pawn_attacked[] = {S(-64, -14), S(-155, -142)};
             score += bishop_pair;
 
         // Doubled pawns
-        score += pawn_doubled * count((north(pawns[0]) | north(north(pawns[0]))) & pawns[0]);
+        score -= pawn_doubled_penalty * count((north(pawns[0]) | north(north(pawns[0]))) & pawns[0]);
 
         // Phalanx pawns
         score += pawn_phalanx * count(west(pawns[0]) & pawns[0]);
@@ -444,7 +444,7 @@ const i32 pawn_attacked[] = {S(-64, -14), S(-155, -142)};
 
                         // Blocked passed pawns
                         if (north(piece_bb) & pos.colour[1])
-                            score += pawn_passed_blocked[rank - 3];
+                            score -= pawn_passed_blocked_penalty[rank - 3];
 
                         // King defense/attack
                         // king distance to square in front of passer
@@ -457,7 +457,7 @@ const i32 pawn_attacked[] = {S(-64, -14), S(-155, -142)};
                     if (piece_bb & attacked_by_pawns)
                         // If we're to move, we'll just lose some options and our tempo.
                         // If we're not to move, we lose a piece?
-                        score += pawn_attacked[c];
+                        score -= pawn_attacked_penalty[c];
 
                     u64 mobility = 0;
 
@@ -1001,9 +1001,9 @@ i32 main(
     setbuf(stdout, 0);
 
     // Generate used attack masks
-    for (i32 i = 0; i < 64; ++i) {
+    for (i32 i = 0; i < 64; ++i)
         diag_mask[i] = ray(i, 0, ne) | ray(i, 0, sw);
-    }
+
     mt19937_64 r;
     // pieces from 1-12 multiplied by the square + ep squares + castling rights
     for (u64 &k : keys)
@@ -1217,10 +1217,10 @@ i32 main(
             const i32 num_moves = movegen(pos, moves, false);
             for (i32 i = 0; i < num_moves; ++i) {
                 if (word == move_str(moves[i], pos.flipped)) {
-                    if (piece_on(pos, moves[i].to) != None || piece_on(pos, moves[i].from) == Pawn)
-                        hash_history.clear();
-                    else
+                    if (piece_on(pos, moves[i].to) == None && piece_on(pos, moves[i].from))
                         hash_history.emplace_back(get_hash(pos));
+                    else
+                        hash_history.clear();
 
                     makemove(pos, moves[i]);
                     break;
