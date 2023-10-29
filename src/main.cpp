@@ -379,7 +379,7 @@ const i32 open_files[] = {
     S(20, 16),
     S(3, 19),
     S(-23, 10),
-    // Fully open files
+    // Open files
     S(-3, -12),
     S(-11, 0),
     S(47, 0),
