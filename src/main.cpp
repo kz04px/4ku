@@ -590,12 +590,12 @@ i32 alphabeta(Position &pos,
     else
         depth -= depth > 3;
 
-    i32 static_eval = stack[ply].score = eval(pos);
+    i32 static_eval = stack[ply].score = in_check ? -inf : eval(pos);
     const i32 improving = ply > 1 && static_eval > stack[ply - 2].score;
 
     // If static_eval > tt_entry.score, tt_entry.flag cannot be Lower (ie must be Upper or Exact).
     // Otherwise, tt_entry.flag cannot be Upper (ie must be Lower or Exact).
-    if (tt_entry.key == tt_key && tt_entry.flag != static_eval > tt_entry.score)
+    if (!in_check && tt_entry.key == tt_key && tt_entry.flag != static_eval > tt_entry.score)
         static_eval = tt_entry.score;
 
     if (in_qsearch && static_eval > alpha) {
