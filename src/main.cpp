@@ -235,7 +235,7 @@ u64 diag_mask[64];
     return pawn_attacks & bb || pos.colour[them] & pos.pieces[Knight] & knight(sq, 0) ||
            bishop(sq, pos.colour[0] | pos.colour[1]) & pos.colour[them] & (pos.pieces[Bishop] | pos.pieces[Queen]) ||
            rook(sq, pos.colour[0] | pos.colour[1]) & pos.colour[them] & (pos.pieces[Rook] | pos.pieces[Queen]) ||
-           king(sq, 0) & pos.colour[them] & pos.pieces[King];
+           king(sq, pos.colour[0] | pos.colour[1]) & pos.colour[them] & pos.pieces[King];
 }
 
 auto makemove(Position &pos, const Move &move) {
