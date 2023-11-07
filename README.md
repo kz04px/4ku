@@ -28,7 +28,7 @@ bash build-mini.sh
 
 ## 4ku-mini Size
 ```
-3,934 bytes
+3,959 bytes
 ```
 
 ---
