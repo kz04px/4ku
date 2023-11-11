@@ -235,7 +235,7 @@ u64 diag_mask[64];
     return pawn_attacks & bb || pos.colour[them] & pos.pieces[Knight] & knight(sq, 0) ||
            bishop(sq, pos.colour[0] | pos.colour[1]) & pos.colour[them] & (pos.pieces[Bishop] | pos.pieces[Queen]) ||
            rook(sq, pos.colour[0] | pos.colour[1]) & pos.colour[them] & (pos.pieces[Rook] | pos.pieces[Queen]) ||
-           king(sq, 0) & pos.colour[them] & pos.pieces[King];
+           king(sq, pos.colour[0] | pos.colour[1]) & pos.colour[them] & pos.pieces[King];
 }
 
 auto makemove(Position &pos, const Move &move) {
@@ -590,8 +590,8 @@ i32 alphabeta(Position &pos,
     Move tt_move{};
     if (tt_entry.key == tt_key) {
         tt_move = tt_entry.move;
-        if (alpha == beta - 1 && tt_entry.depth >= depth && tt_entry.flag != tt_entry.score <= alpha)
-            // If tt_entry.score <= alpha, tt_entry.flag cannot be Lower (ie must be Upper or Exact).
+        if (alpha == beta - 1 && tt_entry.depth >= depth && tt_entry.flag != tt_entry.score < beta)
+            // If tt_entry.score < beta, tt_entry.flag cannot be Lower (ie must be Upper or Exact).
             // Otherwise, tt_entry.flag cannot be Upper (ie must be Lower or Exact).
             return tt_entry.score;
     }
@@ -763,23 +763,23 @@ i32 alphabeta(Position &pos,
         if (!gain)
             quiets_evaluated[num_quiets_evaluated++] = move;
 
-        if (score > best_score) {
+        if (score > best_score)
             best_score = score;
-            if (score > alpha) {
-                best_move = move;
-                tt_flag = Exact;
-                alpha = score;
-                stack[ply].move = move;
-                if (score >= beta) {
-                    tt_flag = Lower;
-                    if (!gain) {
-                        hh_table[pos.flipped][move.from][move.to] += depth * depth;
-                        for (i32 j = 0; j < num_quiets_evaluated - 1; ++j)
-                            hh_table[pos.flipped][quiets_evaluated[j].from][quiets_evaluated[j].to] -= depth * depth;
-                        stack[ply].killer = move;
-                    }
-                    break;
+
+        if (score > alpha) {
+            best_move = move;
+            tt_flag = Exact;
+            alpha = score;
+            stack[ply].move = move;
+            if (score >= beta) {
+                tt_flag = Lower;
+                if (!gain) {
+                    hh_table[pos.flipped][move.from][move.to] += depth * depth;
+                    for (i32 j = 0; j < num_quiets_evaluated - 1; ++j)
+                        hh_table[pos.flipped][quiets_evaluated[j].from][quiets_evaluated[j].to] -= depth * depth;
+                    stack[ply].killer = move;
                 }
+                break;
             }
         }
         // Late move pruning based on quiet move count
