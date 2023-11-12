@@ -99,6 +99,7 @@ struct [[nodiscard]] TT_Entry {
     Move move;
     i32 score;
     i32 depth;
+    i32 eval;
     uint16_t flag;
 };
 
@@ -588,24 +589,27 @@ i32 alphabeta(Position &pos,
     // TT Probing
     TT_Entry &tt_entry = transposition_table[tt_key % num_tt_entries];
     Move tt_move{};
+    i32 static_eval;
     if (tt_entry.key == tt_key) {
         tt_move = tt_entry.move;
+        static_eval = stack[ply].score = tt_entry.eval;
         if (alpha == beta - 1 && tt_entry.depth >= depth && tt_entry.flag != tt_entry.score < beta)
             // If tt_entry.score < beta, tt_entry.flag cannot be Lower (ie must be Upper or Exact).
             // Otherwise, tt_entry.flag cannot be Upper (ie must be Lower or Exact).
             return tt_entry.score;
-    }
-    // Internal iterative reduction
-    else
+
+        // If static_eval > tt_entry.score, tt_entry.flag cannot be Lower (ie must be Upper or Exact).
+        // Otherwise, tt_entry.flag cannot be Upper (ie must be Lower or Exact).
+        if (tt_entry.flag != static_eval > tt_entry.score)
+            static_eval = tt_entry.score;
+    } else {
+        static_eval = stack[ply].score = eval(pos);
+
+        // Internal iterative reduction
         depth -= depth > 3;
+    }
 
-    i32 static_eval = stack[ply].score = eval(pos);
-    const i32 improving = ply > 1 && static_eval > stack[ply - 2].score;
-
-    // If static_eval > tt_entry.score, tt_entry.flag cannot be Lower (ie must be Upper or Exact).
-    // Otherwise, tt_entry.flag cannot be Upper (ie must be Lower or Exact).
-    if (tt_entry.key == tt_key && tt_entry.flag != static_eval > tt_entry.score)
-        static_eval = tt_entry.score;
+    const i32 improving = ply > 1 && stack[ply].score > stack[ply - 2].score;
 
     if (in_qsearch && static_eval > alpha) {
         if (static_eval >= beta)
@@ -793,7 +797,7 @@ i32 alphabeta(Position &pos,
         return in_check ? ply - mate_score : 0;
 
     // Save to TT
-    tt_entry = {tt_key, best_move, best_score, in_qsearch ? 0 : depth, tt_flag};
+    tt_entry = {tt_key, best_move, best_score, in_qsearch ? 0 : depth, stack[ply].score, tt_flag};
 
     return best_score;
 }
