@@ -597,11 +597,6 @@ i32 alphabeta(Position &pos,
             // If tt_entry.score < beta, tt_entry.flag cannot be Lower (ie must be Upper or Exact).
             // Otherwise, tt_entry.flag cannot be Upper (ie must be Lower or Exact).
             return tt_entry.score;
-
-        // If static_eval > tt_entry.score, tt_entry.flag cannot be Lower (ie must be Upper or Exact).
-        // Otherwise, tt_entry.flag cannot be Upper (ie must be Lower or Exact).
-        if (tt_entry.flag != static_eval > tt_entry.score)
-            static_eval = tt_entry.score;
     } else {
         static_eval = stack[ply].score = eval(pos);
 
@@ -609,7 +604,12 @@ i32 alphabeta(Position &pos,
         depth -= depth > 3;
     }
 
-    const i32 improving = ply > 1 && stack[ply].score > stack[ply - 2].score;
+    const i32 improving = ply > 1 && static_eval > stack[ply - 2].score;
+
+    // If static_eval > tt_entry.score, tt_entry.flag cannot be Lower (ie must be Upper or Exact).
+    // Otherwise, tt_entry.flag cannot be Upper (ie must be Lower or Exact).
+    if (tt_entry.key == tt_key && tt_entry.flag != static_eval > tt_entry.score)
+        static_eval = tt_entry.score;
 
     if (in_qsearch && static_eval > alpha) {
         if (static_eval >= beta)
