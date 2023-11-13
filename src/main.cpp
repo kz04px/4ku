@@ -879,7 +879,7 @@ auto iteratively_deepen(Position &pos,
                               hash_history);
 
             // Hard time limit exceeded
-            if (now() >= start_time + allocated_time || stop)
+            if (stop || now() >= start_time + allocated_time)
                 break;
 
             // minify enable filter delete
