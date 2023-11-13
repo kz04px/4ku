@@ -346,6 +346,7 @@ void generate_piece_moves(Move *const movelist,
                           const i32 piece,
                           const u64 to_mask,
                           F f) {
+    assert(piece >= Pawn);
     assert(piece <= None);
     u64 copy = pos.colour[0] & pos.pieces[piece];
     while (copy) {
@@ -356,9 +357,9 @@ void generate_piece_moves(Move *const movelist,
             const u8 to = lsb(moves);
             moves &= moves - 1;
             movelist[num_moves++] = Move{fr, to, None};
+            assert(num_moves < 256);
         }
     }
-    assert(num_moves < 256);
 }
 
 [[nodiscard]] i32 movegen(const Position &pos, Move *const movelist, const i32 only_captures) {
