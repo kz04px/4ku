@@ -165,8 +165,7 @@ vector<TTEntry> transposition_table;
     assert(move.from < 64);
     assert(move.to >= 0);
     assert(move.to < 64);
-    assert(move.promo == None || move.promo == Knight || move.promo == Bishop || move.promo == Rook ||
-           move.promo == Queen);
+    assert(move.promo == None || move.promo == Knight || move.promo == Bishop || move.promo == Rook || move.promo == Queen);
     string str;
     str += 'a' + move.from % 8;
     str += '1' + (move.from / 8 ^ 7 * flip);
@@ -263,6 +262,11 @@ u64 diag_mask[64];
 }
 
 auto makemove(Position &pos, const Move &move) {
+    assert(move.from >= 0);
+    assert(move.from < 64);
+    assert(move.to >= 0);
+    assert(move.to < 64);
+    assert(move.promo == None || move.promo == Knight || move.promo == Bishop || move.promo == Rook || move.promo == Queen);
     const i32 piece = piece_on(pos, move.from);
     const i32 captured = piece_on(pos, move.to);
     const u64 to = 1ULL << move.to;
@@ -320,6 +324,10 @@ void generate_pawn_moves(Move *const movelist, i32 &num_moves, u64 to_mask, cons
     while (to_mask) {
         const u8 to = lsb(to_mask);
         const u8 from = to + offset;
+        assert(from >= 0);
+        assert(from < 64);
+        assert(to >= 0);
+        assert(to < 64);
         to_mask &= to_mask - 1;
         if (to >= 56) {
             movelist[num_moves++] = Move{from, to, Queen};
@@ -338,6 +346,7 @@ void generate_piece_moves(Move *const movelist,
                           const i32 piece,
                           const u64 to_mask,
                           F f) {
+    assert(piece <= None);
     u64 copy = pos.colour[0] & pos.pieces[piece];
     while (copy) {
         const u8 fr = lsb(copy);
@@ -349,6 +358,7 @@ void generate_piece_moves(Move *const movelist,
             movelist[num_moves++] = Move{fr, to, None};
         }
     }
+    assert(num_moves < 256);
 }
 
 [[nodiscard]] i32 movegen(const Position &pos, Move *const movelist, const i32 only_captures) {
