@@ -570,7 +570,7 @@ const i32 pawn_attacked_penalty[] = {S(63, 14), S(156, 140)};
                     if (!(0x101010101010101ull << file & pawns[0]))
                         score += open_files[!(0x101010101010101ull << file & pawns[1]) * 5 + p - 1];
 
-                    // Pawns on bishop colored squares
+                    // Pawns on bishop coloured squares
                     if (p == Bishop) {
                         u64 mask = 0xAA55AA55AA55AA55ULL;
                         if (piece_bb & ~mask)
