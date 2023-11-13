@@ -861,7 +861,7 @@ auto iteratively_deepen(Position &pos,
     i32 score = 0;
     for (i32 i = 1; i < 128; ++i) {
         i32 research = 0;
-        for (i32 window = 32 + (score * score >> 14);; window <<= ++research) {
+        for (i32 window = 32 + (score * score >> 14); true; window <<= ++research) {
             i32 alpha = score - window;
             i32 beta = score + window;
             score = alphabeta(pos,
