@@ -70,9 +70,9 @@ struct [[nodiscard]] Position {
 };
 
 struct Move {
-    int8_t from = 0;
-    int8_t to = 0;
-    int8_t promo = 0;
+    uint8_t from = 0;
+    uint8_t to = 0;
+    uint8_t promo = 0;
 };
 
 const Move no_move{};
@@ -294,8 +294,8 @@ auto makemove(Position &pos, const Move &move) {
 
 void generate_pawn_moves(Move *const movelist, i32 &num_moves, u64 to_mask, const i32 offset) {
     while (to_mask) {
-        const int8_t to = lsb(to_mask);
-        const int8_t from = to + offset;
+        const uint8_t to = lsb(to_mask);
+        const uint8_t from = to + offset;
         to_mask &= to_mask - 1;
         if (to >= 56) {
             movelist[num_moves++] = Move{from, to, Queen};
@@ -316,11 +316,11 @@ void generate_piece_moves(Move *const movelist,
                           F f) {
     u64 copy = pos.colour[0] & pos.pieces[piece];
     while (copy) {
-        const int8_t fr = lsb(copy);
+        const uint8_t fr = lsb(copy);
         copy &= copy - 1;
         u64 moves = f(fr, pos.colour[0] | pos.colour[1]) & to_mask;
         while (moves) {
-            const int8_t to = lsb(moves);
+            const uint8_t to = lsb(moves);
             moves &= moves - 1;
             movelist[num_moves++] = Move{fr, to, None};
         }
