@@ -70,9 +70,9 @@ struct [[nodiscard]] Position {
 };
 
 struct Move {
-    i32 from = 0;
-    i32 to = 0;
-    i32 promo = 0;
+    int8_t from = 0;
+    int8_t to = 0;
+    int8_t promo = 0;
 };
 
 const Move no_move{};
@@ -294,15 +294,16 @@ auto makemove(Position &pos, const Move &move) {
 
 void generate_pawn_moves(Move *const movelist, i32 &num_moves, u64 to_mask, const i32 offset) {
     while (to_mask) {
-        const i32 to = lsb(to_mask);
+        const int8_t to = lsb(to_mask);
+        const int8_t from = to + offset;
         to_mask &= to_mask - 1;
         if (to >= 56) {
-            movelist[num_moves++] = Move{to + offset, to, Queen};
-            movelist[num_moves++] = Move{to + offset, to, Rook};
-            movelist[num_moves++] = Move{to + offset, to, Bishop};
-            movelist[num_moves++] = Move{to + offset, to, Knight};
+            movelist[num_moves++] = Move{from, to, Queen};
+            movelist[num_moves++] = Move{from, to, Rook};
+            movelist[num_moves++] = Move{from, to, Bishop};
+            movelist[num_moves++] = Move{from, to, Knight};
         } else
-            movelist[num_moves++] = Move{to + offset, to, None};
+            movelist[num_moves++] = Move{from, to, None};
     }
 }
 
@@ -315,11 +316,11 @@ void generate_piece_moves(Move *const movelist,
                           F f) {
     u64 copy = pos.colour[0] & pos.pieces[piece];
     while (copy) {
-        const i32 fr = lsb(copy);
+        const int8_t fr = lsb(copy);
         copy &= copy - 1;
         u64 moves = f(fr, pos.colour[0] | pos.colour[1]) & to_mask;
         while (moves) {
-            const i32 to = lsb(moves);
+            const int8_t to = lsb(moves);
             moves &= moves - 1;
             movelist[num_moves++] = Move{fr, to, None};
         }
