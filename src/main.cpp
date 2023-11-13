@@ -865,8 +865,8 @@ auto iteratively_deepen(Position &pos,
             i32 alpha = score - window;
             i32 beta = score + window;
             score = alphabeta(pos,
-                              score - window,
-                              score + window,
+                              alpha,
+                              beta,
                               i,
                               0,
                               // minify enable filter delete
