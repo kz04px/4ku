@@ -912,7 +912,7 @@ auto iteratively_deepen(Position &pos,
             }
             // minify disable filter delete
 
-            if (alpha < score && score < beta)
+            if (score > alpha && score < beta)
                 break;
         }
 
