@@ -880,7 +880,7 @@ auto iteratively_deepen(Position &pos,
 
             // Hard time limit exceeded
             if (stop || now() >= start_time + allocated_time)
-                break;
+                return stack[0].move;
 
             // minify enable filter delete
             // The main search thread prints with every iteration normally, or when the target depth has finished when
