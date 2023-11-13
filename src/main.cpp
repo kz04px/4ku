@@ -572,8 +572,8 @@ const i32 pawn_attacked_penalty[] = {S(63, 14), S(156, 140)};
 
                     // Pawns on bishop colored squares
                     if (p == Bishop) {
-                        u64 mask = 0xAA55AA55AA55AA55UL;
-                        if (!(piece_bb & mask))
+                        u64 mask = 0xAA55AA55AA55AA55ULL;
+                        if (piece_bb & ~mask)
                             mask = ~mask;
                         score -= bishop_pawns_penalty[0] * count(pawns[0] & mask);
                         score -= bishop_pawns_penalty[1] * count(pawns[1] & mask);
