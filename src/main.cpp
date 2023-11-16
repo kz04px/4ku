@@ -400,11 +400,11 @@ const i32 pawn_passed_blocked_penalty[] = {S(9, 14), S(-7, 43), S(-9, 85), S(4, 
 const i32 pawn_passed_king_distance[] = {S(1, -6), S(-4, 11)};
 const i32 bishop_pair = S(32, 72);
 const i32 king_shield[] = {S(36, -12), S(27, -7)};
-const i32 pawn_attacked_penalty[] = {S(64, 14), S(155, 142)};
+const i32 pawn_attacked_penalty[] = {S(63, 14), S(156, 140)};
 
 [[nodiscard]] i32 eval(Position &pos) {
     // Include side to move bonus
-    i32 score = S(28, 10);
+    i32 score = S(29, 10);
     i32 phase = 0;
 
     for (i32 c = 0; c < 2; ++c) {
@@ -617,8 +617,8 @@ i32 alphabeta(Position &pos,
 
     if (ply > 0 && !in_qsearch && !in_check && alpha == beta - 1) {
         // Reverse futility pruning
-        if (depth < 7) {
-            if (static_eval - 66 * (depth - improving) >= beta)
+        if (depth < 8) {
+            if (static_eval - 68 * (depth - improving) >= beta)
                 return static_eval;
 
             in_qsearch = static_eval + 256 * depth < alpha;
@@ -633,7 +633,7 @@ i32 alphabeta(Position &pos,
             if (-alphabeta(npos,
                            -beta,
                            -alpha,
-                           depth - 4 - depth / 6 - min((static_eval - beta) / 200, 3),
+                           depth - 4 - depth / 5 - min((static_eval - beta) / 200, 3),
                            ply + 1,
                            // minify enable filter delete
                            nodes,
@@ -691,12 +691,12 @@ i32 alphabeta(Position &pos,
         const i32 gain = max_material[move.promo] + max_material[piece_on(pos, move.to)];
 
         // Delta pruning
-        if (in_qsearch && !in_check && static_eval + 50 + gain < alpha)
+        if (in_qsearch && !in_check && static_eval + 48 + gain < alpha)
             break;
 
         // Forward futility pruning
         if (ply > 0 && depth < 8 && !in_qsearch && !in_check && num_moves_evaluated &&
-            static_eval + 100 * depth + gain < alpha)
+            static_eval + 104 * depth + gain < alpha)
             break;
 
         Position npos = pos;
@@ -726,7 +726,7 @@ i32 alphabeta(Position &pos,
         else {
             // Late move reduction
             i32 reduction = depth > 2 && num_moves_evaluated > 4 && !gain
-                                ? num_moves_evaluated / 14 + depth / 17 + (alpha == beta - 1) + !improving +
+                                ? num_moves_evaluated / 13 + depth / 15 + (alpha == beta - 1) + !improving +
                                       (hh_table[pos.flipped][move.from][move.to] < 0) -
                                       (hh_table[pos.flipped][move.from][move.to] > 0)
                                 : 0;
@@ -785,7 +785,7 @@ i32 alphabeta(Position &pos,
             }
         }
         // Late move pruning based on quiet move count
-        if (!in_check && alpha == beta - 1 && num_quiets_evaluated > 3 + depth * depth >> !improving)
+        if (!in_check && alpha == beta - 1 && num_quiets_evaluated > 2 + depth * depth >> !improving)
             break;
     }
     hash_history.pop_back();
@@ -862,8 +862,7 @@ auto iteratively_deepen(Position &pos,
 
     i32 score = 0;
     for (i32 i = 1; i < 128; ++i) {
-        i32 research = 0;
-        for (i32 window = 32 + (score * score >> 14); true; window <<= ++research) {
+        for (i32 window = 29 + (score * score >> 14); true; window *= 2) {
             i32 alpha = score - window;
             i32 beta = score + window;
             score = alphabeta(pos,
@@ -919,7 +918,7 @@ auto iteratively_deepen(Position &pos,
         }
 
         // Early exit after completed ply
-        if (!research && now() >= start_time + allocated_time / 10)
+        if (now() >= start_time + allocated_time / 10)
             break;
     }
     return stack[0].move;
