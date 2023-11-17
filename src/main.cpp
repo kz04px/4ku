@@ -165,7 +165,8 @@ vector<TTEntry> transposition_table;
     assert(move.from < 64);
     assert(move.to >= 0);
     assert(move.to < 64);
-    assert(move.promo == None || move.promo == Knight || move.promo == Bishop || move.promo == Rook || move.promo == Queen);
+    assert(move.promo == None || move.promo == Knight || move.promo == Bishop || move.promo == Rook ||
+           move.promo == Queen);
     string str;
     str += 'a' + move.from % 8;
     str += '1' + (move.from / 8 ^ 7 * flip);
@@ -266,7 +267,8 @@ auto makemove(Position &pos, const Move &move) {
     assert(move.from < 64);
     assert(move.to >= 0);
     assert(move.to < 64);
-    assert(move.promo == None || move.promo == Knight || move.promo == Bishop || move.promo == Rook || move.promo == Queen);
+    assert(move.promo == None || move.promo == Knight || move.promo == Bishop || move.promo == Rook ||
+           move.promo == Queen);
     const i32 piece = piece_on(pos, move.from);
     const i32 captured = piece_on(pos, move.to);
     const u64 to = 1ULL << move.to;
@@ -346,15 +348,19 @@ void generate_piece_moves(Move *const movelist,
                           const i32 piece,
                           const u64 to_mask,
                           F f) {
-    assert(piece >= Pawn);
-    assert(piece <= None);
+    assert(piece > Pawn);
+    assert(piece < None);
     u64 copy = pos.colour[0] & pos.pieces[piece];
     while (copy) {
         const u8 fr = lsb(copy);
+        assert(fr >= 0);
+        assert(fr < 64);
         copy &= copy - 1;
         u64 moves = f(fr, pos.colour[0] | pos.colour[1]) & to_mask;
         while (moves) {
             const u8 to = lsb(moves);
+            assert(to >= 0);
+            assert(to < 64);
             moves &= moves - 1;
             movelist[num_moves++] = Move{fr, to, None};
             assert(num_moves < 256);
@@ -382,10 +388,15 @@ void generate_piece_moves(Move *const movelist,
         movelist[num_moves++] = Move{4, 6, None};
     if (!only_captures && pos.castling[1] && !(all & 0xEULL) && !is_attacked(pos, 4) && !is_attacked(pos, 3))
         movelist[num_moves++] = Move{4, 2, None};
+    assert(num_moves < 256);
     return num_moves;
 }
 
 [[nodiscard]] i32 S(const i32 mg, const i32 eg) {
+    assert(mg >= -32768);
+    assert(mg <= 32767);
+    assert(eg >= -32768);
+    assert(eg <= 32767);
     return (eg << 16) + mg;
 }
 
@@ -555,6 +566,8 @@ const i32 pawn_attacked_penalty[] = {S(63, 14), S(156, 140)};
 
         score = -score;
     }
+
+    assert(phase >= 0);
 
     // Tapered eval with endgame scaling based on remaining pawn count of the stronger side
     return (int16_t(score) * phase +
