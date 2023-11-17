@@ -448,8 +448,6 @@ const i32 king_shield[] = {S(36, -12), S(27, -7)};
 const i32 pawn_attacked_penalty[] = {S(63, 14), S(156, 140)};
 
 [[nodiscard]] i32 eval(Position &pos) {
-    assert(true);
-    static_assert(true);
     // Include side to move bonus
     i32 score = S(29, 10);
     i32 phase = 0;
