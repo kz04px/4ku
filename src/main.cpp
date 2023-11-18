@@ -36,8 +36,8 @@ using i32 = int;
 using u64 = uint64_t;
 
 // Constants
-const i32 mate_score = 1 << 15;
-const i32 inf = 1 << 16;
+const i32 mate_score = 30000;
+const i32 inf = 32000;
 
 enum
 {
@@ -97,15 +97,15 @@ enum
 struct [[nodiscard]] TT_Entry {
     u64 key;
     Move move;
-    i32 score;
-    i32 depth;
-    uint16_t flag;
+    uint8_t flag;
+    int16_t score;
+    int16_t depth;
 };
 
 u64 keys[848];
 
 // Engine options
-u64 num_tt_entries = 64ULL << 15;  // The first value is the size in megabytes
+u64 num_tt_entries = 64ULL << 16;  // The first value is the size in megabytes
 i32 thread_count = 1;
 
 vector<TT_Entry> transposition_table;
@@ -648,7 +648,7 @@ i32 alphabeta(Position &pos,
     }
 
     hash_history.emplace_back(tt_key);
-    uint16_t tt_flag = Upper;
+    uint8_t tt_flag = Upper;
 
     i32 num_moves_evaluated = 0;
     i32 num_quiets_evaluated = 0;
@@ -794,7 +794,7 @@ i32 alphabeta(Position &pos,
         return in_check ? ply - mate_score : 0;
 
     // Save to TT
-    tt_entry = {tt_key, best_move, best_score, in_qsearch ? 0 : depth, tt_flag};
+    tt_entry = {tt_key, best_move, tt_flag, int16_t(best_score), int16_t(in_qsearch ? 0 : depth)};
 
     return best_score;
 }
@@ -1015,6 +1015,8 @@ i32 main(
     // minify disable filter delete
 ) {
     setbuf(stdout, 0);
+
+    sizeof(TT_Entry);
 
     // Generate used attack masks
     for (i32 i = 0; i < 64; ++i)
