@@ -32,6 +32,7 @@
 
 using namespace std;
 
+using u8 = uint8_t;
 using i32 = int;
 using u64 = uint64_t;
 
@@ -70,9 +71,9 @@ struct [[nodiscard]] Position {
 };
 
 struct Move {
-    uint8_t from = 0;
-    uint8_t to = 0;
-    uint8_t promo = 0;
+    u8 from = 0;
+    u8 to = 0;
+    u8 promo = 0;
 };
 
 const Move no_move{};
@@ -97,7 +98,7 @@ enum
 struct [[nodiscard]] TT_Entry {
     u64 key;
     Move move;
-    uint8_t flag;
+    u8 flag;
     int16_t score;
     int16_t depth;
 };
@@ -294,8 +295,8 @@ auto makemove(Position &pos, const Move &move) {
 
 void generate_pawn_moves(Move *const movelist, i32 &num_moves, u64 to_mask, const i32 offset) {
     while (to_mask) {
-        const uint8_t to = lsb(to_mask);
-        const uint8_t from = to + offset;
+        const u8 to = lsb(to_mask);
+        const u8 from = to + offset;
         to_mask &= to_mask - 1;
         if (to >= 56) {
             movelist[num_moves++] = Move{from, to, Queen};
@@ -316,11 +317,11 @@ void generate_piece_moves(Move *const movelist,
                           F f) {
     u64 copy = pos.colour[0] & pos.pieces[piece];
     while (copy) {
-        const uint8_t fr = lsb(copy);
+        const u8 fr = lsb(copy);
         copy &= copy - 1;
         u64 moves = f(fr, pos.colour[0] | pos.colour[1]) & to_mask;
         while (moves) {
-            const uint8_t to = lsb(moves);
+            const u8 to = lsb(moves);
             moves &= moves - 1;
             movelist[num_moves++] = Move{fr, to, None};
         }
@@ -648,7 +649,7 @@ i32 alphabeta(Position &pos,
     }
 
     hash_history.emplace_back(tt_key);
-    uint8_t tt_flag = Upper;
+    u8 tt_flag = Upper;
 
     i32 num_moves_evaluated = 0;
     i32 num_quiets_evaluated = 0;
