@@ -1016,8 +1016,6 @@ i32 main(
 ) {
     setbuf(stdout, 0);
 
-    sizeof(TT_Entry);
-
     // Generate used attack masks
     for (i32 i = 0; i < 64; ++i)
         diag_mask[i] = ray(i, 0, ne) | ray(i, 0, sw);
