@@ -1124,8 +1124,8 @@ i32 main(
                 cin >> word;
                 cin >> megabytes;
                 num_tt_entries = static_cast<u64>(min(max(megabytes, 1), 65536)) * 1024 * 1024 / sizeof(TTEntry);
-                transposition_table.clear();
                 transposition_table.resize(num_tt_entries);
+                transposition_table.clear();
                 transposition_table.shrink_to_fit();
             }
         }
