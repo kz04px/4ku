@@ -95,7 +95,7 @@ enum
     Exact
 };
 
-struct [[nodiscard]] TT_Entry {
+struct [[nodiscard]] TTEntry {
     u64 key;
     Move move;
     u8 flag;
@@ -109,7 +109,7 @@ u64 keys[848];
 u64 num_tt_entries = 64ULL << 16;  // The first value is the size in megabytes
 i32 thread_count = 1;
 
-vector<TT_Entry> transposition_table;
+vector<TTEntry> transposition_table;
 
 [[nodiscard]] u64 flip(const u64 bb) {
     return __builtin_bswap64(bb);
@@ -588,7 +588,7 @@ i32 alphabeta(Position &pos,
     }
 
     // TT Probing
-    TT_Entry &tt_entry = transposition_table[tt_key % num_tt_entries];
+    TTEntry &tt_entry = transposition_table[tt_key % num_tt_entries];
     Move tt_move{};
     if (tt_entry.key == tt_key) {
         tt_move = tt_entry.move;
@@ -827,7 +827,7 @@ void print_pv(const Position &pos, const Move move, vector<u64> &hash_history) {
 
     // Probe the TT in the resulting position
     const u64 tt_key = get_hash(npos);
-    const TT_Entry &tt_entry = transposition_table[tt_key % num_tt_entries];
+    const TTEntry &tt_entry = transposition_table[tt_key % num_tt_entries];
 
     // Only continue if the move was valid and comes from a PV search
     if (tt_entry.key != tt_key || tt_entry.move == no_move || tt_entry.flag != 2)
@@ -1091,7 +1091,8 @@ i32 main(
     cout << "id author kz04px\n";
     // minify enable filter delete
     cout << "option name Threads type spin default " << thread_count << " min 1 max 256\n";
-    cout << "option name Hash type spin default " << (num_tt_entries >> 16) << " min 1 max 65536\n";
+    cout << "option name Hash type spin default " << (num_tt_entries * sizeof(TTEntry) / (1024 * 1024))
+         << " min 1 max 65536\n";
     // minify disable filter delete
     cout << "uciok\n";
 
@@ -1107,7 +1108,7 @@ i32 main(
         )
             break;
         else if (word == "ucinewgame")
-            memset(transposition_table.data(), 0, sizeof(TT_Entry) * transposition_table.size());
+            memset(transposition_table.data(), 0, sizeof(TTEntry) * transposition_table.size());
         else if (word == "isready")
             cout << "readyok\n";
         // minify enable filter delete
@@ -1122,7 +1123,7 @@ i32 main(
                 i32 megabytes = 1;
                 cin >> word;
                 cin >> megabytes;
-                num_tt_entries = static_cast<u64>(min(max(megabytes, 1), 65536)) * 1024 * 1024 / sizeof(TT_Entry);
+                num_tt_entries = static_cast<u64>(min(max(megabytes, 1), 65536)) * 1024 * 1024 / sizeof(TTEntry);
                 transposition_table.clear();
                 transposition_table.resize(num_tt_entries);
             }
