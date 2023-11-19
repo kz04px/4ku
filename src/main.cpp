@@ -32,12 +32,13 @@
 
 using namespace std;
 
+using u8 = uint8_t;
 using i32 = int;
 using u64 = uint64_t;
 
 // Constants
-const i32 mate_score = 1 << 15;
-const i32 inf = 1 << 16;
+const i32 mate_score = 30000;
+const i32 inf = 32000;
 
 enum
 {
@@ -70,9 +71,9 @@ struct [[nodiscard]] Position {
 };
 
 struct Move {
-    i32 from = 0;
-    i32 to = 0;
-    i32 promo = 0;
+    u8 from = 0;
+    u8 to = 0;
+    u8 promo = 0;
 };
 
 const Move no_move{};
@@ -94,21 +95,21 @@ enum
     Exact
 };
 
-struct [[nodiscard]] TT_Entry {
+struct [[nodiscard]] TTEntry {
     u64 key;
     Move move;
-    i32 score;
-    i32 depth;
-    uint16_t flag;
+    u8 flag;
+    int16_t score;
+    int16_t depth;
 };
 
 u64 keys[848];
 
 // Engine options
-u64 num_tt_entries = 64ULL << 15;  // The first value is the size in megabytes
+u64 num_tt_entries = 64ULL << 16;  // The first value is the size in megabytes
 i32 thread_count = 1;
 
-vector<TT_Entry> transposition_table;
+vector<TTEntry> transposition_table;
 
 [[nodiscard]] u64 flip(const u64 bb) {
     return __builtin_bswap64(bb);
@@ -294,15 +295,16 @@ auto makemove(Position &pos, const Move &move) {
 
 void generate_pawn_moves(Move *const movelist, i32 &num_moves, u64 to_mask, const i32 offset) {
     while (to_mask) {
-        const i32 to = lsb(to_mask);
+        const u8 to = lsb(to_mask);
+        const u8 from = to + offset;
         to_mask &= to_mask - 1;
         if (to >= 56) {
-            movelist[num_moves++] = Move{to + offset, to, Queen};
-            movelist[num_moves++] = Move{to + offset, to, Rook};
-            movelist[num_moves++] = Move{to + offset, to, Bishop};
-            movelist[num_moves++] = Move{to + offset, to, Knight};
+            movelist[num_moves++] = Move{from, to, Queen};
+            movelist[num_moves++] = Move{from, to, Rook};
+            movelist[num_moves++] = Move{from, to, Bishop};
+            movelist[num_moves++] = Move{from, to, Knight};
         } else
-            movelist[num_moves++] = Move{to + offset, to, None};
+            movelist[num_moves++] = Move{from, to, None};
     }
 }
 
@@ -315,11 +317,11 @@ void generate_piece_moves(Move *const movelist,
                           F f) {
     u64 copy = pos.colour[0] & pos.pieces[piece];
     while (copy) {
-        const i32 fr = lsb(copy);
+        const u8 fr = lsb(copy);
         copy &= copy - 1;
         u64 moves = f(fr, pos.colour[0] | pos.colour[1]) & to_mask;
         while (moves) {
-            const i32 to = lsb(moves);
+            const u8 to = lsb(moves);
             moves &= moves - 1;
             movelist[num_moves++] = Move{fr, to, None};
         }
@@ -586,7 +588,7 @@ i32 alphabeta(Position &pos,
     }
 
     // TT Probing
-    TT_Entry &tt_entry = transposition_table[tt_key % num_tt_entries];
+    TTEntry &tt_entry = transposition_table[tt_key % num_tt_entries];
     Move tt_move{};
     if (tt_entry.key == tt_key) {
         tt_move = tt_entry.move;
@@ -647,7 +649,7 @@ i32 alphabeta(Position &pos,
     }
 
     hash_history.emplace_back(tt_key);
-    uint16_t tt_flag = Upper;
+    u8 tt_flag = Upper;
 
     i32 num_moves_evaluated = 0;
     i32 num_quiets_evaluated = 0;
@@ -793,7 +795,7 @@ i32 alphabeta(Position &pos,
         return in_check ? ply - mate_score : 0;
 
     // Save to TT
-    tt_entry = {tt_key, best_move, best_score, in_qsearch ? 0 : depth, tt_flag};
+    tt_entry = {tt_key, best_move, tt_flag, int16_t(best_score), int16_t(!in_qsearch * depth)};
 
     return best_score;
 }
@@ -825,7 +827,7 @@ void print_pv(const Position &pos, const Move move, vector<u64> &hash_history) {
 
     // Probe the TT in the resulting position
     const u64 tt_key = get_hash(npos);
-    const TT_Entry &tt_entry = transposition_table[tt_key % num_tt_entries];
+    const TTEntry &tt_entry = transposition_table[tt_key % num_tt_entries];
 
     // Only continue if the move was valid and comes from a PV search
     if (tt_entry.key != tt_key || tt_entry.move == no_move || tt_entry.flag != 2)
@@ -1089,7 +1091,8 @@ i32 main(
     cout << "id author kz04px\n";
     // minify enable filter delete
     cout << "option name Threads type spin default " << thread_count << " min 1 max 256\n";
-    cout << "option name Hash type spin default " << (num_tt_entries >> 15) << " min 1 max 65536\n";
+    cout << "option name Hash type spin default " << num_tt_entries * sizeof(TTEntry) / (1024 * 1024)
+         << " min 1 max 65536\n";
     // minify disable filter delete
     cout << "uciok\n";
 
@@ -1105,7 +1108,7 @@ i32 main(
         )
             break;
         else if (word == "ucinewgame")
-            memset(transposition_table.data(), 0, sizeof(TT_Entry) * transposition_table.size());
+            memset(transposition_table.data(), 0, sizeof(TTEntry) * transposition_table.size());
         else if (word == "isready")
             cout << "readyok\n";
         // minify enable filter delete
@@ -1120,7 +1123,7 @@ i32 main(
                 i32 megabytes = 1;
                 cin >> word;
                 cin >> megabytes;
-                num_tt_entries = static_cast<u64>(min(max(megabytes, 1), 65536)) * 1024 * 1024 / sizeof(TT_Entry);
+                num_tt_entries = static_cast<u64>(min(max(megabytes, 1), 65536)) * 1024 * 1024 / sizeof(TTEntry);
                 transposition_table.clear();
                 transposition_table.resize(num_tt_entries);
             }
