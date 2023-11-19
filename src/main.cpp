@@ -795,7 +795,7 @@ i32 alphabeta(Position &pos,
         return in_check ? ply - mate_score : 0;
 
     // Save to TT
-    tt_entry = {tt_key, best_move, tt_flag, int16_t(best_score), int16_t(in_qsearch ? 0 : depth)};
+    tt_entry = {tt_key, best_move, tt_flag, int16_t(best_score), int16_t(!in_qsearch * depth)};
 
     return best_score;
 }
@@ -1091,7 +1091,8 @@ i32 main(
     cout << "id author kz04px\n";
     // minify enable filter delete
     cout << "option name Threads type spin default " << thread_count << " min 1 max 256\n";
-    cout << "option name Hash type spin default " << num_tt_entries * sizeof(TTEntry) / (1024 * 1024) << " min 1 max 65536\n";
+    cout << "option name Hash type spin default " << num_tt_entries * sizeof(TTEntry) / (1024 * 1024)
+         << " min 1 max 65536\n";
     // minify disable filter delete
     cout << "uciok\n";
 
