@@ -1091,8 +1091,7 @@ i32 main(
     cout << "id author kz04px\n";
     // minify enable filter delete
     cout << "option name Threads type spin default " << thread_count << " min 1 max 256\n";
-    cout << "option name Hash type spin default " << (num_tt_entries * sizeof(TTEntry) / (1024 * 1024))
-         << " min 1 max 65536\n";
+    cout << "option name Hash type spin default " << num_tt_entries * sizeof(TTEntry) / (1024 * 1024) << " min 1 max 65536\n";
     // minify disable filter delete
     cout << "uciok\n";
 
