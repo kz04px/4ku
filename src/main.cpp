@@ -103,6 +103,7 @@ struct [[nodiscard]] TTEntry {
     int16_t score;
     int16_t depth;
 };
+static_assert(sizeof(TTEntry) == 16);
 
 u64 keys[848];
 
@@ -165,6 +166,7 @@ vector<TTEntry> transposition_table;
     assert(move.from < 64);
     assert(move.to >= 0);
     assert(move.to < 64);
+    assert(move.from != move.to);
     assert(move.promo == None || move.promo == Knight || move.promo == Bishop || move.promo == Rook ||
            move.promo == Queen);
     string str;
@@ -267,6 +269,7 @@ auto makemove(Position &pos, const Move &move) {
     assert(move.from < 64);
     assert(move.to >= 0);
     assert(move.to < 64);
+    assert(move.from != move.to);
     assert(move.promo == None || move.promo == Knight || move.promo == Bishop || move.promo == Rook ||
            move.promo == Queen);
     const i32 piece = piece_on(pos, move.from);
@@ -348,8 +351,7 @@ void generate_piece_moves(Move *const movelist,
                           const i32 piece,
                           const u64 to_mask,
                           F f) {
-    assert(piece > Pawn);
-    assert(piece < None);
+    assert(piece == Knight || piece == Bishop || piece == Rook || piece == Queen || piece == King);
     u64 copy = pos.colour[0] & pos.pieces[piece];
     while (copy) {
         const u8 fr = lsb(copy);
