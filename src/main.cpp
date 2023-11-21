@@ -27,6 +27,7 @@
 #include <thread>
 #include <vector>
 // minify enable filter delete
+#include <cassert>
 #include <sstream>
 // minify disable filter delete
 
@@ -102,6 +103,7 @@ struct [[nodiscard]] TTEntry {
     int16_t score;
     int16_t depth;
 };
+static_assert(sizeof(TTEntry) == 16);
 
 u64 keys[848];
 
@@ -160,6 +162,13 @@ vector<TTEntry> transposition_table;
 }
 
 [[nodiscard]] string move_str(const Move &move, const i32 flip) {
+    assert(move.from >= 0);
+    assert(move.from < 64);
+    assert(move.to >= 0);
+    assert(move.to < 64);
+    assert(move.from != move.to);
+    assert(move.promo == None || move.promo == Knight || move.promo == Bishop || move.promo == Rook ||
+           move.promo == Queen);
     string str;
     str += 'a' + move.from % 8;
     str += '1' + (move.from / 8 ^ 7 * flip);
@@ -171,6 +180,8 @@ vector<TTEntry> transposition_table;
 }
 
 [[nodiscard]] i32 piece_on(const Position &pos, const i32 sq) {
+    assert(sq >= 0);
+    assert(sq < 64);
     const u64 bb = 1ULL << sq;
     for (i32 i = 0; i < 6; ++i)
         if (pos.pieces[i] & bb)
@@ -192,6 +203,8 @@ void flip(Position &pos) {
 
 template <typename F>
 [[nodiscard]] u64 ray(const i32 sq, const u64 blockers, F f) {
+    assert(sq >= 0);
+    assert(sq < 64);
     u64 mask = f(1ULL << sq);
     mask |= f(mask & ~blockers);
     mask |= f(mask & ~blockers);
@@ -205,31 +218,43 @@ template <typename F>
 u64 diag_mask[64];
 
 [[nodiscard]] u64 xattack(const i32 sq, const u64 blockers, const u64 dir_mask) {
+    assert(sq >= 0);
+    assert(sq < 64);
     return dir_mask & ((blockers & dir_mask) - (1ULL << sq) ^ flip(flip(blockers & dir_mask) - flip(1ULL << sq)));
 }
 
 [[nodiscard]] u64 bishop(const i32 sq, const u64 blockers) {
+    assert(sq >= 0);
+    assert(sq < 64);
     return xattack(sq, blockers, diag_mask[sq]) | xattack(sq, blockers, flip(diag_mask[sq ^ 56]));
 }
 
 [[nodiscard]] u64 rook(const i32 sq, const u64 blockers) {
+    assert(sq >= 0);
+    assert(sq < 64);
     return xattack(sq, blockers, 1ULL << sq ^ 0x101010101010101ULL << sq % 8) | ray(sq, blockers, east) |
            ray(sq, blockers, west);
 }
 
 [[nodiscard]] u64 knight(const i32 sq, const u64) {
+    assert(sq >= 0);
+    assert(sq < 64);
     const u64 bb = 1ULL << sq;
     return (bb << 15 | bb >> 17) & 0x7F7F7F7F7F7F7F7FULL | (bb << 17 | bb >> 15) & 0xFEFEFEFEFEFEFEFEULL |
            (bb << 10 | bb >> 6) & 0xFCFCFCFCFCFCFCFCULL | (bb << 6 | bb >> 10) & 0x3F3F3F3F3F3F3F3FULL;
 }
 
 [[nodiscard]] u64 king(const i32 sq, const u64) {
+    assert(sq >= 0);
+    assert(sq < 64);
     const u64 bb = 1ULL << sq;
     return bb << 8 | bb >> 8 | (bb >> 1 | bb >> 9 | bb << 7) & 0x7F7F7F7F7F7F7F7FULL |
            (bb << 1 | bb << 9 | bb >> 7) & 0xFEFEFEFEFEFEFEFEULL;
 }
 
 [[nodiscard]] auto is_attacked(const Position &pos, const i32 sq, const i32 them = true) {
+    assert(sq >= 0);
+    assert(sq < 64);
     const u64 bb = 1ULL << sq;
     const u64 pawns = pos.colour[them] & pos.pieces[Pawn];
     const u64 pawn_attacks = them ? sw(pawns) | se(pawns) : nw(pawns) | ne(pawns);
@@ -240,8 +265,17 @@ u64 diag_mask[64];
 }
 
 auto makemove(Position &pos, const Move &move) {
+    assert(move.from >= 0);
+    assert(move.from < 64);
+    assert(move.to >= 0);
+    assert(move.to < 64);
+    assert(move.from != move.to);
+    assert(move.promo == None || move.promo == Knight || move.promo == Bishop || move.promo == Rook ||
+           move.promo == Queen);
     const i32 piece = piece_on(pos, move.from);
+    assert(piece != None);
     const i32 captured = piece_on(pos, move.to);
+    assert(captured != King);
     const u64 to = 1ULL << move.to;
     const u64 from = 1ULL << move.from;
     const u64 mask = from | to;
@@ -289,6 +323,23 @@ auto makemove(Position &pos, const Move &move) {
 
     flip(pos);
 
+    assert(!(pos.colour[0] & pos.colour[1]));
+    assert(!(pos.pieces[Pawn] & pos.pieces[Knight]));
+    assert(!(pos.pieces[Pawn] & pos.pieces[Bishop]));
+    assert(!(pos.pieces[Pawn] & pos.pieces[Rook]));
+    assert(!(pos.pieces[Pawn] & pos.pieces[Queen]));
+    assert(!(pos.pieces[Pawn] & pos.pieces[King]));
+    assert(!(pos.pieces[Knight] & pos.pieces[Bishop]));
+    assert(!(pos.pieces[Knight] & pos.pieces[Rook]));
+    assert(!(pos.pieces[Knight] & pos.pieces[Queen]));
+    assert(!(pos.pieces[Knight] & pos.pieces[King]));
+    assert(!(pos.pieces[Bishop] & pos.pieces[Rook]));
+    assert(!(pos.pieces[Bishop] & pos.pieces[Queen]));
+    assert(!(pos.pieces[Bishop] & pos.pieces[King]));
+    assert(!(pos.pieces[Rook] & pos.pieces[Queen]));
+    assert(!(pos.pieces[Rook] & pos.pieces[King]));
+    assert(!(pos.pieces[Queen] & pos.pieces[King]));
+
     // Return move legality
     return !is_attacked(pos, lsb(pos.colour[1] & pos.pieces[King]), false);
 }
@@ -297,6 +348,10 @@ void generate_pawn_moves(Move *const movelist, i32 &num_moves, u64 to_mask, cons
     while (to_mask) {
         const u8 to = lsb(to_mask);
         const u8 from = to + offset;
+        assert(from >= 0);
+        assert(from < 64);
+        assert(to >= 0);
+        assert(to < 64);
         to_mask &= to_mask - 1;
         if (to >= 56) {
             movelist[num_moves++] = Move{from, to, Queen};
@@ -315,15 +370,21 @@ void generate_piece_moves(Move *const movelist,
                           const i32 piece,
                           const u64 to_mask,
                           F f) {
+    assert(piece == Knight || piece == Bishop || piece == Rook || piece == Queen || piece == King);
     u64 copy = pos.colour[0] & pos.pieces[piece];
     while (copy) {
         const u8 fr = lsb(copy);
+        assert(fr >= 0);
+        assert(fr < 64);
         copy &= copy - 1;
         u64 moves = f(fr, pos.colour[0] | pos.colour[1]) & to_mask;
         while (moves) {
             const u8 to = lsb(moves);
+            assert(to >= 0);
+            assert(to < 64);
             moves &= moves - 1;
             movelist[num_moves++] = Move{fr, to, None};
+            assert(num_moves < 256);
         }
     }
 }
@@ -348,10 +409,15 @@ void generate_piece_moves(Move *const movelist,
         movelist[num_moves++] = Move{4, 6, None};
     if (!only_captures && pos.castling[1] && !(all & 0xEULL) && !is_attacked(pos, 4) && !is_attacked(pos, 3))
         movelist[num_moves++] = Move{4, 2, None};
+    assert(num_moves < 256);
     return num_moves;
 }
 
 [[nodiscard]] i32 S(const i32 mg, const i32 eg) {
+    assert(mg >= -32768);
+    assert(mg <= 32767);
+    assert(eg >= -32768);
+    assert(eg <= 32767);
     return (eg << 16) + mg;
 }
 
@@ -520,6 +586,8 @@ const i32 pawn_attacked_penalty[] = {S(63, 14), S(156, 140)};
         score = -score;
     }
 
+    assert(phase >= 0);
+
     // Tapered eval with endgame scaling based on remaining pawn count of the stronger side
     return (int16_t(score) * phase +
             (score + 0x8000 >> 16) * (16 + count(pos.colour[score < 0] & pos.pieces[Pawn])) / 24 * (24 - phase)) /
@@ -569,6 +637,11 @@ i32 alphabeta(Position &pos,
               int64_t (&hh_table)[2][64][64],
               vector<u64> &hash_history,
               const i32 do_null = true) {
+    assert(alpha < beta);
+    assert(ply >= 0);
+    assert(stack != nullptr);
+    assert(hh_table != nullptr);
+
     // Don't overflow the stack
     if (ply > 127)
         return eval(pos);
@@ -618,6 +691,7 @@ i32 alphabeta(Position &pos,
     if (ply > 0 && !in_qsearch && !in_check && alpha == beta - 1) {
         // Reverse futility pruning
         if (depth < 8) {
+            assert(ply > 0);
             if (static_eval - 68 * (depth - improving) >= beta)
                 return static_eval;
 
@@ -627,6 +701,7 @@ i32 alphabeta(Position &pos,
         // Null move pruning
         if (depth > 2 && static_eval >= beta && static_eval >= stack[ply].score && do_null &&
             pos.colour[0] & ~(pos.pieces[Pawn] | pos.pieces[King])) {
+            assert(ply > 0);
             Position npos = pos;
             flip(npos);
             npos.ep = 0;
