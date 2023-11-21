@@ -575,8 +575,8 @@ const i32 pawn_attacked_penalty[] = {S(63, 14), S(156, 140)};
                         u64 mask = 0xAA55AA55AA55AA55ULL;
                         if (piece_bb & ~mask)
                             mask = ~mask;
-                        score -= bishop_pawns_penalty[0] * count(pawns[0] & mask);
-                        score -= bishop_pawns_penalty[1] * count(pawns[1] & mask);
+                        for (i32 i = 0; i < 2; ++i)
+                            score -= bishop_pawns_penalty[i] * count(pawns[i] & mask);
                     }
 
                     if (p == King && piece_bb & 0xC3D7) {
