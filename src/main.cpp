@@ -691,7 +691,7 @@ i32 alphabeta(Position &pos,
     if (ply > 0 && !in_qsearch && !in_check && alpha == beta - 1) {
         // Reverse futility pruning
         if (depth < 8) {
-            assert(ply != 0);
+            assert(ply > 0);
             if (static_eval - 68 * (depth - improving) >= beta)
                 return static_eval;
 
@@ -701,7 +701,7 @@ i32 alphabeta(Position &pos,
         // Null move pruning
         if (depth > 2 && static_eval >= beta && static_eval >= stack[ply].score && do_null &&
             pos.colour[0] & ~(pos.pieces[Pawn] | pos.pieces[King])) {
-            assert(ply != 0);
+            assert(ply > 0);
             Position npos = pos;
             flip(npos);
             npos.ep = 0;
