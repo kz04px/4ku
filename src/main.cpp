@@ -273,7 +273,9 @@ auto makemove(Position &pos, const Move &move) {
     assert(move.promo == None || move.promo == Knight || move.promo == Bishop || move.promo == Rook ||
            move.promo == Queen);
     const i32 piece = piece_on(pos, move.from);
+    assert(piece != None);
     const i32 captured = piece_on(pos, move.to);
+    assert(captured != King);
     const u64 to = 1ULL << move.to;
     const u64 from = 1ULL << move.from;
     const u64 mask = from | to;
@@ -320,6 +322,23 @@ auto makemove(Position &pos, const Move &move) {
     pos.castling[3] &= !(mask & 0x1100000000000000ULL);
 
     flip(pos);
+
+    assert(!(pos.colour[0] & pos.colour[1]));
+    assert(!(pos.pieces[Pawn] & pos.pieces[Knight]));
+    assert(!(pos.pieces[Pawn] & pos.pieces[Bishop]));
+    assert(!(pos.pieces[Pawn] & pos.pieces[Rook]));
+    assert(!(pos.pieces[Pawn] & pos.pieces[Queen]));
+    assert(!(pos.pieces[Pawn] & pos.pieces[King]));
+    assert(!(pos.pieces[Knight] & pos.pieces[Bishop]));
+    assert(!(pos.pieces[Knight] & pos.pieces[Rook]));
+    assert(!(pos.pieces[Knight] & pos.pieces[Queen]));
+    assert(!(pos.pieces[Knight] & pos.pieces[King]));
+    assert(!(pos.pieces[Bishop] & pos.pieces[Rook]));
+    assert(!(pos.pieces[Bishop] & pos.pieces[Queen]));
+    assert(!(pos.pieces[Bishop] & pos.pieces[King]));
+    assert(!(pos.pieces[Rook] & pos.pieces[Queen]));
+    assert(!(pos.pieces[Rook] & pos.pieces[King]));
+    assert(!(pos.pieces[Queen] & pos.pieces[King]));
 
     // Return move legality
     return !is_attacked(pos, lsb(pos.colour[1] & pos.pieces[King]), false);
@@ -618,6 +637,11 @@ i32 alphabeta(Position &pos,
               int64_t (&hh_table)[2][64][64],
               vector<u64> &hash_history,
               const i32 do_null = true) {
+    assert(alpha < beta);
+    assert(ply >= 0);
+    assert(stack != nullptr);
+    assert(hh_table != nullptr);
+
     // Don't overflow the stack
     if (ply > 127)
         return eval(pos);
@@ -667,6 +691,7 @@ i32 alphabeta(Position &pos,
     if (ply > 0 && !in_qsearch && !in_check && alpha == beta - 1) {
         // Reverse futility pruning
         if (depth < 8) {
+            assert(ply != 0);
             if (static_eval - 68 * (depth - improving) >= beta)
                 return static_eval;
 
@@ -676,6 +701,7 @@ i32 alphabeta(Position &pos,
         // Null move pruning
         if (depth > 2 && static_eval >= beta && static_eval >= stack[ply].score && do_null &&
             pos.colour[0] & ~(pos.pieces[Pawn] | pos.pieces[King])) {
+            assert(ply != 0);
             Position npos = pos;
             flip(npos);
             npos.ep = 0;
