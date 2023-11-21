@@ -920,6 +920,7 @@ void print_pv(const Position &pos, const Move move, vector<u64> &hash_history) {
 // minify disable filter delete
 
 auto iteratively_deepen(Position &pos,
+                        int64_t (&hh_table)[2][64][64],
                         vector<u64> &hash_history,
                         // minify enable filter delete
                         i32 thread_id,
@@ -930,7 +931,6 @@ auto iteratively_deepen(Position &pos,
                         const i32 allocated_time,
                         i32 &stop) {
     Stack stack[128] = {};
-    int64_t hh_table[2][64][64] = {};
     // minify enable filter delete
     u64 nodes = 0;
     // minify disable filter delete
@@ -1103,6 +1103,7 @@ i32 main(
 
     Position pos;
     vector<u64> hash_history;
+    int64_t hh_table[2][64][64] = {};
 
     // minify enable filter delete
     // OpenBench compliance
@@ -1143,7 +1144,7 @@ i32 main(
         for (const auto &[fen, depth] : bench_positions) {
             i32 stop = false;
             set_fen(pos, fen);
-            iteratively_deepen(pos, hash_history, 0, depth, total_nodes, now(), 1 << 30, stop);
+            iteratively_deepen(pos, hh_table, hash_history, 0, depth, total_nodes, now(), 1 << 30, stop);
         }
         const u64 elapsed = now() - start_time;
 
@@ -1182,9 +1183,10 @@ i32 main(
             // minify disable filter delete
         )
             break;
-        else if (word == "ucinewgame")
+        else if (word == "ucinewgame") {
             memset(transposition_table.data(), 0, sizeof(TTEntry) * transposition_table.size());
-        else if (word == "isready")
+            memset(hh_table, 0, sizeof(hh_table));
+        } else if (word == "isready")
             cout << "readyok\n";
         // minify enable filter delete
         else if (word == "setoption") {
@@ -1230,12 +1232,18 @@ i32 main(
 
             const u64 start = now();
 
+            // Age history heuristic table
+            for (i32 i = 0; i < 2; ++i)
+                for (i32 j = 0; j < 4096; ++j)
+                    hh_table[i][j / 64][j % 64] /= 8;
+
             // Lazy SMP
             vector<thread> threads;
             i32 stop = false;
             for (i32 i = 1; i < thread_count; ++i)
                 threads.emplace_back([=, &stop]() mutable {
                     iteratively_deepen(pos,
+                                       hh_table,
                                        hash_history,
                                        // minify enable filter delete
                                        i,
@@ -1247,6 +1255,7 @@ i32 main(
                                        stop);
                 });
             const Move best_move = iteratively_deepen(pos,
+                                                      hh_table,
                                                       hash_history,
                                                       // minify enable filter delete
                                                       0,
