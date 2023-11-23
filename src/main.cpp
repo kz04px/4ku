@@ -82,7 +82,7 @@ const Move no_move{};
 struct [[nodiscard]] Stack {
     Move moves[256];
     Move quiets_evaluated[256];
-    int64_t move_scores[256];
+    i32 move_scores[256];
     Move move;
     Move killer;
     i32 score;
@@ -634,7 +634,7 @@ i32 alphabeta(Position &pos,
               const int64_t stop_time,
               i32 &stop,
               Stack *const stack,
-              int64_t (&hh_table)[2][64][64],
+              i32 (&hh_table)[2][64][64],
               vector<u64> &hash_history,
               const i32 do_null = true) {
     assert(alpha < beta);
@@ -742,8 +742,8 @@ i32 alphabeta(Position &pos,
         if (i == !(no_move == tt_move))
             for (i32 j = 0; j < num_moves; ++j) {
                 const i32 gain = max_material[moves[j].promo] + max_material[piece_on(pos, moves[j].to)];
-                move_scores[j] = gain                            ? gain + (1LL << 54)
-                                 : moves[j] == stack[ply].killer ? 1LL << 50
+                move_scores[j] = gain                            ? gain + 1025
+                                 : moves[j] == stack[ply].killer ? 1024
                                                                  : hh_table[pos.flipped][moves[j].from][moves[j].to];
             }
 
@@ -801,9 +801,8 @@ i32 alphabeta(Position &pos,
         else {
             // Late move reduction
             i32 reduction = depth > 2 && num_moves_evaluated > 4 && !gain
-                                ? num_moves_evaluated / 13 + depth / 15 + (alpha == beta - 1) + !improving +
-                                      (hh_table[pos.flipped][move.from][move.to] < 0) -
-                                      (hh_table[pos.flipped][move.from][move.to] > 0)
+                                ? num_moves_evaluated / 13 + depth / 15 + (alpha == beta - 1) + !improving -
+                                      min(max(hh_table[pos.flipped][move.from][move.to], -1), 1)
                                 : 0;
 
         zero_window:
@@ -851,9 +850,13 @@ i32 alphabeta(Position &pos,
             if (score >= beta) {
                 tt_flag = Lower;
                 if (!gain) {
-                    hh_table[pos.flipped][move.from][move.to] += depth * depth;
+                    hh_table[pos.flipped][move.from][move.to] +=
+                        depth * depth - depth * depth * hh_table[pos.flipped][move.from][move.to] / 512;
                     for (i32 j = 0; j < num_quiets_evaluated - 1; ++j)
-                        hh_table[pos.flipped][quiets_evaluated[j].from][quiets_evaluated[j].to] -= depth * depth;
+                        hh_table[pos.flipped][quiets_evaluated[j].from][quiets_evaluated[j].to] -=
+                            depth * depth +
+                            depth * depth * hh_table[pos.flipped][quiets_evaluated[j].from][quiets_evaluated[j].to] /
+                                512;
                     stack[ply].killer = move;
                 }
                 break;
@@ -921,6 +924,7 @@ void print_pv(const Position &pos, const Move move, vector<u64> &hash_history) {
 
 auto iteratively_deepen(Position &pos,
                         vector<u64> &hash_history,
+                        i32 (&hh_table)[2][64][64],
                         // minify enable filter delete
                         i32 thread_id,
                         const i32 bench_depth,
@@ -930,7 +934,6 @@ auto iteratively_deepen(Position &pos,
                         const i32 allocated_time,
                         i32 &stop) {
     Stack stack[128] = {};
-    int64_t hh_table[2][64][64] = {};
     // minify enable filter delete
     u64 nodes = 0;
     // minify disable filter delete
@@ -1103,6 +1106,7 @@ i32 main(
 
     Position pos;
     vector<u64> hash_history;
+    i32 hh_table[2][64][64] = {};
 
     // minify enable filter delete
     // OpenBench compliance
@@ -1143,7 +1147,7 @@ i32 main(
         for (const auto &[fen, depth] : bench_positions) {
             i32 stop = false;
             set_fen(pos, fen);
-            iteratively_deepen(pos, hash_history, 0, depth, total_nodes, now(), 1 << 30, stop);
+            iteratively_deepen(pos, hash_history, hh_table, 0, depth, total_nodes, now(), 1 << 30, stop);
         }
         const u64 elapsed = now() - start_time;
 
@@ -1182,9 +1186,10 @@ i32 main(
             // minify disable filter delete
         )
             break;
-        else if (word == "ucinewgame")
+        else if (word == "ucinewgame") {
+            memset(hh_table, 0, sizeof(hh_table));
             memset(transposition_table.data(), 0, sizeof(TTEntry) * transposition_table.size());
-        else if (word == "isready")
+        } else if (word == "isready")
             cout << "readyok\n";
         // minify enable filter delete
         else if (word == "setoption") {
@@ -1237,6 +1242,7 @@ i32 main(
                 threads.emplace_back([=, &stop]() mutable {
                     iteratively_deepen(pos,
                                        hash_history,
+                                       hh_table,
                                        // minify enable filter delete
                                        i,
                                        0,
@@ -1248,6 +1254,7 @@ i32 main(
                 });
             const Move best_move = iteratively_deepen(pos,
                                                       hash_history,
+                                                      hh_table,
                                                       // minify enable filter delete
                                                       0,
                                                       0,
