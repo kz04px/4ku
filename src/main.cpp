@@ -634,8 +634,8 @@ i32 alphabeta(Position &pos,
               const int64_t stop_time,
               i32 &stop,
               Stack *const stack,
-              i32 (&hh_table)[2][64][64],
               vector<u64> &hash_history,
+              i32 (&hh_table)[2][64][64],
               const i32 do_null = true) {
     assert(alpha < beta);
     assert(ply >= 0);
@@ -716,8 +716,8 @@ i32 alphabeta(Position &pos,
                            stop_time,
                            stop,
                            stack,
-                           hh_table,
                            hash_history,
+                           hh_table,
                            false) >= beta)
                 return beta;
         }
@@ -796,8 +796,8 @@ i32 alphabeta(Position &pos,
                                stop_time,
                                stop,
                                stack,
-                               hh_table,
-                               hash_history);
+                               hash_history,
+                               hh_table);
         else {
             // Late move reduction
             i32 reduction = depth > 2 && num_moves_evaluated > 4 && !gain
@@ -817,8 +817,8 @@ i32 alphabeta(Position &pos,
                                stop_time,
                                stop,
                                stack,
-                               hh_table,
-                               hash_history);
+                               hash_history,
+                               hh_table);
 
             if (reduction > 0 && score > alpha) {
                 reduction = 0;
@@ -955,8 +955,8 @@ auto iteratively_deepen(Position &pos,
                               start_time + allocated_time,
                               stop,
                               stack,
-                              hh_table,
-                              hash_history);
+                              hash_history,
+                              hh_table);
 
             // Hard time limit exceeded
             if (stop || now() >= start_time + allocated_time)
