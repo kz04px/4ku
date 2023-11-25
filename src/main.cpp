@@ -127,7 +127,7 @@ vector<TTEntry> transposition_table;
 }
 
 [[nodiscard]] u64 east(const u64 bb) {
-    return bb << 1 & ~0x0101010101010101ULL;
+    return bb << 1 & ~0x101010101010101ULL;
 }
 
 [[nodiscard]] u64 west(const u64 bb) {
@@ -241,7 +241,7 @@ u64 diag_mask[64];
     assert(sq >= 0);
     assert(sq < 64);
     const u64 bb = 1ULL << sq;
-    return (bb << 15 | bb >> 17) & 0x7F7F7F7F7F7F7F7FULL | (bb << 17 | bb >> 15) & 0xFEFEFEFEFEFEFEFEULL |
+    return (bb << 15 | bb >> 17) & 0x7F7F7F7F7F7F7F7FULL | (bb << 17 | bb >> 15) & ~0x101010101010101ULL |
            (bb << 10 | bb >> 6) & 0xFCFCFCFCFCFCFCFCULL | (bb << 6 | bb >> 10) & 0x3F3F3F3F3F3F3F3FULL;
 }
 
@@ -250,7 +250,7 @@ u64 diag_mask[64];
     assert(sq < 64);
     const u64 bb = 1ULL << sq;
     return bb << 8 | bb >> 8 | (bb >> 1 | bb >> 9 | bb << 7) & 0x7F7F7F7F7F7F7F7FULL |
-           (bb << 1 | bb << 9 | bb >> 7) & 0xFEFEFEFEFEFEFEFEULL;
+           (bb << 1 | bb << 9 | bb >> 7) & ~0x101010101010101ULL;
 }
 
 [[nodiscard]] auto is_attacked(const Position &pos, const i32 sq, const i32 them = true) {
