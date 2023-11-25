@@ -930,9 +930,9 @@ auto iteratively_deepen(Position &pos,
                         const i32 bench_depth,
                         u64 &total_nodes,
                         // minify disable filter delete
-                        const u64 start_time,
+                        i32 &stop,
                         const i32 allocated_time,
-                        i32 &stop) {
+                        const u64 start_time) {
     Stack stack[128] = {};
     // minify enable filter delete
     u64 nodes = 0;
@@ -1147,7 +1147,7 @@ i32 main(
         for (const auto &[fen, depth] : bench_positions) {
             i32 stop = false;
             set_fen(pos, fen);
-            iteratively_deepen(pos, hash_history, hh_table, 0, depth, total_nodes, now(), 1 << 30, stop);
+            iteratively_deepen(pos, hash_history, hh_table, 0, depth, total_nodes, stop, 1 << 30, now());
         }
         const u64 elapsed = now() - start_time;
 
@@ -1248,9 +1248,9 @@ i32 main(
                                        0,
                                        total_nodes,
                                        // minify disable filter delete
-                                       start,
+                                       stop,
                                        1 << 30,
-                                       stop);
+                                       start);
                 });
             const Move best_move = iteratively_deepen(pos,
                                                       hash_history,
@@ -1260,9 +1260,9 @@ i32 main(
                                                       0,
                                                       total_nodes,
                                                       // minify disable filter delete
-                                                      start,
+                                                      stop,
                                                       time_left / 3,
-                                                      stop);
+                                                      start);
             stop = true;
             for (i32 i = 1; i < thread_count; ++i)
                 threads[i - 1].join();
