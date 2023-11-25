@@ -484,11 +484,11 @@ const i32 pawn_attacked_penalty[] = {S(63, 14), S(156, 140)};
         if (count(pos.colour[0] & pos.pieces[Bishop]) == 2)
             score += bishop_pair;
 
-        // Doubled pawns
-        score -= pawn_doubled_penalty * count((north(pawns[0]) | north(north(pawns[0]))) & pawns[0]);
-
         // Phalanx pawns
         score += pawn_phalanx * count(west(pawns[0]) & pawns[0]);
+
+        // Doubled pawns
+        score -= pawn_doubled_penalty * count((north(pawns[0]) | north(north(pawns[0]))) & pawns[0]);
 
         // For each piece type
         for (i32 p = 0; p < 6; ++p) {
