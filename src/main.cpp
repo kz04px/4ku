@@ -158,7 +158,8 @@ vector<TTEntry> transposition_table;
 }
 
 [[nodiscard]] i32 operator==(const Move &lhs, const Move &rhs) {
-    return !memcmp(&rhs, &lhs, sizeof(Move));
+    assert(sizeof(Move) == 3);
+    return !memcmp(&rhs, &lhs, 3);
 }
 
 [[nodiscard]] string move_str(const Move &move, const i32 flip) {
