@@ -104,6 +104,7 @@ struct [[nodiscard]] TTEntry {
     int16_t depth;
 };
 static_assert(sizeof(TTEntry) == 16);
+static_assert(sizeof(Move) == 3);
 
 u64 keys[848];
 
@@ -158,7 +159,6 @@ vector<TTEntry> transposition_table;
 }
 
 [[nodiscard]] i32 operator==(const Move &lhs, const Move &rhs) {
-    assert(sizeof(Move) == 3);
     return !memcmp(&rhs, &lhs, 3);
 }
 
