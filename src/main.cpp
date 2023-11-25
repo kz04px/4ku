@@ -321,7 +321,7 @@ auto makemove(Position &pos, const Move &move) {
     pos.castling[0] &= !(mask & 0x90ULL);
     pos.castling[1] &= !(mask & 0x11ULL);
     pos.castling[2] &= !(mask & 0x8000000000000000ULL);
-    pos.castling[3] &= !(mask & 0x1000000000000000ULL);
+    pos.castling[3] &= !(mask & 0x1100000000000000ULL);
 
     flip(pos);
 
