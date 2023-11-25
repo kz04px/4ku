@@ -77,6 +77,8 @@ struct Move {
     u8 promo = 0;
 };
 
+static_assert(sizeof(Move) == 3);
+
 const Move no_move{};
 
 struct [[nodiscard]] Stack {
@@ -104,7 +106,6 @@ struct [[nodiscard]] TTEntry {
     int16_t depth;
 };
 static_assert(sizeof(TTEntry) == 16);
-static_assert(sizeof(Move) == 3);
 
 u64 keys[848];
 
