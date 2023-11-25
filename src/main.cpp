@@ -632,8 +632,8 @@ i32 alphabeta(Position &pos,
               u64 &nodes,
               // minify disable filter delete
               const int64_t stop_time,
-              i32 &stop,
               Stack *const stack,
+              i32 &stop,
               vector<u64> &hash_history,
               i32 (&hh_table)[2][64][64],
               const i32 do_null = true) {
@@ -714,8 +714,8 @@ i32 alphabeta(Position &pos,
                            nodes,
                            // minify disable filter delete
                            stop_time,
-                           stop,
                            stack,
+                           stop,
                            hash_history,
                            hh_table,
                            false) >= beta)
@@ -794,8 +794,8 @@ i32 alphabeta(Position &pos,
                                nodes,
                                // minify disable filter delete
                                stop_time,
-                               stop,
                                stack,
+                               stop,
                                hash_history,
                                hh_table);
         else {
@@ -815,8 +815,8 @@ i32 alphabeta(Position &pos,
                                nodes,
                                // minify disable filter delete
                                stop_time,
-                               stop,
                                stack,
+                               stop,
                                hash_history,
                                hh_table);
 
@@ -923,6 +923,7 @@ void print_pv(const Position &pos, const Move move, vector<u64> &hash_history) {
 // minify disable filter delete
 
 auto iteratively_deepen(Position &pos,
+                        i32 &stop,
                         vector<u64> &hash_history,
                         i32 (&hh_table)[2][64][64],
                         // minify enable filter delete
@@ -930,7 +931,6 @@ auto iteratively_deepen(Position &pos,
                         const i32 bench_depth,
                         u64 &total_nodes,
                         // minify disable filter delete
-                        i32 &stop,
                         const i32 allocated_time,
                         const u64 start_time) {
     Stack stack[128] = {};
@@ -953,8 +953,8 @@ auto iteratively_deepen(Position &pos,
                               nodes,
                               // minify disable filter delete
                               start_time + allocated_time,
-                              stop,
                               stack,
+                              stop,
                               hash_history,
                               hh_table);
 
@@ -1147,7 +1147,7 @@ i32 main(
         for (const auto &[fen, depth] : bench_positions) {
             i32 stop = false;
             set_fen(pos, fen);
-            iteratively_deepen(pos, hash_history, hh_table, 0, depth, total_nodes, stop, 1 << 30, now());
+            iteratively_deepen(pos, stop, hash_history, hh_table, 0, depth, total_nodes, 1 << 30, now());
         }
         const u64 elapsed = now() - start_time;
 
@@ -1241,6 +1241,7 @@ i32 main(
             for (i32 i = 1; i < thread_count; ++i)
                 threads.emplace_back([=, &stop]() mutable {
                     iteratively_deepen(pos,
+                                       stop,
                                        hash_history,
                                        hh_table,
                                        // minify enable filter delete
@@ -1248,11 +1249,11 @@ i32 main(
                                        0,
                                        total_nodes,
                                        // minify disable filter delete
-                                       stop,
                                        1 << 30,
                                        start);
                 });
             const Move best_move = iteratively_deepen(pos,
+                                                      stop,
                                                       hash_history,
                                                       hh_table,
                                                       // minify enable filter delete
@@ -1260,7 +1261,6 @@ i32 main(
                                                       0,
                                                       total_nodes,
                                                       // minify disable filter delete
-                                                      stop,
                                                       time_left / 3,
                                                       start);
             stop = true;
