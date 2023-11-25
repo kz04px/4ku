@@ -616,7 +616,7 @@ const i32 pawn_attacked_penalty[] = {S(63, 14), S(156, 140)};
 
     // En passant square
     if (pos.ep)
-        hash ^= keys[768 + lsb(pos.ep)];
+        hash ^= keys[12 * 64 + lsb(pos.ep)];
 
     // Castling permissions
     hash ^= keys[832 + (pos.castling[0] | pos.castling[1] << 1 | pos.castling[2] << 2 | pos.castling[3] << 3)];
