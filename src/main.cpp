@@ -855,12 +855,12 @@ i32 alphabeta(Position &pos,
                 hh_table[pos.flipped][!gain][move.from][move.to] +=
                     depth * depth - depth * depth * hh_table[pos.flipped][!gain][move.from][move.to] / 512;
                 for (i32 j = 0; j < num_moves_evaluated - 1; ++j) {
-                    const i32 prev_gain =
+                    const i32 previous_gain =
                         max_material[moves_evaluated[j].promo] + max_material[piece_on(pos, moves_evaluated[j].to)];
-                    hh_table[pos.flipped][!prev_gain][moves_evaluated[j].from][moves_evaluated[j].to] -=
+                    hh_table[pos.flipped][!previous_gain][moves_evaluated[j].from][moves_evaluated[j].to] -=
                         depth * depth +
                         depth * depth *
-                            hh_table[pos.flipped][!prev_gain][moves_evaluated[j].from][moves_evaluated[j].to] / 512;
+                            hh_table[pos.flipped][!previous_gain][moves_evaluated[j].from][moves_evaluated[j].to] / 512;
                 }
                 if (!gain)
                     stack[ply].killer = move;
