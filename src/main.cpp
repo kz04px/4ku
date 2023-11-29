@@ -196,12 +196,12 @@ void flip(Position &pos) {
     pos.flipped = !pos.flipped;
     pos.colour[0] = flip(pos.colour[0]);
     pos.colour[1] = flip(pos.colour[1]);
-    for (i32 i = 0; i < 6; ++i)
-        pos.pieces[i] = flip(pos.pieces[i]);
-    pos.ep = flip(pos.ep);
     swap(pos.colour[0], pos.colour[1]);
     swap(pos.castling[0], pos.castling[2]);
     swap(pos.castling[1], pos.castling[3]);
+    for (i32 i = 0; i < 6; ++i)
+        pos.pieces[i] = flip(pos.pieces[i]);
+    pos.ep = flip(pos.ep);
 }
 
 template <typename F>
