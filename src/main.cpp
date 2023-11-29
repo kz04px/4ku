@@ -500,12 +500,12 @@ const i32 pawn_attacked_penalty[] = {S(63, 14), S(156, 140)};
                 const i32 sq = lsb(copy);
                 copy &= copy - 1;
 
+                const i32 rank = sq / 8;
+                const i32 file = sq % 8;
+
                 // Material
                 phase += phases[p];
                 score += material[p];
-
-                const i32 rank = sq / 8;
-                const i32 file = sq % 8;
 
                 // Split quantized PSTs
                 score += pst_rank[p * 8 + rank] * 8;
