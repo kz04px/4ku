@@ -108,6 +108,7 @@ struct [[nodiscard]] TTEntry {
 
 static_assert(sizeof(TTEntry) == 16);
 
+u64 diag_mask[64];
 u64 keys[848];
 
 // Engine options
@@ -216,8 +217,6 @@ template <typename F>
     mask |= f(mask & ~blockers);
     return mask;
 }
-
-u64 diag_mask[64];
 
 [[nodiscard]] u64 xattack(const i32 sq, const u64 blockers, const u64 dir_mask) {
     assert(sq >= 0);
