@@ -185,9 +185,8 @@ vector<TTEntry> transposition_table;
 [[nodiscard]] i32 piece_on(const Position &pos, const i32 sq) {
     assert(sq >= 0);
     assert(sq < 64);
-    const u64 bb = 1ull << sq;
     for (i32 i = 0; i < 6; ++i)
-        if (pos.pieces[i] & bb)
+        if (pos.pieces[i] & 1ull << sq)
             return i;
     return None;
 }
