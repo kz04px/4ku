@@ -108,6 +108,7 @@ struct [[nodiscard]] TTEntry {
 
 static_assert(sizeof(TTEntry) == 16);
 
+u64 diag_mask[64];
 u64 keys[848];
 
 // Engine options
@@ -185,23 +186,22 @@ vector<TTEntry> transposition_table;
 [[nodiscard]] i32 piece_on(const Position &pos, const i32 sq) {
     assert(sq >= 0);
     assert(sq < 64);
-    const u64 bb = 1ull << sq;
     for (i32 i = 0; i < 6; ++i)
-        if (pos.pieces[i] & bb)
+        if (pos.pieces[i] & 1ull << sq)
             return i;
     return None;
 }
 
 void flip(Position &pos) {
+    pos.flipped = !pos.flipped;
     pos.colour[0] = flip(pos.colour[0]);
     pos.colour[1] = flip(pos.colour[1]);
-    for (i32 i = 0; i < 6; ++i)
-        pos.pieces[i] = flip(pos.pieces[i]);
-    pos.ep = flip(pos.ep);
     swap(pos.colour[0], pos.colour[1]);
     swap(pos.castling[0], pos.castling[2]);
     swap(pos.castling[1], pos.castling[3]);
-    pos.flipped = !pos.flipped;
+    for (i32 i = 0; i < 6; ++i)
+        pos.pieces[i] = flip(pos.pieces[i]);
+    pos.ep = flip(pos.ep);
 }
 
 template <typename F>
@@ -217,8 +217,6 @@ template <typename F>
     mask |= f(mask & ~blockers);
     return mask;
 }
-
-u64 diag_mask[64];
 
 [[nodiscard]] u64 xattack(const i32 sq, const u64 blockers, const u64 dir_mask) {
     assert(sq >= 0);
@@ -500,12 +498,12 @@ const i32 pawn_attacked_penalty[] = {S(63, 14), S(156, 140)};
                 const i32 sq = lsb(copy);
                 copy &= copy - 1;
 
+                const i32 rank = sq / 8;
+                const i32 file = sq % 8;
+
                 // Material
                 phase += phases[p];
                 score += material[p];
-
-                const i32 rank = sq / 8;
-                const i32 file = sq % 8;
 
                 // Split quantized PSTs
                 score += pst_rank[p * 8 + rank] * 8;
@@ -568,9 +566,8 @@ const i32 pawn_attacked_penalty[] = {S(63, 14), S(156, 140)};
                     score += king_attacks[p - 1] * count(mobility & king(kings[1], 0));
 
                     // Open or semi-open files
-                    const u64 file_bb = 0x101010101010101ull << file;
-                    if (!(file_bb & pawns[0]))
-                        score += open_files[!(file_bb & pawns[1]) * 5 + p - 1];
+                    if (!(0x101010101010101ull << file & pawns[0]))
+                        score += open_files[!(0x101010101010101ull << file & pawns[1]) * 5 + p - 1];
 
                     if (p == King && piece_bb & 0xC3D7) {
                         // C3D7 = Reasonable king squares
