@@ -186,7 +186,7 @@ vector<TTEntry> transposition_table;
 [[nodiscard]] i32 piece_on(const Position &pos, const i32 sq) {
     assert(sq >= 0);
     assert(sq < 64);
-    for (i32 i = 0; i < 6; ++i)
+    for (i32 i = Pawn; i < None; ++i)
         if (pos.pieces[i] & 1ull << sq)
             return i;
     return None;
@@ -199,7 +199,7 @@ void flip(Position &pos) {
     swap(pos.colour[0], pos.colour[1]);
     swap(pos.castling[0], pos.castling[2]);
     swap(pos.castling[1], pos.castling[3]);
-    for (i32 i = 0; i < 6; ++i)
+    for (i32 i = Pawn; i < None; ++i)
         pos.pieces[i] = flip(pos.pieces[i]);
     pos.ep = flip(pos.ep);
 }
@@ -492,7 +492,7 @@ const i32 pawn_attacked_penalty[] = {S(63, 14), S(156, 140)};
         score -= pawn_doubled_penalty * count((north(pawns[0]) | north(north(pawns[0]))) & pawns[0]);
 
         // For each piece type
-        for (i32 p = 0; p < 6; ++p) {
+        for (i32 p = Pawn; p < None; ++p) {
             u64 copy = pos.colour[0] & pos.pieces[p];
             while (copy) {
                 const i32 sq = lsb(copy);
@@ -912,7 +912,7 @@ void print_pv(const Position &pos, const Move move, vector<u64> &hash_history) {
     const TTEntry &tt_entry = transposition_table[tt_key % num_tt_entries];
 
     // Only continue if the move was valid and comes from a PV search
-    if (tt_entry.key != tt_key || tt_entry.move == no_move || tt_entry.flag != 2)
+    if (tt_entry.key != tt_key || tt_entry.move == no_move || tt_entry.flag != Exact)
         return;
 
     // Avoid infinite recursion on a repetition
