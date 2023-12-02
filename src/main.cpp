@@ -609,7 +609,7 @@ const i32 pawn_attacked_penalty[] = {S(63, 14), S(156, 140)};
         while (copy) {
             const i32 sq = lsb(copy);
             copy &= copy - 1;
-            hash ^= keys[(p + 6) * 64 + sq];
+            hash ^= keys[p * 64 + sq + 6 * 64];
         }
     }
 
