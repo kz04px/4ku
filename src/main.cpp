@@ -734,10 +734,10 @@ i32 alphabeta(Position &pos,
                   nodes,
                   // minify disable filter delete
                   stop_time,
-                  stop,
                   stack,
-                  hh_table,
+                  stop,
                   hash_history,
+                  hh_table,
                   false);
 
         tt_move = stack[ply].move;
