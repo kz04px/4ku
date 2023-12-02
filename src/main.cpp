@@ -806,6 +806,7 @@ i32 alphabeta(Position &pos,
                                 : 0;
 
         zero_window:
+            assert(reduction >= 0);
             score = -alphabeta(npos,
                                -alpha - 1,
                                -alpha,
