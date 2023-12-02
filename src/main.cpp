@@ -850,6 +850,9 @@ i32 alphabeta(Position &pos,
             if (score >= beta) {
                 tt_flag = Lower;
 
+                if (!gain)
+                    stack[ply].killer = move;
+
                 hh_table[pos.flipped][!gain][move.from][move.to] +=
                     depth * depth - depth * depth * hh_table[pos.flipped][!gain][move.from][move.to] / 512;
                 for (i32 j = 0; j < num_moves_evaluated - 1; ++j) {
@@ -860,8 +863,6 @@ i32 alphabeta(Position &pos,
                         depth * depth *
                             hh_table[pos.flipped][!prev_gain][moves_evaluated[j].from][moves_evaluated[j].to] / 512;
                 }
-                if (!gain)
-                    stack[ply].killer = move;
                 break;
             }
         }
