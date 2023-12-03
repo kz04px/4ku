@@ -836,10 +836,6 @@ i32 alphabeta(Position &pos,
             return 0;
         }
 
-        moves_evaluated[num_moves_evaluated++] = move;
-        if (!gain)
-            num_quiets_evaluated++;
-
         if (score > best_score)
             best_score = score;
 
@@ -856,7 +852,7 @@ i32 alphabeta(Position &pos,
 
                 hh_table[pos.flipped][!gain][move.from][move.to] +=
                     depth * depth - depth * depth * hh_table[pos.flipped][!gain][move.from][move.to] / 512;
-                for (i32 j = 0; j < num_moves_evaluated - 1; ++j) {
+                for (i32 j = 0; j < num_moves_evaluated; ++j) {
                     const i32 prev_gain =
                         max_material[moves_evaluated[j].promo] + max_material[piece_on(pos, moves_evaluated[j].to)];
                     hh_table[pos.flipped][!prev_gain][moves_evaluated[j].from][moves_evaluated[j].to] -=
@@ -867,6 +863,11 @@ i32 alphabeta(Position &pos,
                 break;
             }
         }
+
+        moves_evaluated[num_moves_evaluated++] = move;
+        if (!gain)
+            num_quiets_evaluated++;
+
         // Late move pruning based on quiet move count
         if (!in_check && alpha == beta - 1 && num_quiets_evaluated > 2 + depth * depth >> !improving)
             break;
