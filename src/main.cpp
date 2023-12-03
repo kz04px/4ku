@@ -186,7 +186,7 @@ vector<TTEntry> transposition_table;
 [[nodiscard]] i32 piece_on(const Position &pos, const i32 sq) {
     assert(sq >= 0);
     assert(sq < 64);
-    for (i32 i = 0; i < 6; ++i)
+    for (i32 i = Pawn; i < None; ++i)
         if (pos.pieces[i] & 1ull << sq)
             return i;
     return None;
@@ -199,7 +199,7 @@ void flip(Position &pos) {
     swap(pos.colour[0], pos.colour[1]);
     swap(pos.castling[0], pos.castling[2]);
     swap(pos.castling[1], pos.castling[3]);
-    for (i32 i = 0; i < 6; ++i)
+    for (i32 i = Pawn; i < None; ++i)
         pos.pieces[i] = flip(pos.pieces[i]);
     pos.ep = flip(pos.ep);
 }
@@ -493,7 +493,7 @@ const i32 pawn_attacked_penalty[] = {S(63, 14), S(156, 140)};
         score -= pawn_doubled_penalty * count((north(pawns[0]) | north(north(pawns[0]))) & pawns[0]);
 
         // For each piece type
-        for (i32 p = 0; p < 6; ++p) {
+        for (i32 p = Pawn; p < None; ++p) {
             u64 copy = pos.colour[0] & pos.pieces[p];
             while (copy) {
                 const i32 sq = lsb(copy);
@@ -619,7 +619,7 @@ const i32 pawn_attacked_penalty[] = {S(63, 14), S(156, 140)};
         while (copy) {
             const i32 sq = lsb(copy);
             copy &= copy - 1;
-            hash ^= keys[(p + 6) * 64 + sq];
+            hash ^= keys[p * 64 + sq + 6 * 64];
         }
     }
 
@@ -753,7 +753,7 @@ i32 alphabeta(Position &pos,
             for (i32 j = 0; j < num_moves; ++j) {
                 const i32 gain = max_material[moves[j].promo] + max_material[piece_on(pos, moves[j].to)];
                 move_scores[j] = hh_table[pos.flipped][!gain][moves[j].from][moves[j].to] +
-                                 (gain || moves[j] == stack[ply].killer ? 2048 : 0) + gain;
+                                 (gain || moves[j] == stack[ply].killer) * 2048 + gain;
             }
 
         // Find best move remaining
@@ -809,13 +809,14 @@ i32 alphabeta(Position &pos,
                                hh_table);
         else {
             // Late move reduction
-            i32 reduction = depth > 2 && num_moves_evaluated > 4 && !gain
+            i32 reduction = depth > 2 && num_moves_evaluated > 4
                                 ? max(num_moves_evaluated / 13 + depth / 15 + (alpha == beta - 1) + !improving -
-                                          min(max(hh_table[pos.flipped][1][move.from][move.to] / 128, -2), 2),
-                                      -1)
+                                          min(max(hh_table[pos.flipped][!gain][move.from][move.to] / 128, -2), 2),
+                                      0)
                                 : 0;
 
         zero_window:
+            assert(reduction >= 0);
             score = -alphabeta(npos,
                                -alpha - 1,
                                -alpha,
@@ -845,10 +846,6 @@ i32 alphabeta(Position &pos,
             return 0;
         }
 
-        moves_evaluated[num_moves_evaluated++] = move;
-        if (!gain)
-            num_quiets_evaluated++;
-
         if (score > best_score)
             best_score = score;
 
@@ -860,9 +857,12 @@ i32 alphabeta(Position &pos,
             if (score >= beta) {
                 tt_flag = Lower;
 
+                if (!gain)
+                    stack[ply].killer = move;
+
                 hh_table[pos.flipped][!gain][move.from][move.to] +=
                     depth * depth - depth * depth * hh_table[pos.flipped][!gain][move.from][move.to] / 512;
-                for (i32 j = 0; j < num_moves_evaluated - 1; ++j) {
+                for (i32 j = 0; j < num_moves_evaluated; ++j) {
                     const i32 prev_gain =
                         max_material[moves_evaluated[j].promo] + max_material[piece_on(pos, moves_evaluated[j].to)];
                     hh_table[pos.flipped][!prev_gain][moves_evaluated[j].from][moves_evaluated[j].to] -=
@@ -870,11 +870,14 @@ i32 alphabeta(Position &pos,
                         depth * depth *
                             hh_table[pos.flipped][!prev_gain][moves_evaluated[j].from][moves_evaluated[j].to] / 512;
                 }
-                if (!gain)
-                    stack[ply].killer = move;
                 break;
             }
         }
+
+        moves_evaluated[num_moves_evaluated++] = move;
+        if (!gain)
+            num_quiets_evaluated++;
+
         // Late move pruning based on quiet move count
         if (!in_check && alpha == beta - 1 && num_quiets_evaluated > 2 + depth * depth >> !improving)
             break;
@@ -921,7 +924,7 @@ void print_pv(const Position &pos, const Move move, vector<u64> &hash_history) {
     const TTEntry &tt_entry = transposition_table[tt_key % num_tt_entries];
 
     // Only continue if the move was valid and comes from a PV search
-    if (tt_entry.key != tt_key || tt_entry.move == no_move || tt_entry.flag != 2)
+    if (tt_entry.key != tt_key || tt_entry.move == no_move || tt_entry.flag != Exact)
         return;
 
     // Avoid infinite recursion on a repetition
