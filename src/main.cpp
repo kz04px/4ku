@@ -743,7 +743,7 @@ i32 alphabeta(Position &pos,
             for (i32 j = 0; j < num_moves; ++j) {
                 const i32 gain = max_material[moves[j].promo] + max_material[piece_on(pos, moves[j].to)];
                 move_scores[j] = hh_table[pos.flipped][!gain][moves[j].from][moves[j].to] +
-                                 (gain || moves[j] == stack[ply].killer ? 2048 : 0) + gain;
+                                 (gain || moves[j] == stack[ply].killer) * 2048 + gain;
             }
 
         // Find best move remaining
