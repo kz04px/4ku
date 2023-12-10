@@ -61,11 +61,11 @@ struct [[nodiscard]] Position {
     i32 castling[4] = {true, true, true, true};
     u64 colour[2] = {0xFFFFull, 0xFFFF000000000000ull};
     u64 pieces[6] = {0xFF00000000FF00ull,
-                            0x4200000000000042ull,
-                            0x2400000000000024ull,
-                            0x8100000000000081ull,
-                            0x800000000000008ull,
-                            0x1000000000000010ull};
+                     0x4200000000000042ull,
+                     0x2400000000000024ull,
+                     0x8100000000000081ull,
+                     0x800000000000008ull,
+                     0x1000000000000010ull};
     u64 ep = 0x0ull;
     i32 flipped = false;
 };
