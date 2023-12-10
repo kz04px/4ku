@@ -16,7 +16,6 @@
 // minify replace false 0
 // minify replace NULL 0
 
-#include <array>
 #include <cstdint>
 #include <cstdio>
 #include <cstring>
@@ -59,14 +58,14 @@ enum
 }
 
 struct [[nodiscard]] Position {
-    array<i32, 4> castling = {true, true, true, true};
-    array<u64, 2> colour = {0xFFFFull, 0xFFFF000000000000ull};
-    array<u64, 6> pieces = {0xFF00000000FF00ull,
-                            0x4200000000000042ull,
-                            0x2400000000000024ull,
-                            0x8100000000000081ull,
-                            0x800000000000008ull,
-                            0x1000000000000010ull};
+    i32 castling[4] = {true, true, true, true};
+    u64 colour[2] = {0xFFFFull, 0xFFFF000000000000ull};
+    u64 pieces[6] = {0xFF00000000FF00ull,
+                     0x4200000000000042ull,
+                     0x2400000000000024ull,
+                     0x8100000000000081ull,
+                     0x800000000000008ull,
+                     0x1000000000000010ull};
     u64 ep = 0x0ull;
     i32 flipped = false;
 };
@@ -1019,9 +1018,9 @@ void set_fen(Position &pos, const string &fen) {
     }
 
     // Clear
-    pos.colour = {};
-    pos.pieces = {};
-    pos.castling = {};
+    memset(pos.colour, 0, sizeof(pos.colour));
+    memset(pos.pieces, 0, sizeof(pos.pieces));
+    memset(pos.castling, 0, sizeof(pos.castling));
 
     stringstream ss{fen};
     string word;
@@ -1041,8 +1040,8 @@ void set_fen(Position &pos, const string &fen) {
                               : c == 'r' || c == 'R' ? Rook
                               : c == 'q' || c == 'Q' ? Queen
                                                      : King;
-            pos.colour.at(side) ^= 1ull << i;
-            pos.pieces.at(piece) ^= 1ull << i;
+            pos.colour[side] ^= 1ull << i;
+            pos.pieces[piece] ^= 1ull << i;
             i++;
         }
 
