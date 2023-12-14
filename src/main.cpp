@@ -1174,7 +1174,7 @@ i32 main(
 
     // Send UCI info
     cout << "id name 4ku\n";
-    cout << "id author kz04px\n";
+    cout << "id author Team4ku\n";
     // minify enable filter delete
     cout << "option name Threads type spin default " << thread_count << " min 1 max 256\n";
     cout << "option name Hash type spin default " << num_tt_entries * sizeof(TTEntry) / (1024 * 1024)
