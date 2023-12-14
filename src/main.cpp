@@ -693,10 +693,10 @@ i32 alphabeta(Position &pos,
         // Reverse futility pruning
         if (depth < 8) {
             assert(ply > 0);
-            if (static_eval - 68 * (depth - improving) >= beta)
+            if (static_eval - 69 * (depth - improving) >= beta)
                 return static_eval;
 
-            in_qsearch = static_eval + 256 * depth < alpha;
+            in_qsearch = static_eval + 241 * depth < alpha;
         }
 
         // Null move pruning
@@ -709,7 +709,7 @@ i32 alphabeta(Position &pos,
             if (-alphabeta(npos,
                            -beta,
                            -alpha,
-                           depth - 4 - depth / 5 - min((static_eval - beta) / 200, 3),
+                           depth - 4 - depth / 5 - min((static_eval - beta) / 208, 3),
                            ply + 1,
                            // minify enable filter delete
                            nodes,
@@ -800,8 +800,8 @@ i32 alphabeta(Position &pos,
                                hh_table);
         else {
             // Late move reduction
-            i32 reduction = depth > 2 && num_moves_evaluated > 4
-                                ? max(num_moves_evaluated / 13 + depth / 15 + (alpha == beta - 1) + !improving -
+            i32 reduction = depth > 3 && num_moves_evaluated > 2
+                                ? max(num_moves_evaluated / 13 + depth / 14 + (alpha == beta - 1) + !improving -
                                           min(max(hh_table[pos.flipped][!gain][move.from][move.to] / 128, -2), 2),
                                       0)
                                 : 0;
