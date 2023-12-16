@@ -693,10 +693,10 @@ i32 alphabeta(Position &pos,
         // Reverse futility pruning
         if (depth < 8) {
             assert(ply > 0);
-            if (static_eval - 69 * (depth - improving) >= beta)
+            if (static_eval - 71 * (depth - improving) >= beta)
                 return static_eval;
 
-            in_qsearch = static_eval + 241 * depth < alpha;
+            in_qsearch = static_eval + 238 * depth < alpha;
         }
 
         // Null move pruning
@@ -709,7 +709,7 @@ i32 alphabeta(Position &pos,
             if (-alphabeta(npos,
                            -beta,
                            -alpha,
-                           depth - 4 - depth / 5 - min((static_eval - beta) / 208, 3),
+                           depth - 4 - depth / 5 - min((static_eval - beta) / 196, 3),
                            ply + 1,
                            // minify enable filter delete
                            nodes,
@@ -766,12 +766,12 @@ i32 alphabeta(Position &pos,
         const i32 gain = max_material[move.promo] + max_material[piece_on(pos, move.to)];
 
         // Delta pruning
-        if (in_qsearch && !in_check && static_eval + 48 + gain < alpha)
+        if (in_qsearch && !in_check && static_eval + 50 + gain < alpha)
             break;
 
         // Forward futility pruning
         if (ply > 0 && depth < 8 && !in_qsearch && !in_check && num_moves_evaluated &&
-            static_eval + 104 * depth + gain < alpha)
+            static_eval + 105 * depth + gain < alpha)
             break;
 
         Position npos = pos;
@@ -800,7 +800,7 @@ i32 alphabeta(Position &pos,
                                hh_table);
         else {
             // Late move reduction
-            i32 reduction = depth > 3 && num_moves_evaluated > 2
+            i32 reduction = depth > 3 && num_moves_evaluated > 1
                                 ? max(num_moves_evaluated / 13 + depth / 14 + (alpha == beta - 1) + !improving -
                                           min(max(hh_table[pos.flipped][!gain][move.from][move.to] / 128, -2), 2),
                                       0)
@@ -870,7 +870,7 @@ i32 alphabeta(Position &pos,
             num_quiets_evaluated++;
 
         // Late move pruning based on quiet move count
-        if (!in_check && alpha == beta - 1 && num_quiets_evaluated > 2 + depth * depth >> !improving)
+        if (!in_check && alpha == beta - 1 && num_quiets_evaluated > 1 + depth * depth >> !improving)
             break;
     }
     hash_history.pop_back();
@@ -948,7 +948,7 @@ auto iteratively_deepen(Position &pos,
     i32 score = 0;
     for (i32 i = 1; i < 128; ++i) {
         i32 research = 0;
-        for (i32 window = 29 + (score * score >> 14); ++research; window *= 2) {
+        for (i32 window = 28 + (score * score >> 14); ++research; window *= 2) {
             const i32 alpha = score - window;
             const i32 beta = score + window;
             score = alphabeta(pos,
