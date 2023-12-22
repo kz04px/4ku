@@ -734,6 +734,26 @@ i32 alphabeta(Position &pos,
         }
     }
 
+    // Internal iterative deepening
+    if (depth > 4 && alpha != beta - 1 && tt_move == no_move) {
+        alphabeta(pos,
+                  alpha,
+                  beta,
+                  depth - 4,
+                  ply,
+                  // minify enable filter delete
+                  nodes,
+                  // minify disable filter delete
+                  stop_time,
+                  stack,
+                  stop,
+                  hash_history,
+                  hh_table,
+                  false);
+
+        tt_move = stack[ply].move;
+    }
+
     hash_history.emplace_back(tt_key);
     u8 tt_flag = Upper;
 
