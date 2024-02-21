@@ -1004,7 +1004,7 @@ auto iteratively_deepen(Position &pos,
         }
 
         // Early exit after completed ply
-        if (2 > research && now() >= start_time + allocated_time / 10)
+        if (4 > research && now() >= start_time + allocated_time * (2 * research - 1) / 10)
             break;
     }
     return stack[0].move;
@@ -1154,7 +1154,7 @@ i32 main(
         for (const auto &[fen, depth] : bench_positions) {
             i32 stop = false;
             set_fen(pos, fen);
-            iteratively_deepen(pos, stop, hash_history, hh_table, 0, depth, total_nodes, 1 << 30, now());
+            iteratively_deepen(pos, stop, hash_history, hh_table, 0, depth, total_nodes, 1 << 20, now());
         }
         const u64 elapsed = now() - start_time;
 
