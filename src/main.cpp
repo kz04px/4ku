@@ -1021,6 +1021,7 @@ void set_fen(Position &pos, const string &fen) {
     memset(pos.colour, 0, sizeof(pos.colour));
     memset(pos.pieces, 0, sizeof(pos.pieces));
     memset(pos.castling, 0, sizeof(pos.castling));
+    pos.ep = 0ull;
 
     stringstream ss{fen};
     string word;
