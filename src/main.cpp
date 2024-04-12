@@ -706,21 +706,22 @@ i32 alphabeta(Position &pos,
             Position npos = pos;
             flip(npos);
             npos.ep = 0;
-            if (-alphabeta(npos,
-                           -beta,
-                           -alpha,
-                           depth - 4 - depth / 5 - min((static_eval - beta) / 196, 3),
-                           ply + 1,
-                           // minify enable filter delete
-                           nodes,
-                           // minify disable filter delete
-                           stop_time,
-                           stack,
-                           stop,
-                           hash_history,
-                           hh_table,
-                           false) >= beta)
-                return beta;
+            const i32 score = -alphabeta(npos,
+                                         -beta,
+                                         -alpha,
+                                         depth - 4 - depth / 5 - min((static_eval - beta) / 196, 3),
+                                         ply + 1,
+                                         // minify enable filter delete
+                                         nodes,
+                                         // minify disable filter delete
+                                         stop_time,
+                                         stack,
+                                         stop,
+                                         hash_history,
+                                         hh_table,
+                                         false);
+            if (score >= beta)
+                return score < mate_score - 256 ? score : beta;
         }
     }
 
