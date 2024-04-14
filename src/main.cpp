@@ -689,6 +689,7 @@ i32 alphabeta(Position &pos,
         alpha = static_eval;
     }
 
+    i32 score;
     if (ply > 0 && !in_qsearch && !in_check && alpha == beta - 1) {
         // Reverse futility pruning
         if (depth < 8) {
@@ -706,21 +707,22 @@ i32 alphabeta(Position &pos,
             Position npos = pos;
             flip(npos);
             npos.ep = 0;
-            if (-alphabeta(npos,
-                           -beta,
-                           -alpha,
-                           depth - 4 - depth / 5 - min((static_eval - beta) / 196, 3),
-                           ply + 1,
-                           // minify enable filter delete
-                           nodes,
-                           // minify disable filter delete
-                           stop_time,
-                           stack,
-                           stop,
-                           hash_history,
-                           hh_table,
-                           false) >= beta)
-                return beta;
+            score = -alphabeta(npos,
+                               -beta,
+                               -alpha,
+                               depth - 4 - depth / 5 - min((static_eval - beta) / 196, 3),
+                               ply + 1,
+                               // minify enable filter delete
+                               nodes,
+                               // minify disable filter delete
+                               stop_time,
+                               stack,
+                               stop,
+                               hash_history,
+                               hh_table,
+                               false);
+            if (score >= beta)
+                return score < mate_score - 256 ? score : beta;
         }
     }
 
@@ -782,7 +784,6 @@ i32 alphabeta(Position &pos,
         nodes++;
         // minify disable filter delete
 
-        i32 score;
         if (!num_moves_evaluated)
         full_window:
             score = -alphabeta(npos,
