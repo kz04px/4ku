@@ -783,8 +783,30 @@ i32 alphabeta(Position &pos,
         // minify disable filter delete
 
         i32 score;
-        if (!num_moves_evaluated)
-        full_window:
+        i32 reduction = depth > 3 && num_moves_evaluated > 1
+                            ? max(num_moves_evaluated / 13 + depth / 14 + (alpha == beta - 1) + !improving -
+                                      min(max(hh_table[pos.flipped][!gain][move.from][move.to] / 128, -2), 2),
+                                  0)
+                            : 0;
+
+        while (num_moves_evaluated &&
+               (score = -alphabeta(npos,
+                                   -alpha - 1,
+                                   -alpha,
+                                   depth - reduction - 1,
+                                   ply + 1,
+                                   // minify enable filter delete
+                                   nodes,
+                                   // minify disable filter delete
+                                   stop_time,
+                                   stack,
+                                   stop,
+                                   hash_history,
+                                   hh_table)) > alpha &&
+               reduction > 0)
+            reduction = 0;
+
+        if (!num_moves_evaluated || score > alpha && score < beta)
             score = -alphabeta(npos,
                                -beta,
                                -alpha,
@@ -798,38 +820,6 @@ i32 alphabeta(Position &pos,
                                stop,
                                hash_history,
                                hh_table);
-        else {
-            // Late move reduction
-            i32 reduction = depth > 3 && num_moves_evaluated > 1
-                                ? max(num_moves_evaluated / 13 + depth / 14 + (alpha == beta - 1) + !improving -
-                                          min(max(hh_table[pos.flipped][!gain][move.from][move.to] / 128, -2), 2),
-                                      0)
-                                : 0;
-
-        zero_window:
-            assert(reduction >= 0);
-            score = -alphabeta(npos,
-                               -alpha - 1,
-                               -alpha,
-                               depth - reduction - 1,
-                               ply + 1,
-                               // minify enable filter delete
-                               nodes,
-                               // minify disable filter delete
-                               stop_time,
-                               stack,
-                               stop,
-                               hash_history,
-                               hh_table);
-
-            if (reduction > 0 && score > alpha) {
-                reduction = 0;
-                goto zero_window;
-            }
-
-            if (score > alpha && score < beta)
-                goto full_window;
-        }
 
         // Exit early if out of time
         if (depth > 4 && (stop || now() >= stop_time)) {
