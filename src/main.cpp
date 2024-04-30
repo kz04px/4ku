@@ -701,7 +701,7 @@ i32 alphabeta(Position &pos,
 
         // Null move pruning
         if (depth > 2 && static_eval >= beta && static_eval >= stack[ply].score && do_null &&
-            pos.colour[0] & ~(pos.pieces[Pawn] | pos.pieces[King])) {
+            pos.colour[0] & ~pos.pieces[Pawn] & ~pos.pieces[King]) {
             assert(ply > 0);
             Position npos = pos;
             flip(npos);
