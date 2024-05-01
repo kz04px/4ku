@@ -272,13 +272,15 @@ auto makemove(Position &pos, const Move &move) {
     assert(move.from != move.to);
     assert(move.promo == None || move.promo == Knight || move.promo == Bishop || move.promo == Rook ||
            move.promo == Queen);
+
+    const u64 from = 1ull << move.from;
+    const u64 to = 1ull << move.to;
+    const u64 mask = from | to;
+
     const i32 piece = piece_on(pos, move.from);
     assert(piece != None);
     const i32 captured = piece_on(pos, move.to);
     assert(captured != King);
-    const u64 to = 1ull << move.to;
-    const u64 from = 1ull << move.from;
-    const u64 mask = from | to;
 
     // Move the piece
     pos.colour[0] ^= mask;
