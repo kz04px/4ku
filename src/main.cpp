@@ -240,7 +240,7 @@ template <typename F>
     assert(sq >= 0);
     assert(sq < 64);
     const u64 bb = 1ull << sq;
-    return (bb << 15 | bb >> 17) & 0x7F7F7F7F7F7F7F7Full | (bb << 17 | bb >> 15) & ~0x101010101010101ull |
+    return (bb << 15 | bb >> 17) & ~0x8080808080808080ull | (bb << 17 | bb >> 15) & ~0x101010101010101ull |
            (bb << 10 | bb >> 6) & 0xFCFCFCFCFCFCFCFCull | (bb << 6 | bb >> 10) & 0x3F3F3F3F3F3F3F3Full;
 }
 
@@ -248,7 +248,7 @@ template <typename F>
     assert(sq >= 0);
     assert(sq < 64);
     const u64 bb = 1ull << sq;
-    return bb << 8 | bb >> 8 | (bb >> 1 | bb >> 9 | bb << 7) & 0x7F7F7F7F7F7F7F7Full |
+    return bb << 8 | bb >> 8 | (bb >> 1 | bb >> 9 | bb << 7) & ~0x8080808080808080ull |
            (bb << 1 | bb << 9 | bb >> 7) & ~0x101010101010101ull;
 }
 
