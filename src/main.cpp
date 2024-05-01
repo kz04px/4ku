@@ -66,7 +66,7 @@ struct [[nodiscard]] Position {
                      0x8100000000000081ull,
                      0x800000000000008ull,
                      0x1000000000000010ull};
-    u64 ep = 0x0ull;
+    u64 ep = 0ull;
     i32 flipped = false;
 };
 
@@ -306,7 +306,7 @@ auto makemove(Position &pos, const Move &move) {
 
     // Castling
     if (piece == King) {
-        const u64 bb = move.to - move.from == 2 ? 0xa0ull : move.to - move.from == -2 ? 0x9ull : 0x0ull;
+        const u64 bb = move.to - move.from == 2 ? 0xa0ull : move.to - move.from == -2 ? 0x9ull : 0ull;
         pos.colour[0] ^= bb;
         pos.pieces[Rook] ^= bb;
     }
