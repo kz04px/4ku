@@ -192,7 +192,7 @@ vector<TTEntry> transposition_table;
 }
 
 void flip(Position &pos) {
-    pos.flipped = !pos.flipped;
+    pos.flipped ^= 1;
     pos.colour[0] = flip(pos.colour[0]);
     pos.colour[1] = flip(pos.colour[1]);
     swap(pos.colour[0], pos.colour[1]);
