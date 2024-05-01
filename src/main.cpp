@@ -286,6 +286,12 @@ auto makemove(Position &pos, const Move &move) {
     pos.colour[0] ^= mask;
     pos.pieces[piece] ^= mask;
 
+    // Captures
+    if (captured != None) {
+        pos.colour[1] ^= to;
+        pos.pieces[captured] ^= to;
+    }
+
     // En passant
     if (piece == Pawn && to == pos.ep) {
         pos.colour[1] ^= to >> 8;
@@ -297,12 +303,6 @@ auto makemove(Position &pos, const Move &move) {
     // Pawn double move
     if (piece == Pawn && move.to - move.from == 16)
         pos.ep = to >> 8;
-
-    // Captures
-    if (captured != None) {
-        pos.colour[1] ^= to;
-        pos.pieces[captured] ^= to;
-    }
 
     // Castling
     if (piece == King) {
