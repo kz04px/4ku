@@ -312,7 +312,7 @@ auto makemove(Position &pos, const Move &move) {
     }
 
     // Promotions
-    if (piece == Pawn && move.to >= 56) {
+    if (piece == Pawn && move.to > 55) {
         pos.pieces[Pawn] ^= to;
         pos.pieces[move.promo] ^= to;
     }
@@ -355,7 +355,7 @@ void generate_pawn_moves(Move *const movelist, i32 &num_moves, u64 to_mask, cons
         assert(to >= 0);
         assert(to < 64);
         to_mask &= to_mask - 1;
-        if (to >= 56) {
+        if (to > 55) {
             movelist[num_moves++] = Move{from, to, Queen};
             movelist[num_moves++] = Move{from, to, Rook};
             movelist[num_moves++] = Move{from, to, Bishop};
