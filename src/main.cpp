@@ -483,8 +483,7 @@ const i32 pawn_attacked_penalty[] = {S(63, 14), S(156, 140)};
         const i32 kings[] = {lsb(pos.colour[0] & pos.pieces[King]), lsb(pos.colour[1] & pos.pieces[King])};
 
         // Bishop pair
-        if (count(pos.colour[0] & pos.pieces[Bishop]) == 2)
-            score += bishop_pair;
+        score += bishop_pair * (count(pos.colour[0] & pos.pieces[Bishop]) == 2);
 
         // Phalanx pawns
         score += pawn_phalanx * count(west(pawns[0]) & pawns[0]);
