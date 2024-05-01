@@ -478,9 +478,9 @@ const i32 pawn_attacked_penalty[] = {S(63, 14), S(156, 140)};
     for (i32 c = 0; c < 2; ++c) {
         // our pawns, their pawns
         const u64 pawns[] = {pos.colour[0] & pos.pieces[Pawn], pos.colour[1] & pos.pieces[Pawn]};
+        const i32 kings[] = {lsb(pos.colour[0] & pos.pieces[King]), lsb(pos.colour[1] & pos.pieces[King])};
         const u64 protected_by_pawns = nw(pawns[0]) | ne(pawns[0]);
         const u64 attacked_by_pawns = se(pawns[1]) | sw(pawns[1]);
-        const i32 kings[] = {lsb(pos.colour[0] & pos.pieces[King]), lsb(pos.colour[1] & pos.pieces[King])};
 
         // Bishop pair
         score += bishop_pair * (count(pos.colour[0] & pos.pieces[Bishop]) == 2);
