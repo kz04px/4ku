@@ -252,7 +252,7 @@ template <typename F>
            (bb << 1 | bb << 9 | bb >> 7) & ~0x101010101010101ull;
 }
 
-[[nodiscard]] auto is_attacked(const Position &pos, const i32 sq, const i32 them = true) {
+[[nodiscard]] i32 is_attacked(const Position &pos, const i32 sq, const i32 them = true) {
     assert(sq >= 0);
     assert(sq < 64);
     const u64 bb = 1ull << sq;
@@ -264,7 +264,7 @@ template <typename F>
            king(sq, pos.colour[0] | pos.colour[1]) & pos.colour[them] & pos.pieces[King];
 }
 
-auto makemove(Position &pos, const Move &move) {
+i32 makemove(Position &pos, const Move &move) {
     assert(move.from >= 0);
     assert(move.from < 64);
     assert(move.to >= 0);
