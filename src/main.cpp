@@ -160,49 +160,6 @@ vector<TTEntry> transposition_table;
     return south(east(bb));
 }
 
-[[nodiscard]] i32 operator==(const Move &lhs, const Move &rhs) {
-    return !memcmp(&rhs, &lhs, 3);
-}
-
-[[nodiscard]] string move_str(const Move &move, const i32 flip) {
-    assert(move.from >= 0);
-    assert(move.from < 64);
-    assert(move.to >= 0);
-    assert(move.to < 64);
-    assert(move.from != move.to);
-    assert(move.promo == None || move.promo == Knight || move.promo == Bishop || move.promo == Rook ||
-           move.promo == Queen);
-    string str;
-    str += 'a' + move.from % 8;
-    str += '1' + (move.from / 8 ^ 7 * flip);
-    str += 'a' + move.to % 8;
-    str += '1' + (move.to / 8 ^ 7 * flip);
-    if (move.promo != None)
-        str += "nbrq"[move.promo - Knight];
-    return str;
-}
-
-[[nodiscard]] i32 piece_on(const Position &pos, const i32 sq) {
-    assert(sq >= 0);
-    assert(sq < 64);
-    for (i32 i = Pawn; i < None; ++i)
-        if (pos.pieces[i] & 1ull << sq)
-            return i;
-    return None;
-}
-
-void flip(Position &pos) {
-    pos.flipped ^= 1;
-    pos.colour[0] = flip(pos.colour[0]);
-    pos.colour[1] = flip(pos.colour[1]);
-    swap(pos.colour[0], pos.colour[1]);
-    swap(pos.castling[0], pos.castling[2]);
-    swap(pos.castling[1], pos.castling[3]);
-    for (i32 i = Pawn; i < None; ++i)
-        pos.pieces[i] = flip(pos.pieces[i]);
-    pos.ep = flip(pos.ep);
-}
-
 template <typename F>
 [[nodiscard]] u64 ray(const i32 sq, const u64 blockers, F f) {
     assert(sq >= 0);
@@ -250,6 +207,49 @@ template <typename F>
     const u64 bb = 1ull << sq;
     return bb << 8 | bb >> 8 | (bb >> 1 | bb >> 9 | bb << 7) & ~0x8080808080808080ull |
            (bb << 1 | bb << 9 | bb >> 7) & ~0x101010101010101ull;
+}
+
+[[nodiscard]] i32 operator==(const Move &lhs, const Move &rhs) {
+    return !memcmp(&rhs, &lhs, 3);
+}
+
+[[nodiscard]] string move_str(const Move &move, const i32 flip) {
+    assert(move.from >= 0);
+    assert(move.from < 64);
+    assert(move.to >= 0);
+    assert(move.to < 64);
+    assert(move.from != move.to);
+    assert(move.promo == None || move.promo == Knight || move.promo == Bishop || move.promo == Rook ||
+           move.promo == Queen);
+    string str;
+    str += 'a' + move.from % 8;
+    str += '1' + (move.from / 8 ^ 7 * flip);
+    str += 'a' + move.to % 8;
+    str += '1' + (move.to / 8 ^ 7 * flip);
+    if (move.promo != None)
+        str += "nbrq"[move.promo - Knight];
+    return str;
+}
+
+[[nodiscard]] i32 piece_on(const Position &pos, const i32 sq) {
+    assert(sq >= 0);
+    assert(sq < 64);
+    for (i32 i = Pawn; i < None; ++i)
+        if (pos.pieces[i] & 1ull << sq)
+            return i;
+    return None;
+}
+
+void flip(Position &pos) {
+    pos.flipped ^= 1;
+    pos.colour[0] = flip(pos.colour[0]);
+    pos.colour[1] = flip(pos.colour[1]);
+    swap(pos.colour[0], pos.colour[1]);
+    swap(pos.castling[0], pos.castling[2]);
+    swap(pos.castling[1], pos.castling[3]);
+    for (i32 i = Pawn; i < None; ++i)
+        pos.pieces[i] = flip(pos.pieces[i]);
+    pos.ep = flip(pos.ep);
 }
 
 [[nodiscard]] i32 is_attacked(const Position &pos, const i32 sq, const i32 them = true) {
