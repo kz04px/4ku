@@ -566,8 +566,8 @@ const i32 pawn_attacked_penalty[] = {S(63, 14), S(156, 140)};
                     score += king_attacks[p - 1] * count(mobility & king(kings[1], 0));
 
                     // Open or semi-open files
-                    if (!(0x101010101010101ull << file & pawns[0]))
-                        score += open_files[!(0x101010101010101ull << file & pawns[1]) * 5 + p - 1];
+                    score += !(0x101010101010101ull << file & pawns[0]) *
+                             open_files[!(0x101010101010101ull << file & pawns[1]) * 5 + p - 1];
 
                     if (p == King && piece_bb & 0xC3D7) {
                         // C3D7 = Reasonable king squares
