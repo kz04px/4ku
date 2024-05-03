@@ -306,7 +306,7 @@ i32 makemove(Position &pos, const Move &move) {
 
     // Castling
     if (piece == King) {
-        const u64 bb = move.to - move.from == 2 ? 0xa0ull : move.to - move.from == -2 ? 0x9ull : 0ull;
+        const u64 bb = move.to - move.from == 2 ? 0xa0ull : move.from - move.to == 2 ? 0x9ull : 0ull;
         pos.colour[0] ^= bb;
         pos.pieces[Rook] ^= bb;
     }
