@@ -349,12 +349,12 @@ auto makemove(Position &pos, const Move &move) {
 void generate_pawn_moves(Move *const movelist, i32 &num_moves, u64 to_mask, const i32 offset) {
     while (to_mask) {
         const u8 to = lsb(to_mask);
+        to_mask &= to_mask - 1;
         const u8 from = to + offset;
         assert(from >= 0);
         assert(from < 64);
         assert(to >= 0);
         assert(to < 64);
-        to_mask &= to_mask - 1;
         if (to > 55) {
             movelist[num_moves++] = Move{from, to, Queen};
             movelist[num_moves++] = Move{from, to, Rook};
