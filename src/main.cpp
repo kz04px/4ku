@@ -128,12 +128,12 @@ vector<TTEntry> transposition_table;
     return __builtin_popcountll(bb);
 }
 
-[[nodiscard]] u64 east(const u64 bb) {
-    return bb << 1 & ~0x101010101010101ull;
-}
-
 [[nodiscard]] u64 west(const u64 bb) {
     return bb >> 1 & ~0x8080808080808080ull;
+}
+
+[[nodiscard]] u64 east(const u64 bb) {
+    return bb << 1 & ~0x101010101010101ull;
 }
 
 [[nodiscard]] u64 north(const u64 bb) {
