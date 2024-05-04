@@ -54,7 +54,7 @@ enum
 [[nodiscard]] u64 now() {
     timespec t;
     clock_gettime(CLOCK_MONOTONIC, &t);
-    return t.tv_sec * 1000 + t.tv_nsec / 1000000;
+    return t.tv_sec * 1000 + t.tv_nsec / 1e6;
 }
 
 struct [[nodiscard]] Position {
@@ -66,7 +66,7 @@ struct [[nodiscard]] Position {
                      0x8100000000000081ull,
                      0x800000000000008ull,
                      0x1000000000000010ull};
-    u64 ep = 0x0ull;
+    u64 ep = 0ull;
     i32 flipped = false;
 };
 
@@ -128,12 +128,12 @@ vector<TTEntry> transposition_table;
     return __builtin_popcountll(bb);
 }
 
-[[nodiscard]] u64 east(const u64 bb) {
-    return bb << 1 & ~0x101010101010101ull;
-}
-
 [[nodiscard]] u64 west(const u64 bb) {
     return bb >> 1 & ~0x8080808080808080ull;
+}
+
+[[nodiscard]] u64 east(const u64 bb) {
+    return bb << 1 & ~0x101010101010101ull;
 }
 
 [[nodiscard]] u64 north(const u64 bb) {
@@ -158,49 +158,6 @@ vector<TTEntry> transposition_table;
 
 [[nodiscard]] u64 se(const u64 bb) {
     return south(east(bb));
-}
-
-[[nodiscard]] i32 operator==(const Move &lhs, const Move &rhs) {
-    return !memcmp(&rhs, &lhs, 3);
-}
-
-[[nodiscard]] string move_str(const Move &move, const i32 flip) {
-    assert(move.from >= 0);
-    assert(move.from < 64);
-    assert(move.to >= 0);
-    assert(move.to < 64);
-    assert(move.from != move.to);
-    assert(move.promo == None || move.promo == Knight || move.promo == Bishop || move.promo == Rook ||
-           move.promo == Queen);
-    string str;
-    str += 'a' + move.from % 8;
-    str += '1' + (move.from / 8 ^ 7 * flip);
-    str += 'a' + move.to % 8;
-    str += '1' + (move.to / 8 ^ 7 * flip);
-    if (move.promo != None)
-        str += "nbrq"[move.promo - Knight];
-    return str;
-}
-
-[[nodiscard]] i32 piece_on(const Position &pos, const i32 sq) {
-    assert(sq >= 0);
-    assert(sq < 64);
-    for (i32 i = Pawn; i < None; ++i)
-        if (pos.pieces[i] & 1ull << sq)
-            return i;
-    return None;
-}
-
-void flip(Position &pos) {
-    pos.flipped = !pos.flipped;
-    pos.colour[0] = flip(pos.colour[0]);
-    pos.colour[1] = flip(pos.colour[1]);
-    swap(pos.colour[0], pos.colour[1]);
-    swap(pos.castling[0], pos.castling[2]);
-    swap(pos.castling[1], pos.castling[3]);
-    for (i32 i = Pawn; i < None; ++i)
-        pos.pieces[i] = flip(pos.pieces[i]);
-    pos.ep = flip(pos.ep);
 }
 
 template <typename F>
@@ -240,7 +197,7 @@ template <typename F>
     assert(sq >= 0);
     assert(sq < 64);
     const u64 bb = 1ull << sq;
-    return (bb << 15 | bb >> 17) & 0x7F7F7F7F7F7F7F7Full | (bb << 17 | bb >> 15) & ~0x101010101010101ull |
+    return (bb << 15 | bb >> 17) & ~0x8080808080808080ull | (bb << 17 | bb >> 15) & ~0x101010101010101ull |
            (bb << 10 | bb >> 6) & 0xFCFCFCFCFCFCFCFCull | (bb << 6 | bb >> 10) & 0x3F3F3F3F3F3F3F3Full;
 }
 
@@ -248,11 +205,54 @@ template <typename F>
     assert(sq >= 0);
     assert(sq < 64);
     const u64 bb = 1ull << sq;
-    return bb << 8 | bb >> 8 | (bb >> 1 | bb >> 9 | bb << 7) & 0x7F7F7F7F7F7F7F7Full |
+    return bb << 8 | bb >> 8 | (bb >> 1 | bb >> 9 | bb << 7) & ~0x8080808080808080ull |
            (bb << 1 | bb << 9 | bb >> 7) & ~0x101010101010101ull;
 }
 
-[[nodiscard]] auto is_attacked(const Position &pos, const i32 sq, const i32 them = true) {
+[[nodiscard]] i32 operator==(const Move &lhs, const Move &rhs) {
+    return !memcmp(&rhs, &lhs, 3);
+}
+
+[[nodiscard]] string move_str(const Move &move, const i32 flip) {
+    assert(move.from >= 0);
+    assert(move.from < 64);
+    assert(move.to >= 0);
+    assert(move.to < 64);
+    assert(move.from != move.to);
+    assert(move.promo == None || move.promo == Knight || move.promo == Bishop || move.promo == Rook ||
+           move.promo == Queen);
+    string str;
+    str += 'a' + move.from % 8;
+    str += '1' + (move.from / 8 ^ 7 * flip);
+    str += 'a' + move.to % 8;
+    str += '1' + (move.to / 8 ^ 7 * flip);
+    if (move.promo != None)
+        str += "nbrq"[move.promo - Knight];
+    return str;
+}
+
+[[nodiscard]] i32 piece_on(const Position &pos, const i32 sq) {
+    assert(sq >= 0);
+    assert(sq < 64);
+    for (i32 i = Pawn; i < None; ++i)
+        if (pos.pieces[i] & 1ull << sq)
+            return i;
+    return None;
+}
+
+void flip(Position &pos) {
+    pos.flipped ^= 1;
+    pos.colour[0] = flip(pos.colour[0]);
+    pos.colour[1] = flip(pos.colour[1]);
+    swap(pos.colour[0], pos.colour[1]);
+    swap(pos.castling[0], pos.castling[2]);
+    swap(pos.castling[1], pos.castling[3]);
+    for (i32 i = Pawn; i < None; ++i)
+        pos.pieces[i] = flip(pos.pieces[i]);
+    pos.ep = flip(pos.ep);
+}
+
+[[nodiscard]] i32 is_attacked(const Position &pos, const i32 sq, const i32 them = true) {
     assert(sq >= 0);
     assert(sq < 64);
     const u64 bb = 1ull << sq;
@@ -264,7 +264,7 @@ template <typename F>
            king(sq, pos.colour[0] | pos.colour[1]) & pos.colour[them] & pos.pieces[King];
 }
 
-auto makemove(Position &pos, const Move &move) {
+i32 makemove(Position &pos, const Move &move) {
     assert(move.from >= 0);
     assert(move.from < 64);
     assert(move.to >= 0);
@@ -272,17 +272,25 @@ auto makemove(Position &pos, const Move &move) {
     assert(move.from != move.to);
     assert(move.promo == None || move.promo == Knight || move.promo == Bishop || move.promo == Rook ||
            move.promo == Queen);
+
+    const u64 from = 1ull << move.from;
+    const u64 to = 1ull << move.to;
+    const u64 mask = from | to;
+
     const i32 piece = piece_on(pos, move.from);
     assert(piece != None);
     const i32 captured = piece_on(pos, move.to);
     assert(captured != King);
-    const u64 to = 1ull << move.to;
-    const u64 from = 1ull << move.from;
-    const u64 mask = from | to;
 
     // Move the piece
     pos.colour[0] ^= mask;
     pos.pieces[piece] ^= mask;
+
+    // Captures
+    if (captured != None) {
+        pos.colour[1] ^= to;
+        pos.pieces[captured] ^= to;
+    }
 
     // En passant
     if (piece == Pawn && to == pos.ep) {
@@ -296,21 +304,15 @@ auto makemove(Position &pos, const Move &move) {
     if (piece == Pawn && move.to - move.from == 16)
         pos.ep = to >> 8;
 
-    // Captures
-    if (captured != None) {
-        pos.colour[1] ^= to;
-        pos.pieces[captured] ^= to;
-    }
-
     // Castling
     if (piece == King) {
-        const u64 bb = move.to - move.from == 2 ? 0xa0ull : move.to - move.from == -2 ? 0x9ull : 0x0ull;
+        const u64 bb = move.to - move.from == 2 ? 0xa0ull : move.from - move.to == 2 ? 0x9ull : 0ull;
         pos.colour[0] ^= bb;
         pos.pieces[Rook] ^= bb;
     }
 
     // Promotions
-    if (piece == Pawn && move.to >= 56) {
+    if (piece == Pawn && move.to > 55) {
         pos.pieces[Pawn] ^= to;
         pos.pieces[move.promo] ^= to;
     }
@@ -347,13 +349,13 @@ auto makemove(Position &pos, const Move &move) {
 void generate_pawn_moves(Move *const movelist, i32 &num_moves, u64 to_mask, const i32 offset) {
     while (to_mask) {
         const u8 to = lsb(to_mask);
+        to_mask &= to_mask - 1;
         const u8 from = to + offset;
         assert(from >= 0);
         assert(from < 64);
         assert(to >= 0);
         assert(to < 64);
-        to_mask &= to_mask - 1;
-        if (to >= 56) {
+        if (to > 55) {
             movelist[num_moves++] = Move{from, to, Queen};
             movelist[num_moves++] = Move{from, to, Rook};
             movelist[num_moves++] = Move{from, to, Bishop};
@@ -476,13 +478,12 @@ const i32 pawn_attacked_penalty[] = {S(63, 14), S(156, 140)};
     for (i32 c = 0; c < 2; ++c) {
         // our pawns, their pawns
         const u64 pawns[] = {pos.colour[0] & pos.pieces[Pawn], pos.colour[1] & pos.pieces[Pawn]};
+        const i32 kings[] = {lsb(pos.colour[0] & pos.pieces[King]), lsb(pos.colour[1] & pos.pieces[King])};
         const u64 protected_by_pawns = nw(pawns[0]) | ne(pawns[0]);
         const u64 attacked_by_pawns = se(pawns[1]) | sw(pawns[1]);
-        const i32 kings[] = {lsb(pos.colour[0] & pos.pieces[King]), lsb(pos.colour[1] & pos.pieces[King])};
 
         // Bishop pair
-        if (count(pos.colour[0] & pos.pieces[Bishop]) == 2)
-            score += bishop_pair;
+        score += bishop_pair * (count(pos.colour[0] & pos.pieces[Bishop]) == 2);
 
         // Phalanx pawns
         score += pawn_phalanx * count(west(pawns[0]) & pawns[0]);
@@ -565,8 +566,8 @@ const i32 pawn_attacked_penalty[] = {S(63, 14), S(156, 140)};
                     score += king_attacks[p - 1] * count(mobility & king(kings[1], 0));
 
                     // Open or semi-open files
-                    if (!(0x101010101010101ull << file & pawns[0]))
-                        score += open_files[!(0x101010101010101ull << file & pawns[1]) * 5 + p - 1];
+                    score += !(0x101010101010101ull << file & pawns[0]) *
+                             open_files[!(0x101010101010101ull << file & pawns[1]) * 5 + p - 1];
 
                     if (p == King && piece_bb & 0xC3D7) {
                         // C3D7 = Reasonable king squares
@@ -701,7 +702,7 @@ i32 alphabeta(Position &pos,
 
         // Null move pruning
         if (depth > 2 && static_eval >= beta && static_eval >= stack[ply].score && do_null &&
-            pos.colour[0] & ~(pos.pieces[Pawn] | pos.pieces[King])) {
+            pos.colour[0] & ~pos.pieces[Pawn] & ~pos.pieces[King]) {
             assert(ply > 0);
             Position npos = pos;
             flip(npos);
@@ -783,8 +784,30 @@ i32 alphabeta(Position &pos,
         // minify disable filter delete
 
         i32 score;
-        if (!num_moves_evaluated)
-        full_window:
+        i32 reduction = depth > 3 && num_moves_evaluated > 1
+                            ? max(num_moves_evaluated / 13 + depth / 14 + (alpha == beta - 1) + !improving -
+                                      min(max(hh_table[pos.flipped][!gain][move.from][move.to] / 128, -2), 2),
+                                  0)
+                            : 0;
+
+        while (num_moves_evaluated &&
+               (score = -alphabeta(npos,
+                                   -alpha - 1,
+                                   -alpha,
+                                   depth - reduction - 1,
+                                   ply + 1,
+                                   // minify enable filter delete
+                                   nodes,
+                                   // minify disable filter delete
+                                   stop_time,
+                                   stack,
+                                   stop,
+                                   hash_history,
+                                   hh_table)) > alpha &&
+               reduction > 0)
+            reduction = 0;
+
+        if (!num_moves_evaluated || score > alpha && score < beta)
             score = -alphabeta(npos,
                                -beta,
                                -alpha,
@@ -798,38 +821,6 @@ i32 alphabeta(Position &pos,
                                stop,
                                hash_history,
                                hh_table);
-        else {
-            // Late move reduction
-            i32 reduction = depth > 3 && num_moves_evaluated > 1
-                                ? max(num_moves_evaluated / 13 + depth / 14 + (alpha == beta - 1) + !improving -
-                                          min(max(hh_table[pos.flipped][!gain][move.from][move.to] / 128, -2), 2),
-                                      0)
-                                : 0;
-
-        zero_window:
-            assert(reduction >= 0);
-            score = -alphabeta(npos,
-                               -alpha - 1,
-                               -alpha,
-                               depth - reduction - 1,
-                               ply + 1,
-                               // minify enable filter delete
-                               nodes,
-                               // minify disable filter delete
-                               stop_time,
-                               stack,
-                               stop,
-                               hash_history,
-                               hh_table);
-
-            if (reduction > 0 && score > alpha) {
-                reduction = 0;
-                goto zero_window;
-            }
-
-            if (score > alpha && score < beta)
-                goto full_window;
-        }
 
         // Exit early if out of time
         if (depth > 4 && (stop || now() >= stop_time)) {
