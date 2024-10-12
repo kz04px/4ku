@@ -343,7 +343,7 @@ i32 makemove(Position &pos, const Move &move) {
     assert(!(pos.pieces[Queen] & pos.pieces[King]));
 
     // Return move legality
-    return !is_attacked(pos, lsb(pos.colour[1] & pos.pieces[King]), false);
+    return is_attacked(pos, lsb(pos.colour[1] & pos.pieces[King]), false);
 }
 
 void generate_pawn_moves(Move *const movelist, i32 &num_moves, u64 to_mask, const i32 offset) {
@@ -776,7 +776,7 @@ i32 alphabeta(Position &pos,
             break;
 
         Position npos = pos;
-        if (!makemove(npos, move))
+        if (makemove(npos, move))
             continue;
 
         // minify enable filter delete
@@ -895,7 +895,7 @@ void print_pv(const Position &pos, const Move move, vector<u64> &hash_history) {
 
     // Check move legality
     Position npos = pos;
-    if (!makemove(npos, move))
+    if (makemove(npos, move))
         return;
 
     // Print current move
@@ -1076,7 +1076,7 @@ void set_fen(Position &pos, const string &fen) {
         Position npos = pos;
 
         // Check move legality
-        if (!makemove(npos, moves[i]))
+        if (makemove(npos, moves[i]))
             continue;
 
         nodes += perft(npos, depth - 1);
